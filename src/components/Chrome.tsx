@@ -68,10 +68,20 @@ export function useTheme() {
 
 export function Nav() {
   const { theme, toggle } = useTheme();
+  const [scrolled, setScrolled] = useState(false);
+
+  useEffect(() => {
+    function handleScroll() {
+      setScrolled(window.scrollY > 20);
+    }
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    handleScroll();
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
 
   return (
     <>
-    <header className="nav">
+    <header className={scrolled ? "nav scrolled" : "nav"}>
       <div className="nav-glass" aria-hidden="true" />
       <div className="nav-bar">
         <NavLink className="pill" to="/projects">
