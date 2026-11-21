@@ -26,7 +26,7 @@ const pieces: Array<Piece & { feature?: boolean }> = [
     idea: "Cut and arranged by hand. Each point is a step in the spectrum, from the dark outside toward a bright center.",
   },
   {
-    title: "Egypt’s deciphered make",
+    title: "Egypt's deciphered map",
     image: "/images/hand/halftone.webp",
     alt: "A film sheet of a halftone portrait laid over a map",
     idea: "The film sheet deciphers the map.",
