@@ -221,7 +221,7 @@ export function CaseStudy() {
           <div className="split">
             <SectionHeading index="03" title="Process" />
             <p className="method">
-              Research → MoSCoW feature priortization→ sitemaps and key flows →
+              Research → MoSCoW feature prioritization → sitemaps and key flows →
               benchmarking → iterations with the PM, returning to research for every new
               flow.
             </p>
@@ -268,7 +268,7 @@ export function CaseStudy() {
                 body: "A side panel with live timers and interaction history, plus AI replies in the composer, so there’s no reason to keep notes.",
               },
               {
-                label: "Trade off",
+                label: "Trade-off",
                 body: "In-chat notes, pushing agents toward AI replies instead of personal scripts.",
               },
             ]}

@@ -20,6 +20,15 @@ const work = [
     image: "/images/echo/echo-projects-hero.webp",
     alt: "Echo ticket list",
   },
+  {
+    index: "03",
+    name: "AI Analyst",
+    to: "/work/analyst",
+    description: "A chatbot for customer support analytics, vibe coded.",
+    image: "/images/analyst/card.webp?v=2",
+    alt: "AI Analyst chat",
+    vibe: true,
+  },
 ];
 
 export function Projects() {
@@ -41,7 +50,10 @@ export function Projects() {
           {work.map((item) => (
             <article className="work-card" key={item.name}>
               <Link to={item.to}>
-                <img src={item.image} alt={item.alt} />
+                <span className="work-shot">
+                  <img src={item.image} alt={item.alt} />
+                  {"vibe" in item && item.vibe ? <span className="vibe-badge">Vibe coded</span> : null}
+                </span>
                 <p className="index">{item.index}</p>
                 <h2>{item.name}</h2>
                 <p>{item.description}</p>

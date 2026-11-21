@@ -1,5 +1,34 @@
-import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
+import { Link, NavLink } from "react-router-dom";
+import { DotField } from "./DotField";
+
+type Theme = "light" | "dark";
+
+const ThemeContext = createContext<{ theme: Theme; toggle: () => void } | null>(null);
+
+export function ThemeProvider({ children }: { children: ReactNode }) {
+  const [theme, setTheme] = useState<Theme>(() => {
+    return document.documentElement.dataset.theme === "dark" ? "dark" : "light";
+  });
+
+  useEffect(() => {
+    document.documentElement.dataset.theme = theme;
+    localStorage.setItem("theme", theme);
+  }, [theme]);
+
+  return (
+    <ThemeContext.Provider
+      value={{
+        theme,
+        toggle() {
+          setTheme((current) => (current === "light" ? "dark" : "light"));
+        },
+      }}
+    >
+      {children}
+    </ThemeContext.Provider>
+  );
+}
 
 function SunIcon() {
   return (
@@ -24,21 +53,9 @@ function MoonIcon() {
 }
 
 export function useTheme() {
-  const [theme, setTheme] = useState<"light" | "dark">(() => {
-    return document.documentElement.dataset.theme === "dark" ? "dark" : "light";
-  });
-
-  useEffect(() => {
-    document.documentElement.dataset.theme = theme;
-    localStorage.setItem("theme", theme);
-  }, [theme]);
-
-  return {
-    theme,
-    toggle() {
-      setTheme((current) => (current === "light" ? "dark" : "light"));
-    },
-  };
+  const value = useContext(ThemeContext);
+  if (!value) throw new Error("ThemeProvider is missing");
+  return value;
 }
 
 export function Nav() {
@@ -48,10 +65,12 @@ export function Nav() {
     <header className="nav">
       <div className="nav-bar">
         <div className="nav-pills">
-          <Link className="pill" to="/projects">
+          <NavLink className="pill" to="/projects">
             Projects
-          </Link>
-          <span className="pill">Handcrafted</span>
+          </NavLink>
+          <NavLink className="pill" to="/handcrafted">
+            Handcrafted
+          </NavLink>
         </div>
         <Link className="wordmark" to="/home">
           Rana
@@ -88,7 +107,34 @@ export function Footer({ giant = false }: { giant?: boolean }) {
 }
 
 export function Dots() {
-  return <div className="dots" aria-hidden="true" />;
+  const { theme } = useTheme();
+  const light = theme !== "dark";
+
+  return (
+    <DotField
+      className="dots"
+      dotRadius={1.1}
+      dotSpacing={26}
+      pattern="grid"
+      gradientFrom={light ? "#b9b8b1" : "#d8d7d1"}
+      gradientTo={light ? "#8f8e86" : "#f4f4f2"}
+      gradientAngle={180}
+      cursorRadius={110}
+      bulgeStrength={0.36}
+      twist={0}
+      glowColor={light ? "#121211" : "#f4f4f2"}
+      glowRadius={64}
+      glowIntensity={0.16}
+      baseOpacity={light ? 0.26 : 0.22}
+      waveAmplitude={0}
+      sparkle={false}
+      speed={0}
+      interactive
+      holdToZoom={false}
+      intro={false}
+      lightMode={light}
+    />
+  );
 }
 
 export function BrowserFrame({

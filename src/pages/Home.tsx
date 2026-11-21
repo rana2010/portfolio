@@ -34,8 +34,8 @@ export function Home() {
 
         <section className="intro">
           <p className="intro-copy">
-            I conduct research based design decisions. I map the flows, conduct user
-            interviews, and ship working prototypes in code.
+            I make research-based design decisions. I map the flows, run user interviews,
+            and ship working prototypes in code.
           </p>
           <div className="expertise">
             <p className="eyebrow">Expertise</p>
@@ -80,14 +80,6 @@ export function Home() {
             ))}
           </ul>
         </section>
-
-        <p className="about">
-          Hola, I’m Rana a product designer with experience working in egypt’s bigget
-          fintech Fawry, and was a part of noon’s customer support tech team for 2 years
-          where renovatted AI CS chat tools, created a CRM system form scratch. Open to
-          opportunities would love to know more about your project of company (contact
-          info)
-        </p>
       </main>
       <Footer />
     </div>

@@ -9,7 +9,7 @@ export function Splash() {
 
   useEffect(() => {
     document.title = "Rana Ebrahim";
-    const ready = window.setTimeout(() => setPhase("ready"), 1500);
+    const ready = window.setTimeout(() => setPhase("ready"), 900);
     return () => window.clearTimeout(ready);
   }, []);
 
@@ -22,22 +22,24 @@ export function Splash() {
 
   return (
     <main className={`splash splash-${phase}`}>
-      <div className="splash-glow" aria-hidden="true" />
-      <div className="splash-top">
-        <p>Product Design</p>
-        <a href="/home" onClick={enter}>
-          Portfolio
-        </a>
-      </div>
-      <a className="splash-name" href="/home" onClick={enter} aria-label="Enter portfolio">
-        <span className="mask">
-          <span>Rana</span>
+      <a className="splash-card" href="/home" onClick={enter} aria-label="Enter portfolio">
+        <span className="splash-corners">
+          <span>Rana Ebrahim</span>
+          <span>Portfolio</span>
         </span>
-        <sup>®</sup>
-        <span className="mask">
-          <span>Ebrahim</span>
+        <span className="splash-body">
+          <p className="splash-line">
+            Hola, I’m Rana.
+            <br />
+            I love to create experiences
+            <br />
+            and make an impact.
+          </p>
+          <span className="splash-enter">DM to collaborate</span>
         </span>
-        <span className="splash-rule" aria-hidden="true" />
+        <span className="splash-split" aria-hidden="true">
+          Rana
+        </span>
       </a>
     </main>
   );
