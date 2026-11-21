@@ -6,7 +6,7 @@ import { DotField } from "../components/DotField";
 const LINKEDIN = "https://www.linkedin.com/in/rana-ebrahim-875614175/";
 const EMAIL = "mailto:ranaebrahim@aucegypt.edu";
 const STORAGE = "chat-answers";
-const canEdit = ["localhost", "127.0.0.1", "::1"].includes(window.location.hostname);
+const canEdit = false;
 
 const OLD_GREETING =
   "Hey! I’m Rana—well, my v1 pocket version while I finish building out my full chat assistant for December. Ask me about my work, how I design, or why we should work together!";
