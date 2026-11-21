@@ -1,63 +1,142 @@
-import { useEffect, useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent, type ReactNode } from "react";
 import { Link } from "react-router-dom";
 import { asset } from "../asset";
+import { DotField } from "../components/DotField";
 
-const SUGGESTIONS = [
-  "What do you design?",
-  "Where do you work?",
-  "Tell me about Echo",
-  "What have you made by hand?",
-  "How can I reach you?",
-];
+const LINKEDIN = "https://www.linkedin.com/in/rana-ebrahim-875614175/";
+const EMAIL = "mailto:ranaebrahim@aucegypt.edu";
+const STORAGE = "chat-answers";
 
-type Message = { from: "rae" | "you"; text: string };
+const OLD_GREETING =
+  "Hey! I’m Rana—well, my v1 pocket version while I finish building out my full chat assistant for December. Ask me about my work, how I design, or why we should work together!";
 
-function reply(question: string) {
+const DEFAULTS: Record<string, string> = {
+  greeting: "Hey, try out my chatbot.",
+  hire: "Aside from being genuinely fun to have around, I bring 4 years of shipping consumer and enterprise products (including 2 years at Noon), backed by CS and Interactive Design minors. I bridge design and engineering—from behavioral psychology and conversion flows to clean design systems, HTML/CSS/JS, and interactive prototypes.",
+  projects:
+    "In Pulse, I stripped out agent workflow detours so support teams resolve in one screen. In Echo, I turned passive drop-off into repeatable user habits. Click into either case study on this page for the full breakdown—and stay tuned for my live gamified prototype dropping in December!",
+  design:
+    "I start with real user friction and behavioral psychology before opening Figma. I shadow workflows, figure out why people hesitate or drop off, prototype interactions early, and work closely with engineers so what ships matches the intent.",
+  chat: "Skip my v1 bot and talk to the real me! Reach out on LinkedIn or send me an email—I reply way faster than my v2 builds.",
+  relocate:
+    "Yes! I’m currently based in Cairo and completely open to relocating—especially to Europe—or joining remote product teams. I also qualify for fast-track skilled work permits.",
+  open: "I’m actively interviewing right now and open to full-time product design roles or select remote teams. Message me on LinkedIn or email and let’s talk!",
+};
+
+const FIELDS = [
+  ["greeting", "Greeting"],
+  ["hire", "Why hire me?"],
+  ["projects", "Tell me about your projects"],
+  ["design", "How do you design?"],
+  ["chat", "Let’s chat"],
+  ["relocate", "Relocation"],
+  ["open", "Availability"],
+] as const;
+
+const CHIPS = [
+  { id: "hire", label: "Why hire me?" },
+  { id: "projects", label: "Tell me about your projects" },
+  { id: "design", label: "How do you design?" },
+  { id: "chat", label: "Let’s chat" },
+] as const;
+
+type Message = { id: number; from: "rana" | "you"; text: string; at: number };
+
+function loadAnswers() {
+  try {
+    const raw = localStorage.getItem(STORAGE);
+    const stored = raw ? { ...DEFAULTS, ...(JSON.parse(raw) as Record<string, string>) } : { ...DEFAULTS };
+    if (!stored.greeting || stored.greeting === OLD_GREETING) stored.greeting = DEFAULTS.greeting;
+    return stored;
+  } catch {
+    return { ...DEFAULTS };
+  }
+}
+
+function formatTime(at: number) {
+  return new Intl.DateTimeFormat(undefined, { hour: "numeric", minute: "2-digit" }).format(at);
+}
+
+function withLinks(text: string) {
+  const parts = text.split(/(linkedin|email)/gi);
+  return parts.map((part, index) => {
+    if (/^linkedin$/i.test(part)) {
+      return (
+        <a key={index} href={LINKEDIN} target="_blank" rel="noreferrer">
+          {part}
+        </a>
+      );
+    }
+    if (/^email$/i.test(part)) {
+      return (
+        <a key={index} href={EMAIL}>
+          {part}
+        </a>
+      );
+    }
+    return part;
+  });
+}
+
+function answerFor(question: string, answers: Record<string, string>) {
   const q = question.toLowerCase();
-  if (/echo|zoho|crm/.test(q)) {
-    return "Echo is Noon’s internal CRM. Rana owned the design, and it was built to replace Zoho.";
-  }
-  if (/pulse|shopping|e-?commerce/.test(q)) {
-    return "Pulse is product design for one of the Middle East’s largest online shopping platforms.";
-  }
-  if (/analyst|vibe/.test(q)) {
-    return "AI Analyst is a chatbot for customer support analytics. It was vibe coded, and you can try the prototype in the projects.";
-  }
-  if (/hand|queen|craft|draw|ink|wheel|map/.test(q)) {
-    return "In the era of AI, Rana has been reminiscing about design and craft by hand. Queen Falling is an ink and calligraphy collage from 2021. There is also a paper color wheel and a film sheet she calls Egypt’s deciphered make.";
-  }
-  if (/noon|fawry|promolink|work|job|career|role/.test(q)) {
-    return "Rana is a Product Designer II at noon, 2025 to present. Before that she was a Junior Product Designer at Fawry, and a UX Designer at Promolinks International.";
-  }
-  if (/stack|figma|react|code|tool|cursor|claude/.test(q)) {
-    return "She designs in Figma and prototypes in React. The stack also includes Tailwind CSS, shadcn/ui, Cursor, Claude, ChatGPT, and GitHub.";
-  }
-  if (/reach|contact|email|collaborat|hire|linkedin|behance|dm/.test(q)) {
-    return "Write to ranaebrahim@aucegypt.edu. LinkedIn and Behance are in the footer.";
-  }
-  if (/design|who|about|rana|hello|hey|hi\b/.test(q)) {
-    return "Rana makes research-based design decisions. She maps the flows, runs user interviews, and ships working prototypes in code. She loves to create experiences and make an impact.";
-  }
-  return "I can tell you about Rana’s work, Echo, Pulse, the handcrafted pieces, and how to reach her. Or write her at ranaebrahim@aucegypt.edu.";
+  if (/relocat|visa|move|spain|madrid|europe|remote|location|cairo/.test(q)) return answers.relocate;
+  if (/availab|start|notice|hire|open/.test(q)) return answers.open;
+  return answers.chat;
 }
 
 export function Chat() {
-  const [messages, setMessages] = useState<Message[]>([]);
+  const [answers, setAnswers] = useState(loadAnswers);
+  const [messages, setMessages] = useState<Message[]>(() => [
+    { id: 1, from: "rana", at: Date.now(), text: loadAnswers().greeting },
+  ]);
   const [draft, setDraft] = useState("");
+  const [typing, setTyping] = useState(false);
+  const [editing, setEditing] = useState(false);
+  const logRef = useRef<HTMLOListElement>(null);
+  const waitRef = useRef<number | null>(null);
 
   useEffect(() => {
     document.title = "Rana Ebrahim";
+    return () => {
+      if (waitRef.current) window.clearTimeout(waitRef.current);
+    };
   }, []);
 
-  function ask(text: string) {
+  useEffect(() => {
+    setMessages((current) =>
+      current.map((message) =>
+        message.id === 1 && message.from === "rana" ? { ...message, text: answers.greeting } : message,
+      ),
+    );
+  }, [answers.greeting]);
+
+  useEffect(() => {
+    const log = logRef.current;
+    if (!log || editing) return;
+    log.scrollTo({ top: log.scrollHeight, behavior: "smooth" });
+  }, [messages, typing, editing]);
+
+  function save(id: string, value: string) {
+    setAnswers((current) => {
+      const next = { ...current, [id]: value };
+      localStorage.setItem(STORAGE, JSON.stringify(next));
+      return next;
+    });
+  }
+
+  function ask(text: string, preset?: string) {
     const question = text.trim();
-    if (!question) return;
-    setMessages((current) => [
-      ...current,
-      { from: "you", text: question },
-      { from: "rae", text: reply(question) },
-    ]);
+    if (!question || typing || editing) return;
+    const at = Date.now();
+    const answer = preset ?? answerFor(question, answers);
+    setMessages((current) => [...current, { id: at, from: "you", text: question, at }]);
     setDraft("");
+    setTyping(true);
+    waitRef.current = window.setTimeout(() => {
+      setMessages((current) => [...current, { id: at + 1, from: "rana", at: Date.now(), text: answer }]);
+      setTyping(false);
+    }, 350);
   }
 
   function onSubmit(event: FormEvent) {
@@ -65,46 +144,112 @@ export function Chat() {
     ask(draft);
   }
 
+  let stage: ReactNode = (
+    <ol className="chat-log" ref={logRef} aria-busy={typing}>
+      {messages.map((message) => (
+        <li key={message.id} className={message.from === "you" ? "chat-msg is-you" : "chat-msg"}>
+          {message.from === "rana" ? <img src={asset("/images/rana.webp")} alt="" /> : null}
+          <div className="chat-body">
+            <p>{message.from === "rana" ? withLinks(message.text) : message.text}</p>
+            <time dateTime={new Date(message.at).toISOString()}>{formatTime(message.at)}</time>
+          </div>
+        </li>
+      ))}
+      {typing ? (
+        <li className="chat-msg is-typing">
+          <img src={asset("/images/rana.webp")} alt="" />
+          <div className="chat-body">
+            <p className="chat-typing" aria-label="Rana is typing">
+              <i />
+              <i />
+              <i />
+            </p>
+          </div>
+        </li>
+      ) : null}
+    </ol>
+  );
+
+  if (editing) {
+    stage = (
+      <form className="chat-editor">
+        {FIELDS.map(([id, label]) => (
+          <label key={id}>
+            {label}
+            <textarea value={answers[id]} onChange={(event) => save(id, event.target.value)} />
+          </label>
+        ))}
+      </form>
+    );
+  }
+
   return (
     <div className="page chat-page">
+      <DotField
+        className="dots"
+        dotRadius={1.1}
+        dotSpacing={28}
+        pattern="grid"
+        gradientFrom="#d8d7d1"
+        gradientTo="#f4f4f2"
+        gradientAngle={180}
+        cursorRadius={90}
+        bulgeStrength={0.16}
+        twist={0}
+        glowColor="#f4f4f2"
+        glowRadius={48}
+        glowIntensity={0.05}
+        baseOpacity={0.1}
+        waveAmplitude={0}
+        sparkle={false}
+        speed={0}
+        interactive
+        holdToZoom={false}
+        intro={false}
+        lightMode={false}
+      />
       <main className="chat">
-        <Link className="chat-exit" to="/home">
-          Go to portfolio
-        </Link>
-        <div className="chat-stage">
-          {messages.length === 0 ? (
-            <div className="chat-empty">
-              <img className="chat-avatar" src={asset("/images/rana.webp")} alt="" />
-              <p className="chat-name">Rae</p>
-              <h1>Hey, try out my chatbot.</h1>
-              <div className="chat-suggestions">
-                {SUGGESTIONS.map((item) => (
-                  <button key={item} type="button" onClick={() => ask(item)}>
-                    {item}
-                  </button>
-                ))}
-              </div>
-            </div>
-          ) : (
-            <ol className="chat-log">
-              {messages.map((message, index) => (
-                <li key={index} className={message.from === "you" ? "chat-msg is-you" : "chat-msg"}>
-                  {message.from === "rae" ? <img src={asset("/images/rana.webp")} alt="" /> : null}
-                  <p>{message.text}</p>
-                </li>
-              ))}
-            </ol>
-          )}
+        <div className="chat-head">
+          <div className="chat-tools">
+            <p className="chat-beta">my bot.v1</p>
+            <button
+              type="button"
+              className={editing ? "chat-edit is-on" : "chat-edit"}
+              aria-pressed={editing}
+              onClick={() => setEditing((current) => !current)}
+            >
+              {editing ? "Done" : "Edit"}
+            </button>
+          </div>
+          <Link className="chat-exit" to="/home">
+            <span>Go to portfolio</span>
+            <span aria-hidden="true">→</span>
+          </Link>
         </div>
-        <form className="chat-form" onSubmit={onSubmit}>
-          <input
-            value={draft}
-            onChange={(event) => setDraft(event.target.value)}
-            placeholder="Ask me something"
-            aria-label="Ask Rae"
-          />
-          <button type="submit">Ask</button>
-        </form>
+        <div className="chat-stage">{stage}</div>
+        {editing ? null : (
+          <div className="chat-suggestions is-docked">
+            {CHIPS.map((chip) => (
+              <button key={chip.id} type="button" onClick={() => ask(chip.label, answers[chip.id])}>
+                {chip.label}
+              </button>
+            ))}
+          </div>
+        )}
+        {editing ? null : (
+          <form className="chat-form" onSubmit={onSubmit}>
+            <input
+              value={draft}
+              onChange={(event) => setDraft(event.target.value)}
+              placeholder="Ask me something"
+              aria-label="Ask Rana"
+              disabled={typing}
+            />
+            <button type="submit" disabled={typing}>
+              Ask
+            </button>
+          </form>
+        )}
       </main>
     </div>
   );

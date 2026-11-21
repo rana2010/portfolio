@@ -94,8 +94,11 @@ export function Nav() {
         </button>
       </div>
     </header>
-    <Link className="chat-mark" to="/" aria-label="Talk to Rae">
-        <img src={asset("/images/rana.webp")} alt="" />
+    <Link className="chat-mark" to="/" aria-label="Talk to Rana">
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <circle cx="12" cy="10" r="6" fill="currentColor" />
+        <path fill="currentColor" d="M8.1 14.7 5.4 19.6 12.2 15.5Z" />
+      </svg>
     </Link>
     </>
   );
@@ -109,10 +112,9 @@ export function Footer({ giant = false }: { giant?: boolean }) {
           <a href="https://www.linkedin.com/in/rana-ebrahim-875614175/" target="_blank" rel="noreferrer">
             LinkedIn
           </a>
-          <a href="https://www.behance.net/ranaebrahim1" target="_blank" rel="noreferrer">
-            Behance
+          <a href={asset("/Rana_Ebrahim_Product_Designer_CV.pdf")} download>
+            Resume
           </a>
-          <span>Resume</span>
         </nav>
         <a className="footer-mail" href="mailto:ranaebrahim@aucegypt.edu">
           ranaebrahim@aucegypt.edu
