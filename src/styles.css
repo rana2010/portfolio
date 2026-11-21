@@ -1945,11 +1945,14 @@ figcaption,
 @media (max-width: 980px) {
   .intro-split,
   .split,
-  .steps,
   .impact article,
-  .decision-row,
-  .stack ul {
+  .decision-row {
     grid-template-columns: 1fr;
+    gap: 20px;
+  }
+
+  .steps {
+    grid-template-columns: repeat(2, 1fr);
     gap: 20px;
   }
 
@@ -2481,6 +2484,13 @@ figcaption,
   margin-top: 4px;
   font-size: 14px;
   line-height: 1.5;
+}
+
+@media (max-width: 900px) {
+  .work-cards {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 28px 16px;
+  }
 }
 
 @media (max-width: 800px) {
