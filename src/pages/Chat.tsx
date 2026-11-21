@@ -13,13 +13,13 @@ const OLD_GREETING =
 
 const DEFAULTS: Record<string, string> = {
   greeting:
-    "Hey! I’m Rana—well, an mvp version at least. while I finish building out my full chat assistant for December. Ask me about my work, my creative process, or why we should work together!",
-  hire: "Aside from being genuinely fun to have around, I bring experience owning consumer and enterprise products end to end. I like to dig deep in user behavior and what can make their journey better while also achieving business needs. and YESS I use AI \" gracefully\"",
+    "Hola! Try out my AI bot. I’m Rana—an MVP version while I finish building my full assistant. Ask me about my work, my creative process, or why we should work together!",
+  hire: "Aside from being genuinely fun to have around, I bring experience owning consumer and enterprise products end to end. I like to dig deep in user behavior and what can make their journey better while also achieving business needs. Yes, I use AI gracefully.",
   projects:
-    "Well I had an opportunity to work in multiple projects in noon. My biggest one that's used by users everyday now is Pulse. Pulse is a AI-supported CS chat tool, my main role was to design an interface for a better workflow for customer support agents, and through numerous rounds of research I was able to do that. I also owned other projects like echo, AI analyst checkout my projects tab for more information. ",
+    "I worked on multiple projects at noon. My biggest one, used by users every day, is Pulse — an AI-supported customer support chat tool. I designed the interface for a better agent workflow through research and iteration. I also owned Echo and AI Analyst. Check out my projects tab for more.",
   design:
-    "I start with understanding the problem. The first brief call with the pm is very valubele in my process. then I go on with benchmarking to understand where the market is at and then I dig deeper into user behavior through user research and based on that i start wire framing and creating designs. all done through collaboration and discussions with PMs.",
-  chat: "Heeey would love to. skip this bot and message me on linkedin or contact me via email <3",
+    "I start with understanding the problem. The first brief with the PM is valuable in my process. Then I benchmark the market, dig into user behavior through research, and move into wireframing and design — all through collaboration with PMs.",
+  chat: "Hey there! Skip the bot and message me on LinkedIn or email me directly.",
   relocate:
     "Yes! I’m currently based in Cairo and completely open to relocating, especially to Europe or joining remote product teams.",
   open: "I’m actively interviewing right now and open to full-time product design roles or select remote teams. Message me on LinkedIn or email and let’s talk!",
@@ -147,29 +147,42 @@ export function Chat() {
   }
 
   let stage: ReactNode = (
-    <ol className="chat-log" ref={logRef} aria-busy={typing}>
-      {messages.map((message) => (
-        <li key={message.id} className={message.from === "you" ? "chat-msg is-you" : "chat-msg"}>
-          {message.from === "rana" ? <img src={asset("/images/rana.webp")} alt="" /> : null}
-          <div className="chat-body">
-            <p>{message.from === "rana" ? withLinks(message.text) : message.text}</p>
-            <time dateTime={new Date(message.at).toISOString()}>{formatTime(message.at)}</time>
-          </div>
-        </li>
-      ))}
-      {typing ? (
-        <li className="chat-msg is-typing">
-          <img src={asset("/images/rana.webp")} alt="" />
-          <div className="chat-body">
-            <p className="chat-typing" aria-label="Rana is typing">
-              <i />
-              <i />
-              <i />
-            </p>
-          </div>
-        </li>
-      ) : null}
-    </ol>
+    <>
+      <div className="chat-welcome">
+        <div className="chat-welcome-gradient" aria-hidden="true" />
+        <div className="chat-welcome-content">
+          <h2 className="chat-welcome-title">Hola!</h2>
+          <p className="chat-welcome-desc">Try out my AI bot</p>
+          <p className="chat-welcome-sub">
+            I’m Rana — an MVP assistant while I finish building the full version.
+            Ask me about my work, my process, or why we should collaborate.
+          </p>
+        </div>
+      </div>
+      <ol className="chat-log" ref={logRef} aria-busy={typing}>
+        {messages.map((message) => (
+          <li key={message.id} className={message.from === "you" ? "chat-msg is-you" : "chat-msg"}>
+            {message.from === "rana" ? <img src={asset("/images/rana.webp")} alt="" /> : null}
+            <div className="chat-body">
+              <p>{message.from === "rana" ? withLinks(message.text) : message.text}</p>
+              <time dateTime={new Date(message.at).toISOString()}>{formatTime(message.at)}</time>
+            </div>
+          </li>
+        ))}
+        {typing ? (
+          <li className="chat-msg is-typing">
+            <img src={asset("/images/rana.webp")} alt="" />
+            <div className="chat-body">
+              <p className="chat-typing" aria-label="Rana is typing">
+                <i />
+                <i />
+                <i />
+              </p>
+            </div>
+          </li>
+        ) : null}
+      </ol>
+    </>
   );
 
   if (editing) {

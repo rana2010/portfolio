@@ -454,6 +454,14 @@ a:focus-visible,
   padding-bottom: 64px;
 }
 
+.home main > section {
+  margin-bottom: 64px;
+}
+
+.home main > section:last-child {
+  margin-bottom: 0;
+}
+
 .chat-mark {
   position: fixed;
   right: 22px;
@@ -848,11 +856,68 @@ a:focus-visible,
   cursor: default;
 }
 
+.chat-welcome {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 40px 20px;
+  max-width: 420px;
+  margin: 0 auto;
+}
+
+.chat-welcome-gradient {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    to bottom,
+    transparent 0%,
+    transparent 60%,
+    rgba(255, 255, 255, 0.03) 80%,
+    rgba(255, 255, 255, 0.08) 100%
+  );
+  pointer-events: none;
+}
+
+.chat-welcome-content {
+  position: relative;
+  z-index: 1;
+}
+
+.chat-welcome-title {
+  font-family: Playball, cursive;
+  font-size: clamp(40px, 8vw, 56px);
+  font-weight: 400;
+  line-height: 1;
+  letter-spacing: -0.03em;
+  margin: 0 0 12px;
+  color: var(--ink);
+}
+
+.chat-welcome-desc {
+  font-size: clamp(18px, 3vw, 24px);
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  margin: 0 0 16px;
+  color: var(--ink);
+}
+
+.chat-welcome-sub {
+  font-size: 15px;
+  line-height: 1.6;
+  color: var(--muted);
+  margin: 0;
+  max-width: 34em;
+}
+
 .hero-stage {
   display: grid;
   place-items: center;
-  min-height: calc(100svh - 72px);
+  min-height: 55svh;
   text-align: center;
+  padding-top: 72px;
 }
 
 .hero {
@@ -880,8 +945,8 @@ a:focus-visible,
 .lede-screen {
   display: grid;
   place-items: center;
-  min-height: 100svh;
-  padding: 12vh 0;
+  min-height: 30svh;
+  padding: 8vh 0;
 }
 
 .lede-screen .lede {
@@ -1269,16 +1334,12 @@ a:focus-visible,
   position: relative;
   margin: 0;
   overflow: hidden;
-  border-radius: 8px;
+  border-radius: 16px;
   background: #fff;
   outline: none;
   box-shadow:
     inset 0 1px 0 color-mix(in srgb, #fff 70%, transparent),
     0 0 0 1px color-mix(in srgb, var(--ink) 14%, transparent);
-}
-
-.craft-piece.is-feature {
-  grid-column: 1 / -1;
 }
 
 .craft-piece img {
@@ -1287,17 +1348,21 @@ a:focus-visible,
   height: auto;
 }
 
+.craft-piece.is-feature {
+  grid-column: 1 / -1;
+}
+
 .craft-piece figcaption {
   position: absolute;
   right: 0;
   bottom: 0;
   left: 0;
-  padding: 72px 20px 18px;
-  background: linear-gradient(to top, var(--bg) 36%, color-mix(in srgb, var(--bg) 82%, transparent) 62%, transparent);
+  padding: 72px 24px 24px;
+  background: linear-gradient(to top, var(--bg) 40%, color-mix(in srgb, var(--bg) 70%, transparent) 65%, transparent);
   color: var(--ink);
   opacity: 0;
-  transform: translateY(8px);
-  transition: opacity 0.28s ease, transform 0.4s var(--ease);
+  transform: translateY(10px);
+  transition: opacity 0.3s ease, transform 0.4s var(--ease);
 }
 
 .craft-piece:hover figcaption,
@@ -1311,32 +1376,38 @@ a:focus-visible,
   align-items: baseline;
   justify-content: space-between;
   gap: 12px;
-  font-size: 14px;
-  font-weight: 500;
+  font-size: 15px;
+  font-weight: 600;
   letter-spacing: -0.02em;
+  color: var(--ink);
 }
 
 .craft-piece figcaption p:first-child span {
   color: var(--muted);
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 500;
 }
 
 .craft-piece figcaption p:last-child {
   max-width: 46em;
-  margin-top: 4px;
-  color: var(--muted);
-  font-size: 13px;
-  line-height: 1.45;
+  margin-top: 8px;
+  color: color-mix(in srgb, var(--ink) 80%, transparent);
+  font-size: 14px;
+  line-height: 1.55;
 }
 
 @media (hover: none) {
   .craft-piece figcaption {
     position: static;
-    padding: 12px 2px 0;
-    background: none;
+    padding: 14px 20px 16px;
+    background: linear-gradient(to top, var(--bg) 50%, color-mix(in srgb, var(--bg) 60%, transparent));
+    color: var(--ink);
     opacity: 1;
     transform: none;
+  }
+
+  .craft-piece figcaption p:last-child {
+    color: color-mix(in srgb, var(--ink) 75%, transparent);
   }
 }
 
@@ -2705,6 +2776,7 @@ figcaption,
   }
 
   .craft-grid {
+    grid-template-columns: 1fr;
     gap: 12px;
     margin-top: 22px;
   }
