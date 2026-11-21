@@ -148,17 +148,6 @@ export function Chat() {
 
   let stage: ReactNode = (
     <>
-      <div className="chat-welcome">
-        <div className="chat-welcome-gradient" aria-hidden="true" />
-        <div className="chat-welcome-content">
-          <h2 className="chat-welcome-title">Hola!</h2>
-          <p className="chat-welcome-desc">Try out my AI bot</p>
-          <p className="chat-welcome-sub">
-            I’m Rana — an MVP assistant while I finish building the full version.
-            Ask me about my work, my process, or why we should collaborate.
-          </p>
-        </div>
-      </div>
       <ol className="chat-log" ref={logRef} aria-busy={typing}>
         {messages.map((message) => (
           <li key={message.id} className={message.from === "you" ? "chat-msg is-you" : "chat-msg"}>
