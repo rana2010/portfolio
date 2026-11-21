@@ -12,15 +12,16 @@ const OLD_GREETING =
   "Hey! I’m Rana—well, my v1 pocket version while I finish building out my full chat assistant for December. Ask me about my work, how I design, or why we should work together!";
 
 const DEFAULTS: Record<string, string> = {
-  greeting: "Hey, try out my chatbot.",
-  hire: "Aside from being genuinely fun to have around, I bring 4 years of shipping consumer and enterprise products (including 2 years at Noon), backed by CS and Interactive Design minors. I bridge design and engineering—from behavioral psychology and conversion flows to clean design systems, HTML/CSS/JS, and interactive prototypes.",
+  greeting:
+    "Hey! I’m Rana—well, an mvp version at least. while I finish building out my full chat assistant for December. Ask me about my work, my creative process, or why we should work together!",
+  hire: "Aside from being genuinely fun to have around, I bring experience owning consumer and enterprise products end to end. I like to dig deep in user behavior and what can make their journey better while also achieving business needs. and YESS I use AI \" gracefully\"",
   projects:
-    "In Pulse, I stripped out agent workflow detours so support teams resolve in one screen. In Echo, I turned passive drop-off into repeatable user habits. Click into either case study on this page for the full breakdown—and stay tuned for my live gamified prototype dropping in December!",
+    "Well I had an opportunity to work in multiple projects in noon. My biggest one that's used by users everyday now is Pulse. Pulse is a AI-supported CS chat tool, my main role was to design an interface for a better workflow for customer support agents, and through numerous rounds of research I was able to do that. I also owned other projects like echo, AI analyst checkout my projects tab for more information. ",
   design:
-    "I start with real user friction and behavioral psychology before opening Figma. I shadow workflows, figure out why people hesitate or drop off, prototype interactions early, and work closely with engineers so what ships matches the intent.",
-  chat: "Skip my v1 bot and talk to the real me! Reach out on LinkedIn or send me an email—I reply way faster than my v2 builds.",
+    "I start with understanding the problem. The first brief call with the pm is very valubele in my process. then I go on with benchmarking to understand where the market is at and then I dig deeper into user behavior through user research and based on that i start wire framing and creating designs. all done through collaboration and discussions with PMs.",
+  chat: "Heeey would love to. skip this bot and message me on linkedin or contact me via email <3",
   relocate:
-    "Yes! I’m currently based in Cairo and completely open to relocating—especially to Europe—or joining remote product teams. I also qualify for fast-track skilled work permits.",
+    "Yes! I’m currently based in Cairo and completely open to relocating, especially to Europe or joining remote product teams.",
   open: "I’m actively interviewing right now and open to full-time product design roles or select remote teams. Message me on LinkedIn or email and let’s talk!",
 };
 
