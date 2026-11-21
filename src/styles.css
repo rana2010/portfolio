@@ -1019,33 +1019,104 @@ a:focus-visible,
   width: 100%;
 }
 
-.stack ul {
-  margin-top: 4px;
+.stack-board {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px 28px;
+  margin-top: 14px;
+  padding: 20px 22px 22px;
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  background: linear-gradient(
+    145deg,
+    color-mix(in srgb, var(--ink) 6%, transparent) 0%,
+    color-mix(in srgb, var(--ink) 3%, transparent) 100%
+  );
+  box-shadow:
+    inset 0 0 0 1px color-mix(in srgb, var(--ink) 10%, transparent),
+    0 20px 40px -10px rgba(18, 18, 17, 0.12);
 }
 
-.stack li {
+.stack-board > div {
   display: flex;
-  justify-content: space-between;
-  align-items: baseline;
-  gap: 32px;
-  padding: 16px 0;
-  border-bottom: 1px solid var(--line);
+  flex-direction: column;
+  gap: 12px;
 }
 
-.stack li p:first-child {
-  color: var(--muted);
+.stack-board > div p {
+  color: var(--soft);
   font-size: 12px;
-  letter-spacing: 0.08em;
+  font-weight: 600;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
-  margin-bottom: 0;
-  white-space: nowrap;
+  margin: 0;
+  padding: 0;
 }
 
-.stack li p:last-child {
+.stack-board ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.stack-board li {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: transparent;
+  border: 1px solid transparent;
+  cursor: default;
+  transition:
+    border-color 0.2s ease,
+    background 0.2s ease,
+    transform 0.2s ease;
+}
+
+.stack-board li:hover {
+  background: color-mix(in srgb, var(--ink) 6%, transparent);
+  border-color: color-mix(in srgb, var(--ink) 18%, transparent);
+  transform: translateX(4px);
+}
+
+.stack-board li svg {
+  width: 18px;
+  height: 18px;
+  flex: none;
+  color: var(--muted);
+  transition: color 0.2s ease;
+}
+
+.stack-board li:hover svg {
+  color: var(--ink);
+}
+
+.stack-board li span {
+  color: var(--body);
   font-size: 15px;
-  letter-spacing: -0.015em;
-  line-height: 1.5;
-  text-align: right;
+  letter-spacing: -0.01em;
+  line-height: 1.4;
+  transition: color 0.2s ease;
+}
+
+.stack-board li:hover span {
+  color: var(--ink);
+}
+
+@media (max-width: 680px) {
+  .stack-board {
+    grid-template-columns: 1fr;
+    gap: 16px;
+    padding: 16px 18px 18px;
+  }
+
+  .stack-board li {
+    padding: 8px 12px;
+  }
 }
 
 .footer {
