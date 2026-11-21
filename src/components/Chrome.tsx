@@ -72,9 +72,7 @@ export function Nav() {
   return (
     <>
     <header className="nav">
-      <svg className="nav-blob" viewBox="0 0 1000 100" preserveAspectRatio="none" aria-hidden="true">
-        <path className="nav-blob-path" />
-      </svg>
+      <div className="nav-glass" aria-hidden="true" />
       <div className="nav-bar">
         <NavLink className="pill" to="/projects">
           Projects
@@ -108,20 +106,21 @@ export function Nav() {
 export function Footer({ giant = false }: { giant?: boolean }) {
   return (
     <footer className={giant ? "footer footer-giant" : "footer"}>
-      <div className="footer-row">
-        <nav className="footer-links" aria-label="Contact">
-          <a href="https://www.linkedin.com/in/rana-ebrahim-875614175/" target="_blank" rel="noreferrer">
-            LinkedIn
-          </a>
-          <a href={asset("/Rana_Ebrahim_Product_Designer_CV.pdf")} download>
-            Resume
-          </a>
-        </nav>
-        <a className="footer-mail" href="mailto:ranaebrahim@aucegypt.edu">
-          ranaebrahim@aucegypt.edu
-        </a>
+      <div className="footer-line">
+        <p className="footer-name">Rana</p>
+        <div className="footer-links">
+          <div>
+            <p className="footer-label">Say hi!</p>
+            <a href="mailto:ranaebrahim@aucegypt.edu">ranaebrahim@aucegypt.edu</a>
+          </div>
+          <div>
+            <p className="footer-label">Let’s connect</p>
+            <a href="https://www.linkedin.com/in/rana-ebrahim-875614175/" target="_blank" rel="noreferrer">
+              LinkedIn
+            </a>
+          </div>
+        </div>
       </div>
-      {giant ? <p className="footer-name">Rana Ebrahim</p> : null}
     </footer>
   );
 }
