@@ -8,7 +8,7 @@ const career = [
 ];
 
 const lede =
-  "I make research-based design decisions. I map the flows, run user interviews, and ship working prototypes in code.";
+  "I make research-based design decisions and ship working prototypes in code.";
 
 const stack = [
   { label: "Design", items: ["Figma"] },
@@ -149,14 +149,8 @@ export function Home() {
       <Nav />
       <main className="home">
         <section className="hero-stage">
-          <h1 className="hero">
-            <span className="hero-script">Let’s collaborate</span>
-            <span className="hero-sans">
-              and create good products
-              <br />
-              together
-            </span>
-          </h1>
+          <h1 className="hero">Let’s collaborate</h1>
+          <p className="hero-sans">and create good products together.</p>
         </section>
 
         <TypedLede />
