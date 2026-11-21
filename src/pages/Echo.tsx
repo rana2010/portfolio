@@ -1,11 +1,7 @@
-import { createContext, useContext, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { asset } from "../asset";
 import { Dots, Footer, Nav } from "../components/Chrome";
-
-const STORAGE = "echo-edits";
-const canEdit = ["localhost", "127.0.0.1", "::1"].includes(window.location.hostname);
-
-type Edits = Record<string, string>;
+import { Editable, useEdit } from "../components/EditContext";
 
 const glance = [
   ["role", "Role", "Product Designer, owning Echo's design end to end"],
@@ -21,56 +17,6 @@ const tags = [
   ["tag-disclosure", "Progressive Disclosure"],
   ["tag-interaction", "Interaction Design"],
 ] as const;
-
-function loadEdits(): Edits {
-  try {
-    const raw = localStorage.getItem(STORAGE);
-    return raw ? (JSON.parse(raw) as Edits) : {};
-  } catch {
-    return {};
-  }
-}
-
-const EditContext = createContext<{
-  editing: boolean;
-  edits: Edits;
-  setEdit: (id: string, value: string) => void;
-} | null>(null);
-
-function Editable({
-  id,
-  as: Tag = "p",
-  className,
-  text,
-}: {
-  id: string;
-  as?: "p" | "h1" | "h2" | "h3" | "span" | "dd" | "dt" | "li";
-  className?: string;
-  text: string;
-}) {
-  const edit = useContext(EditContext);
-  const value = edit?.edits[id] ?? text;
-
-  if (!edit?.editing) {
-    return <Tag className={className}>{value}</Tag>;
-  }
-
-  return (
-    <Tag
-      className={className ? `${className} is-editing` : "is-editing"}
-      contentEditable
-      suppressContentEditableWarning
-      spellCheck
-      ref={(node) => {
-        if (node && node.dataset.ready !== "1") {
-          node.textContent = value;
-          node.dataset.ready = "1";
-        }
-      }}
-      onInput={(event) => edit.setEdit(id, event.currentTarget.textContent ?? "")}
-    />
-  );
-}
 
 function Media({ src, alt }: { src: string; alt: string }) {
   const [missing, setMissing] = useState(false);
@@ -110,24 +56,14 @@ function Figure({
 }
 
 export function Echo() {
-  const [editing, setEditing] = useState(false);
-  const [edits, setEdits] = useState<Edits>(loadEdits);
+  const { editing, toggleEdit } = useEdit();
 
   useEffect(() => {
     document.title = "Echo · Rana Ebrahim";
   }, []);
 
-  function setEdit(id: string, value: string) {
-    setEdits((current) => {
-      const next = { ...current, [id]: value };
-      localStorage.setItem(STORAGE, JSON.stringify(next));
-      return next;
-    });
-  }
-
   return (
-    <EditContext.Provider value={{ editing, edits, setEdit }}>
-      <div className="page case echo">
+    <div className="page case echo">
         <Dots />
         <Nav />
         <main>
@@ -317,17 +253,14 @@ export function Echo() {
           </section>
         </main>
         <Footer giant />
-        {canEdit ? (
-          <button
-            type="button"
-            className={editing ? "edit-toggle is-on" : "edit-toggle"}
-            aria-pressed={editing}
-            onClick={() => setEditing((current) => !current)}
-          >
-            {editing ? "Done" : "Edit"}
-          </button>
-        ) : null}
+        <button
+          type="button"
+          className={editing ? "edit-toggle is-on" : "edit-toggle"}
+          aria-pressed={editing}
+          onClick={toggleEdit}
+        >
+          {editing ? "Done" : "Edit"}
+        </button>
       </div>
-    </EditContext.Provider>
-  );
-}
+    );
+  }
