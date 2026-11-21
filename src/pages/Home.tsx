@@ -148,11 +148,6 @@ export function Home() {
       <Dots />
       <Nav />
       <main className="home">
-        <section className="hero-stage">
-          <h1 className="hero">Rana Ebrahim</h1>
-          <p className="hero-sans">I strategize and design ideas into visuals that get noticed, spark curiosity, and feel like they actually belong.</p>
-        </section>
-
         <TypedLede />
 
         <section className="career">
