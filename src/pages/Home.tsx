@@ -8,7 +8,7 @@ const career = [
 ];
 
 const lede =
-  "I strategize and design ideas into visuals that get noticed, spark curiosity, and feel like they actually belong.";
+  "I make research-based design decisions and ship working prototypes in code.";
 
 const stack = [
   { label: "Design", items: ["Figma"] },
