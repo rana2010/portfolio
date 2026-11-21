@@ -3,7 +3,7 @@ import { createContext, useContext, useState, type ReactNode } from "react";
 const STORAGE = "portfolio-edits";
 
 // Editing is enabled on all environments including the live site
-const EDITABLE = true;
+const EDITABLE = false;
 
 type Edits = Record<string, string>;
 
