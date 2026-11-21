@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { Route, Routes, useLocation } from "react-router-dom";
-import { Splash } from "./pages/Splash";
+import { Chat } from "./pages/Chat";
 import { Home } from "./pages/Home";
 import { Projects } from "./pages/Projects";
 import { CaseStudy } from "./pages/CaseStudy";
@@ -19,7 +19,7 @@ export function App() {
   return (
     <ThemeProvider>
       <Routes>
-        <Route path="/" element={<Splash />} />
+        <Route path="/" element={<Chat />} />
         <Route path="/home" element={<Home />} />
         <Route path="/projects" element={<Projects />} />
         <Route path="/handcrafted" element={<Handcrafted />} />

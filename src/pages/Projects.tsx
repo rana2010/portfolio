@@ -1,5 +1,6 @@
 import { useEffect } from "react";
 import { Link } from "react-router-dom";
+import { asset } from "../asset";
 import { Dots, Nav } from "../components/Chrome";
 
 const work = [
@@ -25,7 +26,7 @@ const work = [
     name: "AI Analyst",
     to: "/work/analyst",
     description: "A chatbot for customer support analytics, vibe coded.",
-    image: "/images/analyst/card.webp?v=2",
+    image: "/images/analyst/card.webp?v=3",
     alt: "AI Analyst chat",
     vibe: true,
   },
@@ -51,7 +52,7 @@ export function Projects() {
             <article className="work-card" key={item.name}>
               <Link to={item.to}>
                 <span className="work-shot">
-                  <img src={item.image} alt={item.alt} />
+                  <img src={asset(item.image)} alt={item.alt} />
                   {"vibe" in item && item.vibe ? <span className="vibe-badge">Vibe coded</span> : null}
                 </span>
                 <p className="index">{item.index}</p>

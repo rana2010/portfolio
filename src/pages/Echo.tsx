@@ -1,4 +1,5 @@
 import { createContext, useContext, useEffect, useState } from "react";
+import { asset } from "../asset";
 import { Dots, Footer, Nav } from "../components/Chrome";
 
 const STORAGE = "echo-edits";
@@ -81,7 +82,7 @@ function Media({ src, alt }: { src: string; alt: string }) {
     );
   }
 
-  return <img src={src} alt={alt} onError={() => setMissing(true)} />;
+  return <img src={asset(src)} alt={alt} onError={() => setMissing(true)} />;
 }
 
 function Figure({

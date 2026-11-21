@@ -1,4 +1,5 @@
 import { useEffect } from "react";
+import { asset } from "../asset";
 import { Dots, Nav } from "../components/Chrome";
 
 type Piece = {
@@ -9,15 +10,15 @@ type Piece = {
   idea: string;
 };
 
-const feature: Piece = {
-  title: "Queen Falling",
-  year: "2021",
-  image: "/images/hand/queen-falling.webp",
-  alt: "An ink collage of a queen in profile, filled with small drawn icons",
-  idea: "An icon collage in ink and calligraphy pen, from the line “I’d rather watch my kingdom fall. I want it all or not at all.” Kingdom Fall, Claire Wyndham.",
-};
-
-const studies: Piece[] = [
+const pieces: Array<Piece & { feature?: boolean }> = [
+  {
+    title: "Queen Falling",
+    year: "2021",
+    image: "/images/hand/queen-falling.webp",
+    alt: "An ink collage of a queen in profile, filled with small drawn icons",
+    idea: "An icon collage in ink and calligraphy pen, from the line “I’d rather watch my kingdom fall. I want it all or not at all.” Kingdom Fall, Claire Wyndham.",
+    feature: true,
+  },
   {
     title: "Color wheel",
     image: "/images/hand/color-wheel.webp",
@@ -45,22 +46,19 @@ export function Handcrafted() {
         <p className="craft-lede">
           In the era of AI, I’ve found myself reminiscing about design and craft by hand.
         </p>
-        <figure className="craft-feature">
-          <img src={feature.image} alt={feature.alt} />
-          <figcaption>
-            <p>
-              {feature.title}
-              {feature.year ? <span>{feature.year}</span> : null}
-            </p>
-            <p>{feature.idea}</p>
-          </figcaption>
-        </figure>
         <div className="craft-grid">
-          {studies.map((piece) => (
-            <figure className="craft-piece" key={piece.title} tabIndex={0}>
-              <img src={piece.image} alt={piece.alt} />
+          {pieces.map((piece) => (
+            <figure
+              className={piece.feature ? "craft-piece is-feature" : "craft-piece"}
+              key={piece.title}
+              tabIndex={0}
+            >
+              <img src={asset(piece.image)} alt={piece.alt} />
               <figcaption>
-                <p>{piece.title}</p>
+                <p>
+                  {piece.title}
+                  {piece.year ? <span>{piece.year}</span> : null}
+                </p>
                 <p>{piece.idea}</p>
               </figcaption>
             </figure>

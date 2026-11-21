@@ -1,4 +1,5 @@
 import { useEffect } from "react";
+import { asset } from "../asset";
 import { BrowserFrame, Dots, Footer, Nav } from "../components/Chrome";
 
 const meta = [
@@ -163,10 +164,10 @@ export function CaseStudy() {
             <figcaption>The MVP had the data but no hierarchy and no actions.</figcaption>
             <div className="shot-pair">
               <div className="frame">
-                <img src="/pulse/mvp-inbox.webp" alt="The earlier inbox, with a flat side panel of equal fields" />
+                <img src={asset("/pulse/mvp-inbox.webp")} alt="The earlier inbox, with a flat side panel of equal fields" />
               </div>
               <div className="frame">
-                <img src="/pulse/mvp-dashboard.webp" alt="The earlier realtime dashboard, refreshed by hand" />
+                <img src={asset("/pulse/mvp-dashboard.webp")} alt="The earlier realtime dashboard, refreshed by hand" />
               </div>
             </div>
           </figure>
@@ -237,7 +238,7 @@ export function CaseStudy() {
           </ol>
           <figure className="figure">
             <div className="frame">
-              <img src="/pulse/process.webp" alt="Benchmark notes on Zendesk, beside the live agent workspace" />
+              <img src={asset("/pulse/process.webp")} alt="Benchmark notes on Zendesk, beside the live agent workspace" />
             </div>
             <figcaption>Scope came from research; options came from benchmarks.</figcaption>
           </figure>
@@ -338,7 +339,7 @@ export function CaseStudy() {
           <div className="shot-pair captioned">
             <figure className="figure">
               <div className="frame">
-                <img src="/pulse/vip.webp" alt="A VIP badge on the customer, seen while choosing the chat" />
+                <img src={asset("/pulse/vip.webp")} alt="A VIP badge on the customer, seen while choosing the chat" />
               </div>
               <figcaption>
                 Priority is seen at the moment of choice, without an interruption.
