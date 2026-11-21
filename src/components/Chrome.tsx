@@ -72,27 +72,28 @@ export function Nav() {
   return (
     <>
     <header className="nav">
+      <svg className="nav-blob" viewBox="0 0 1000 100" preserveAspectRatio="none" aria-hidden="true">
+        <path className="nav-blob-path" />
+      </svg>
       <div className="nav-bar">
-        <div className="nav-pills">
-          <NavLink className="pill" to="/projects">
-            Projects
-          </NavLink>
-          <NavLink className="pill" to="/handcrafted">
-            Handcrafted
-          </NavLink>
-        </div>
+        <NavLink className="pill" to="/projects">
+          Projects
+        </NavLink>
         <Link className="wordmark" to="/home">
           Rana
         </Link>
-        <button
-          className="theme-toggle"
-          type="button"
-          onClick={toggle}
-          aria-label={theme === "light" ? "Switch to dark theme" : "Switch to light theme"}
-        >
-          {theme === "light" ? <SunIcon /> : <MoonIcon />}
-        </button>
+        <NavLink className="pill" to="/handcrafted">
+          Handcrafted
+        </NavLink>
       </div>
+      <button
+        className="theme-toggle"
+        type="button"
+        onClick={toggle}
+        aria-label={theme === "light" ? "Switch to dark theme" : "Switch to light theme"}
+      >
+        {theme === "light" ? <SunIcon /> : <MoonIcon />}
+      </button>
     </header>
     <Link className="chat-mark" to="/" aria-label="Talk to Rana">
       <svg viewBox="0 0 24 24" aria-hidden="true">
