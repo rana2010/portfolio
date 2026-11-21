@@ -6,6 +6,7 @@ import { DotField } from "../components/DotField";
 const LINKEDIN = "https://www.linkedin.com/in/rana-ebrahim-875614175/";
 const EMAIL = "mailto:ranaebrahim@aucegypt.edu";
 const STORAGE = "chat-answers";
+const canEdit = ["localhost", "127.0.0.1", "::1"].includes(window.location.hostname);
 
 const OLD_GREETING =
   "Hey! I’m Rana—well, my v1 pocket version while I finish building out my full chat assistant for December. Ask me about my work, how I design, or why we should work together!";
@@ -212,14 +213,16 @@ export function Chat() {
         <div className="chat-head">
           <div className="chat-tools">
             <p className="chat-beta">my bot.v1</p>
-            <button
-              type="button"
-              className={editing ? "chat-edit is-on" : "chat-edit"}
-              aria-pressed={editing}
-              onClick={() => setEditing((current) => !current)}
-            >
-              {editing ? "Done" : "Edit"}
-            </button>
+            {canEdit ? (
+              <button
+                type="button"
+                className={editing ? "chat-edit is-on" : "chat-edit"}
+                aria-pressed={editing}
+                onClick={() => setEditing((current) => !current)}
+              >
+                {editing ? "Done" : "Edit"}
+              </button>
+            ) : null}
           </div>
           <Link className="chat-exit" to="/home">
             <span>Go to portfolio</span>

@@ -3,6 +3,7 @@ import { asset } from "../asset";
 import { Dots, Footer, Nav } from "../components/Chrome";
 
 const STORAGE = "echo-edits";
+const canEdit = ["localhost", "127.0.0.1", "::1"].includes(window.location.hostname);
 
 type Edits = Record<string, string>;
 
@@ -316,14 +317,16 @@ export function Echo() {
           </section>
         </main>
         <Footer giant />
-        <button
-          type="button"
-          className={editing ? "edit-toggle is-on" : "edit-toggle"}
-          aria-pressed={editing}
-          onClick={() => setEditing((current) => !current)}
-        >
-          {editing ? "Done" : "Edit"}
-        </button>
+        {canEdit ? (
+          <button
+            type="button"
+            className={editing ? "edit-toggle is-on" : "edit-toggle"}
+            aria-pressed={editing}
+            onClick={() => setEditing((current) => !current)}
+          >
+            {editing ? "Done" : "Edit"}
+          </button>
+        ) : null}
       </div>
     </EditContext.Provider>
   );
