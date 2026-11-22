@@ -2,18 +2,18 @@ import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Dots, Footer, Nav } from "../components/Chrome";
 
 const career = [
-  { company: "noon", role: "Product Designer II", years: "2025–Present" },
-  { company: "Fawry", role: "Junior Product Designer", years: "2024–2025" },
-  { company: "Promolinks International", role: "UX Designer", years: "2023–2024" },
+  { company: "noon", role: "Product Designer II", years: "Jan 2025 – Present" },
+  { company: "Fawry", role: "Product Designer", years: "Jan – Sep 2024" },
+  { company: "Promolinks International", role: "User Experience Designer", years: "May – Nov 2023" },
 ];
 
 const lede =
   "I make research-based design decisions and ship working prototypes in code.";
 
 const stack = [
-  { label: "Design", items: ["Figma"] },
+  { label: "Design", items: ["Figma", "Dovetail"] },
   { label: "Development", items: ["React", "Tailwind CSS", "shadcn/ui"] },
-  { label: "AI tools", items: ["Cursor", "Claude", "ChatGPT"] },
+  { label: "AI tools", items: ["Cursor", "Claude"] },
   { label: "Version control & deployment", items: ["GitHub"] },
 ];
 
@@ -26,6 +26,13 @@ function Icon({ children }: { children: ReactNode }) {
 }
 
 function StackIcon({ name }: { name: string }) {
+  if (name === "Dovetail") {
+    return (
+      <Icon>
+        <path d="M4 6h16M4 12h16M4 18h10" />
+      </Icon>
+    );
+  }
   if (name === "Figma") {
     return (
       <Icon>
@@ -179,7 +186,7 @@ export function Home() {
               <div>
                 <p className="job-company">The American University in Cairo</p>
                 <p className="job-role">
-                  Marketing, with minors in Computer Science and Interactive Design
+                  BA, Communication and Interactive Design · 2018 – 2023
                 </p>
               </div>
             </li>
@@ -191,7 +198,22 @@ export function Home() {
                 </Icon>
               </span>
               <div>
-                <p className="job-company">Gamification Certificate</p>
+                <p className="job-company">
+                  <a href="https://coursera.org/verify/8FBV6NL2KGCC" target="_blank" rel="noreferrer" style={{ textDecoration: "underline" }}>
+                    Gamification, University of Pennsylvania (Coursera), 2024
+                  </a>
+                </p>
+              </div>
+            </li>
+            <li>
+              <span className="edu-mark" aria-hidden="true">
+                <Icon>
+                  <circle cx="12" cy="9" r="3.2" />
+                  <path d="M8.2 12.2 6.5 19l5.5-2.2L17.5 19l-1.7-6.8" />
+                </Icon>
+              </span>
+              <div>
+                <p className="job-company">Google UX Design Professional Certificate</p>
               </div>
             </li>
           </ol>

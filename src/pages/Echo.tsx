@@ -5,7 +5,7 @@ import { Editable, useEdit } from "../components/EditContext";
 
 const glance = [
   ["role", "Role", "Product Designer, owning Echo's design end to end"],
-  ["context", "Context", "Internal CRM replacing Noon's Zoho subscription"],
+  ["context", "Context", "Internal CRM replacing noon's Zoho subscription"],
   ["platform", "Platform", "Desktop web"],
   ["status", "Status", "In development, usability testing planned"],
 ] as const;
@@ -71,18 +71,18 @@ export function Echo() {
             <Editable
               id="kicker"
               className="case-kicker"
-              text="Case study · Noon · internal CRM"
+              text="Case study · noon · internal CRM"
             />
             <Editable
               id="title"
               as="h1"
               className="case-title"
-              text="Echo: Noon's internal CRM system"
+              text="Echo: noon's internal CRM system"
             />
             <Editable
               id="summary"
               className="case-summary"
-              text="I owned the design of Echo, Noon's internal CRM built to replace Zoho. Shadowing showed agents fill in tickets while the customer is still talking, so I deep-dived the ticket creation flow and rebuilt it around progressive disclosure after two versions failed."
+              text="I owned the design of Echo, noon's internal CRM built to replace Zoho. Shadowing showed agents fill in tickets while the customer is still talking, so I deep-dived the ticket creation flow and rebuilt it around progressive disclosure after two versions failed."
             />
             <ul className="tags">
               {tags.map(([id, label]) => (
@@ -114,7 +114,7 @@ export function Echo() {
             <Editable
               id="problem-1"
               className="support"
-              text="Noon wanted to stop paying for Zoho. That sounds like a procurement decision, but for the people using it, it meant giving up a tool they knew for one they didn't."
+              text="noon wanted to stop paying for Zoho. That sounds like a procurement decision, but for the people using it, it meant giving up a tool they knew for one they didn't."
             />
             <Editable
               id="problem-2"

@@ -125,7 +125,7 @@ export function Footer({ giant = false }: { giant?: boolean }) {
           </div>
           <div>
             <p className="footer-label">Let’s connect</p>
-            <a href="https://www.linkedin.com/in/rana-ebrahim-875614175/" target="_blank" rel="noreferrer">
+            <a href="https://www.linkedin.com/in/rana-ebrahimm/" target="_blank" rel="noreferrer">
               LinkedIn
             </a>
           </div>

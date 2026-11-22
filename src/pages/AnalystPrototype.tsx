@@ -310,7 +310,7 @@ export function AnalystPrototype() {
       <aside className="proto-side">
         <p className="proto-mark">
           <i />
-          Tech Care
+          Support Analytics
         </p>
         <button type="button" className={step === 1 && !historyId ? "is-on" : undefined} onClick={reset}>
           New chat

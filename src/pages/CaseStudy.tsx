@@ -3,8 +3,7 @@ import { asset } from "../asset";
 import { BrowserFrame, Dots, Footer, Nav } from "../components/Chrome";
 
 const meta = [
-  ["Role", "Solo Product Designer, with PM"],
-  ["Timeline", "~8–12 months"],
+  ["Timeline", "12 months: 8 to design and ship, 4 iterating on features and supporting flows"],
   ["Platform", "Internal web app · dark/light · Arabic RTL + English"],
   ["Tools", "Figma, Dovetail"],
   ["Surfaces", "Agent chat · TL dashboard · QA Center"],
@@ -13,7 +12,7 @@ const meta = [
 
 const problems = [
   "Data without hierarchy. The MVP’s side panel listed 20+ equal fields, and “Is VIP: No” looked like the rest.",
-  "Detours. Agents left for Zoho, Agent One and personal notes: slower replies, repeated questions, SLA risk.",
+  "Detours. Agents left for Zoho, an internal order-tracking tool and personal notes: slower replies, repeated questions, SLA risk.",
   "Passive dashboard. TLs saw numbers on a manually refreshed screen, with no way to act.",
   "AI bypassed. The business’s core bet wasn’t being used.",
 ];
@@ -28,7 +27,7 @@ const steps = [
   {
     n: "01",
     title: "Research → MoSCoW",
-    body: "Must: unified context panel, canned replies, direct ticket access. Should: AI summary, live dashboard, VIP tagging. Won’t: an AI that replaces humans.",
+    body: "Must: unified context panel, direct ticket access. Should: AI summary, performance dashboard, VIP tagging. Could: internal notes, translation. Won’t: an AI that replaces humans.",
   },
   {
     n: "02",
@@ -47,12 +46,61 @@ const steps = [
   },
 ];
 
-function SectionHeading({ index, title }: { index: string; title: string }) {
+const moscow = [
+  {
+    title: "Must",
+    items: [
+      "Unified customer info panel",
+      "Direct access to order and ticket info from chat",
+      "Chat transfer to agents and departments",
+    ],
+  },
+  {
+    title: "Should",
+    items: [
+      "AI summary per chat",
+      "Customer tagging (VIP, repeat complaints)",
+      "Chat queue filters (mine, new, waiting)",
+    ],
+  },
+  {
+    title: "Could",
+    items: ["Internal agent notes", "Multilingual auto-translation", "Sentiment tagging"],
+  },
+  {
+    title: "Won’t (for now)",
+    items: ["AI replacing human agents", "Gamification (leaderboards, badges)", "Phone and email channels"],
+    wont: true,
+  },
+];
+
+function SectionIntro({
+  index,
+  title,
+  headline,
+}: {
+  index: string;
+  title: string;
+  headline: string;
+}) {
   return (
-    <div className="section-heading">
-      <p>{index}</p>
-      <h2>{title}</h2>
-    </div>
+    <header className="section-intro">
+      <p className="section-label">
+        <span>{index}</span>
+        {title}
+      </p>
+      <h2>{headline}</h2>
+    </header>
+  );
+}
+
+function Lead({ text }: { text: string }) {
+  const i = text.indexOf(". ");
+  if (i === -1) return <>{text}</>;
+  return (
+    <>
+      <strong>{text.slice(0, i + 1)}</strong> {text.slice(i + 2)}
+    </>
   );
 }
 
@@ -74,7 +122,7 @@ function Rows({
   return (
     <div className="decision-rows">
       {rows.map((row) => (
-        <div className="decision-row" key={row.label}>
+        <div className="decision-row" key={row.label} data-label={row.label}>
           <p>{row.label}</p>
           <p>{row.body}</p>
         </div>
@@ -100,6 +148,20 @@ export function CaseStudy() {
             Redesigning Pulse so agents resolve in one screen and team leads act from the
             dashboard
           </p>
+          <div className="results">
+            <div>
+              <p>−20%</p>
+              <span>average handling time in the first 6 months (per PM)</span>
+            </div>
+            <div>
+              <p>200+</p>
+              <span>agents across noon marketplaces use it daily</span>
+            </div>
+            <div>
+              <p>Solo</p>
+              <span>product designer, working with a PM</span>
+            </div>
+          </div>
         </header>
 
         <section className="case-block">
@@ -107,8 +169,8 @@ export function CaseStudy() {
             <p className="lede">
               Agents built workarounds: extra tabs, personal notes, paraphrase tools. Team
               leads could see problems but couldn’t act on them. I redesigned Pulse so the
-              detours aren’t needed, increasing AI adoption and lightening the workflow
-              for both roles.
+              detours aren’t needed. Average handling time dropped 20% in the first 6
+              months after agents onboarded, with no other workflow changes (per PM).
             </p>
             <dl className="meta">
               {meta.map(([label, value]) => (
@@ -131,8 +193,12 @@ export function CaseStudy() {
           </figure>
         </section>
 
-        <section className="case-block split">
-          <SectionHeading index="00" title="Designed for" />
+        <section className="case-block">
+          <SectionIntro
+            index="00"
+            title="Designed for"
+            headline="Two roles: one answers chats, one manages people."
+          />
           <div className="personas">
             <article>
               <h3>L1 Agent</h3>
@@ -152,16 +218,22 @@ export function CaseStudy() {
         </section>
 
         <section className="case-block">
-          <div className="split">
-            <SectionHeading index="01" title="The problem" />
+          <SectionIntro
+            index="01"
+            title="The problem"
+            headline="The MVP had the data, but no hierarchy and no actions."
+          />
+          <div className="col">
             <ul className="problem-list">
               {problems.map((item) => (
-                <li key={item}>{item}</li>
+                <li key={item}>
+                  <Lead text={item} />
+                </li>
               ))}
             </ul>
           </div>
           <figure className="figure">
-            <figcaption>The MVP had the data but no hierarchy and no actions.</figcaption>
+            <figcaption>Before: the MVP inbox and the hand-refreshed dashboard.</figcaption>
             <div className="shot-pair">
               <div className="frame">
                 <img src={asset("/pulse/mvp-inbox.webp")} alt="The earlier inbox, with a flat side panel of equal fields" />
@@ -174,12 +246,17 @@ export function CaseStudy() {
         </section>
 
         <section className="case-block">
-          <div className="split">
-            <SectionHeading index="02" title="Research → insight" />
+          <SectionIntro
+            index="02"
+            title="Research → insight"
+            headline="Workarounds were symptoms of missing hierarchy, not missing features."
+          />
+          <div className="col">
             <div className="research">
               <p className="method">
-                Interviews (6 agents + TLs) · 2 focus groups (Arabic / English) · TL
-                workflow session · synthesized in Dovetail
+                Multiple interview rounds with agents and team leads (incl. group
+                interviews) · 2 focus groups (Arabic / English) · TL workflow session ·
+                synthesized in Dovetail
               </p>
               <div className="stats">
                 <article>
@@ -191,9 +268,12 @@ export function CaseStudy() {
                   <span>kept canned replies in external notebooks</span>
                 </article>
               </div>
+              <p className="method">Both from one round of 6 agent interviews.</p>
               <ul className="problem-list">
                 {insights.map((item) => (
-                  <li key={item}>{item}</li>
+                  <li key={item}>
+                    <Lead text={item} />
+                  </li>
                 ))}
               </ul>
               <blockquote>
@@ -205,22 +285,15 @@ export function CaseStudy() {
               </blockquote>
             </div>
           </div>
-          <figure className="figure">
-            <div className="frame">
-              <img
-                src="/pulse/dovetail.webp"
-                alt="Research synthesis: four of six agents lacked customer history in the chat"
-              />
-            </div>
-            <figcaption>
-              Tagged patterns pointed to missing hierarchy, not missing features.
-            </figcaption>
-          </figure>
         </section>
 
         <section className="case-block">
-          <div className="split">
-            <SectionHeading index="03" title="Process" />
+          <SectionIntro
+            index="03"
+            title="Process"
+            headline="Scope came from research; options came from benchmarks."
+          />
+          <div className="col">
             <p className="method">
               Research → MoSCoW feature prioritization → sitemaps and key flows →
               benchmarking → iterations with the PM, returning to research for every new
@@ -230,32 +303,46 @@ export function CaseStudy() {
           <ol className="steps">
             {steps.map((step) => (
               <li key={step.n}>
-                <p>{step.n}</p>
                 <h3>{step.title}</h3>
                 <p>{step.body}</p>
               </li>
             ))}
           </ol>
+          <div className="moscow-board">
+            <div className="moscow-grid">
+              {moscow.map((q) => (
+                <article key={q.title} className={q.wont ? "wont" : undefined}>
+                  <h3>{q.title}</h3>
+                  <ul>
+                    {q.items.map((item) => (
+                      <li key={item}>{item}</li>
+                    ))}
+                  </ul>
+                </article>
+              ))}
+            </div>
+          </div>
+          <p className="takeaway moscow-note">
+            <strong>Cut a Must.</strong> Canned replies started as a Must; the redesigned
+            workflow removed the need, so we never built them.
+          </p>
           <figure className="figure">
             <div className="frame">
               <img src={asset("/pulse/process.webp")} alt="Benchmark notes on Zendesk, beside the live agent workspace" />
             </div>
-            <figcaption>Scope came from research; options came from benchmarks.</figcaption>
           </figure>
         </section>
 
         <section className="case-block tight">
-          <div className="split">
-            <SectionHeading index="04" title="Key decisions" />
-            <p className="method">
-              Every workaround pointed to something the product should provide, so I
-              removed the need for the detour.
-            </p>
-          </div>
+          <SectionIntro
+            index="04"
+            title="Key decisions"
+            headline="Every workaround pointed to something the product should provide."
+          />
         </section>
 
         <section className="decision">
-          <p className="decision-kicker">Decision 1</p>
+          <p className="decision-kicker">Decision 1 of 3</p>
           <h2>Replace the workarounds, don’t add features</h2>
           <Tags items={["Recognition over recall", "Progressive disclosure"]} />
           <Rows
@@ -286,7 +373,7 @@ export function CaseStudy() {
         </section>
 
         <section className="decision">
-          <p className="decision-kicker">Decision 2</p>
+          <p className="decision-kicker">Decision 2 of 3</p>
           <h2>Make AI the default path, and cheap to trust</h2>
           <Tags items={["Tesler’s Law", "Doherty threshold"]} />
           <Rows
@@ -317,7 +404,7 @@ export function CaseStudy() {
         </section>
 
         <section className="decision">
-          <p className="decision-kicker">Decision 3</p>
+          <p className="decision-kicker">Decision 3 of 3</p>
           <h2>Signals that lead to action, not interruptions</h2>
           <Tags items={["Von Restorff", "Hick’s Law", "Data-ink ratio"]} />
           <Rows
@@ -358,17 +445,16 @@ export function CaseStudy() {
         </section>
 
         <section className="case-block">
-          <div className="split">
-            <SectionHeading index="05" title="Craft" />
-            <div className="decision-rows">
-              <div className="decision-row">
-                <p>States</p>
-                <p>
-                  Failed send with Try again, return-details card, RTL-first Arabic
-                  bubbles, empty and skeleton states.
-                </p>
-              </div>
-            </div>
+          <SectionIntro
+            index="05"
+            title="Craft"
+            headline="Designed for the bad moments too: failures, loading, empty and RTL."
+          />
+          <div className="col">
+            <p className="body-text">
+              Failed send with Try again, return-details card, RTL-first Arabic bubbles,
+              empty and skeleton states.
+            </p>
           </div>
           <figure className="figure">
             <figcaption className="craft-label">Loading state</figcaption>
@@ -386,24 +472,36 @@ export function CaseStudy() {
           </div>
         </section>
 
-        <section className="case-block split">
-          <SectionHeading index="06" title="Impact & reflection" />
+        <section className="case-block">
+          <SectionIntro
+            index="06"
+            title="Impact & reflection"
+            headline="AHT dropped 20% in six months (per PM)."
+          />
           <div className="impact">
+            <article className="impact-lead">
+              <h3>−20% AHT</h3>
+              <p>
+                Average handling time dropped 20% in the first 6 months after onboarding,
+                with no other workflow changes. Measured by the PM.
+              </p>
+            </article>
             <article>
-              <h3>Increased AI adoption</h3>
-              <p>More AI use means faster chat resolution, and better customer support.</p>
+              <h3>AI as the default path</h3>
+              <p>An AI summary opens every chat; drafts stay editable.</p>
             </article>
             <article>
               <h3>A more efficient journey</h3>
               <p>Context in one panel instead of tabs; one-action alerts for TLs.</p>
             </article>
             <article>
-              <h3>Lower cognitive load</h3>
+              <h3>Designed for lower cognitive load</h3>
               <p>For agents and team leads alike.</p>
             </article>
             <p className="takeaway">
-              Takeaway. I designed to remove detours but can’t prove it yet. Next I’d
-              instrument tab-switching and AI-draft edit rate.
+              <strong>Takeaway.</strong> AHT fell 20% in six months (per PM), but that’s
+              one number for the whole redesign. Next I’d instrument tab-switching and
+              AI-draft edit rate to learn which decisions drove it.
             </p>
           </div>
         </section>

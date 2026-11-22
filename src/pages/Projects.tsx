@@ -17,7 +17,7 @@ const work = [
     index: "02",
     name: "Echo",
     to: "/work/echo",
-    description: "I owned the design of Echo, Noon’s internal CRM built to replace Zoho.",
+    description: "I owned the design of Echo, noon’s internal CRM built to replace Zoho.",
     image: "/images/echo/echo-projects-hero.webp",
     alt: "Echo ticket list",
   },

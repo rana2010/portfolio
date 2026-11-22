@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { asset } from "../asset";
 import { DotField } from "../components/DotField";
 
-const LINKEDIN = "https://www.linkedin.com/in/rana-ebrahim-875614175/";
+const LINKEDIN = "https://www.linkedin.com/in/rana-ebrahimm/";
 const EMAIL = "mailto:ranaebrahim@aucegypt.edu";
 const STORAGE = "chat-answers";
 const canEdit = false;
@@ -14,9 +14,9 @@ const OLD_GREETING =
 const DEFAULTS: Record<string, string> = {
   greeting:
     "Hola! Try out my AI bot. I’m Rana—an MVP version while I finish building my full assistant. Ask me about my work, my creative process, or why we should work together!",
-  hire: "Aside from being genuinely fun to have around, I bring experience owning consumer and enterprise products end to end. I like to dig deep in user behavior and what can make their journey better while also achieving business needs. Yes, I use AI gracefully.",
+  hire: "Aside from being genuinely fun to have around, I bring about 3 years designing products at noon, Fawry and Promolinks. I like to dig deep in user behavior and what can make their journey better while also achieving business needs. Yes, I use AI gracefully.",
   projects:
-    "I worked on multiple projects at noon. My biggest one, used by users every day, is Pulse — an AI-supported customer support chat tool. I designed the interface for a better agent workflow through research and iteration. I also owned Echo and AI Analyst. Check out my projects tab for more.",
+    "At noon I was the only designer in the customer support tech squad. My biggest project is Pulse, an AI support workspace used by 200+ agents; AHT dropped 20% after launch (per PM). I also designed the QA Center, Echo (our CRM replacing Zoho) and AI Analyst, which I vibe-coded. Check out my projects tab for more.",
   design:
     "I start with understanding the problem. The first brief with the PM is valuable in my process. Then I benchmark the market, dig into user behavior through research, and move into wireframing and design — all through collaboration with PMs.",
   chat: "Hey there! Skip the bot and message me on LinkedIn or email me directly.",
