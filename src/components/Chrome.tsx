@@ -31,6 +31,8 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   );
 }
 
+
+
 function SunIcon() {
   return (
     <svg viewBox="0 0 18 18" width="18" height="18" aria-hidden="true">
@@ -81,56 +83,80 @@ export function Nav() {
 
   return (
     <>
-    <header className={scrolled ? "nav scrolled" : "nav"}>
-      <div className="nav-glass" aria-hidden="true" />
-      <div className="nav-bar">
-        <NavLink className="pill" to="/projects">
-          Projects
-        </NavLink>
-        <Link className="wordmark" to="/home">
-          Rana
+      <header className={scrolled ? "site-nav is-scrolled" : "site-nav"}>
+        <Link className="site-nav__name" to="/home">
+          Rana Ebrahim
         </Link>
-        <NavLink className="pill" to="/handcrafted">
-          Handcrafted
-        </NavLink>
-      </div>
-      <button
-        className="theme-toggle"
-        type="button"
-        onClick={toggle}
-        aria-label={theme === "light" ? "Switch to dark theme" : "Switch to light theme"}
-      >
-        {theme === "light" ? <SunIcon /> : <MoonIcon />}
-      </button>
-    </header>
-    <Link className="chat-mark" to="/" aria-label="Talk to Rana">
-      <svg viewBox="0 0 24 24" aria-hidden="true">
-        <circle cx="12" cy="10" r="6" fill="currentColor" />
-        <path fill="currentColor" d="M8.1 14.7 5.4 19.6 12.2 15.5Z" />
-      </svg>
-    </Link>
+        <nav className="site-nav__links" aria-label="Main">
+          <NavLink to="/projects">Projects</NavLink>
+          <NavLink to="/handcrafted">Handcrafted</NavLink>
+          <button
+            className="site-nav__theme"
+            type="button"
+            onClick={toggle}
+            aria-label={theme === "light" ? "Switch to dark theme" : "Switch to light theme"}
+          >
+            {theme === "light" ? <SunIcon /> : <MoonIcon />}
+          </button>
+        </nav>
+      </header>
+      <Link className="chat-mark" to="/" aria-label="Talk to Rana">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <circle cx="12" cy="10" r="6" fill="currentColor" />
+          <path fill="currentColor" d="M8.1 14.7 5.4 19.6 12.2 15.5Z" />
+        </svg>
+      </Link>
     </>
   );
 }
 
-export function Footer({ giant = false }: { giant?: boolean }) {
+export function Footer({
+  next,
+}: {
+  giant?: boolean;
+  next?: { name: string; to: string };
+}) {
+  const base = (
+    <div className="site-footer__base">
+      <p>© 2026 Rana Ebrahim</p>
+      <a
+        className="u-link"
+        href="#top"
+        onClick={(event) => {
+          event.preventDefault();
+          window.scrollTo({ top: 0, behavior: "smooth" });
+        }}
+      >
+        Back to top ↑
+      </a>
+    </div>
+  );
+
+  if (next) {
+    return (
+      <footer className="site-footer site-footer--case">
+        <Link className="ds-next" to={next.to}>
+          <span className="ds-next__label">Next</span>
+          <span className="ds-next__title">{next.name}</span>
+        </Link>
+        {base}
+      </footer>
+    );
+  }
+
   return (
-    <footer className={giant ? "footer footer-giant" : "footer"}>
-      <div className="footer-line">
-        <p className="footer-name">Rana</p>
-        <div className="footer-links">
-          <div>
-            <p className="footer-label">Say hi!</p>
-            <a href="mailto:ranaebrahim@aucegypt.edu">ranaebrahim@aucegypt.edu</a>
-          </div>
-          <div>
-            <p className="footer-label">Let’s connect</p>
-            <a href="https://www.linkedin.com/in/rana-ebrahimm/" target="_blank" rel="noreferrer">
-              LinkedIn
-            </a>
-          </div>
-        </div>
+    <footer className="site-footer" id="contact">
+      <p className="site-footer__label">Let’s connect</p>
+      <a className="site-footer__big" href="mailto:ranaebrahim@aucegypt.edu">
+        Say <em>hi!</em>
+      </a>
+      <div className="site-footer__links">
+        <a className="u-link" href="mailto:ranaebrahim@aucegypt.edu">ranaebrahim@aucegypt.edu</a>
+        <a className="u-link" href="https://www.linkedin.com/in/rana-ebrahimm/" target="_blank" rel="noreferrer">
+          LinkedIn
+        </a>
       </div>
+      {base}
     </footer>
   );
 }

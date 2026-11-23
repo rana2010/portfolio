@@ -252,7 +252,7 @@ export function Echo() {
             />
           </section>
         </main>
-        <Footer giant />
+        <Footer next={{ name: "AI Analyst", to: "/work/analyst" }} />
         <button
           type="button"
           className={editing ? "edit-toggle is-on" : "edit-toggle"}

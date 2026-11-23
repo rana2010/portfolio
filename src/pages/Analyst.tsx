@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Dots, Nav } from "../components/Chrome";
+import { Dots, Footer, Nav } from "../components/Chrome";
 import { AnalystPrototype } from "./AnalystPrototype";
 
 const SNIPPET_PATH = "src/components/Step1Discovery.jsx";
@@ -159,6 +159,7 @@ export function Analyst() {
           )}
         </section>
       </main>
+      <Footer next={{ name: "Pulse", to: "/work/pulse" }} />
     </div>
   );
 }

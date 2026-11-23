@@ -7,9 +7,8 @@ import "./styles.css";
 const basename = import.meta.env.BASE_URL.replace(/\/$/, "");
 
 const stored = localStorage.getItem("theme");
-if (stored === "dark" || stored === "light") {
-  document.documentElement.dataset.theme = stored;
-}
+document.documentElement.dataset.theme =
+  stored === "dark" || stored === "light" ? stored : "dark";
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>

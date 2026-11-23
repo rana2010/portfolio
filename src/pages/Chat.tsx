@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, type FormEvent, type ReactNode } from "react";
+import { flushSync } from "react-dom";
 import { Link } from "react-router-dom";
 import { asset } from "../asset";
 import { DotField } from "../components/DotField";
@@ -89,9 +90,8 @@ function answerFor(question: string, answers: Record<string, string>) {
 
 export function Chat() {
   const [answers, setAnswers] = useState(loadAnswers);
-  const [messages, setMessages] = useState<Message[]>(() => [
-    { id: 1, from: "rana", at: Date.now(), text: loadAnswers().greeting },
-  ]);
+  const [messages, setMessages] = useState<Message[]>([]);
+  const empty = messages.length === 0;
   const [draft, setDraft] = useState("");
   const [typing, setTyping] = useState(false);
   const [editing, setEditing] = useState(false);
@@ -132,7 +132,14 @@ export function Chat() {
     if (!question || typing || editing) return;
     const at = Date.now();
     const answer = preset ?? answerFor(question, answers);
-    setMessages((current) => [...current, { id: at, from: "you", text: question, at }]);
+    const add = () => setMessages((current) => [...current, { id: at, from: "you", text: question, at }]);
+    const doc = document as Document & { startViewTransition?: (cb: () => void) => unknown };
+    const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (messages.length === 0 && doc.startViewTransition && !reduce) {
+      doc.startViewTransition(() => flushSync(add));
+    } else {
+      add();
+    }
     setDraft("");
     setTyping(true);
     waitRef.current = window.setTimeout(() => {
@@ -187,6 +194,33 @@ export function Chat() {
     );
   }
 
+  const composer = (
+    <form className="chat-form" onSubmit={onSubmit}>
+      <input
+        value={draft}
+        onChange={(event) => setDraft(event.target.value)}
+        placeholder="Ask me something"
+        aria-label="Ask Rana"
+        disabled={typing}
+      />
+      <button type="submit" disabled={typing || !draft.trim()} aria-label="Ask">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M12 19V5M6 11l6-6 6 6" />
+        </svg>
+      </button>
+    </form>
+  );
+
+  const chips = (
+    <div className={empty ? "chat-suggestions is-centered" : "chat-suggestions is-docked"}>
+      {CHIPS.map((chip) => (
+        <button key={chip.id} type="button" onClick={() => ask(chip.label, answers[chip.id])}>
+          {chip.label}
+        </button>
+      ))}
+    </div>
+  );
+
   return (
     <div className="page chat-page">
       <DotField
@@ -215,7 +249,10 @@ export function Chat() {
       <main className="chat">
         <div className="chat-head">
           <div className="chat-tools">
-            <p className="chat-beta">my bot.v1</p>
+            <Link className="chat-name-ds" to="/home">
+              Rana Ebrahim
+            </Link>
+            <span className="chat-v">my bot.v1</span>
             {canEdit ? (
               <button
                 type="button"
@@ -227,34 +264,26 @@ export function Chat() {
               </button>
             ) : null}
           </div>
-          <Link className="chat-exit" to="/home">
-            <span>Go to portfolio</span>
-            <span aria-hidden="true">→</span>
+          <Link className="chat-exit u-link" to="/home">
+            Go to portfolio →
           </Link>
         </div>
-        <div className="chat-stage">{stage}</div>
-        {editing ? null : (
-          <div className="chat-suggestions is-docked">
-            {CHIPS.map((chip) => (
-              <button key={chip.id} type="button" onClick={() => ask(chip.label, answers[chip.id])}>
-                {chip.label}
-              </button>
-            ))}
-          </div>
-        )}
-        {editing ? null : (
-          <form className="chat-form" onSubmit={onSubmit}>
-            <input
-              value={draft}
-              onChange={(event) => setDraft(event.target.value)}
-              placeholder="Ask me something"
-              aria-label="Ask Rana"
-              disabled={typing}
-            />
-            <button type="submit" disabled={typing}>
-              Ask
-            </button>
-          </form>
+        {empty && !editing ? (
+          <section className="bot-empty">
+            <div className="bot-avatar" aria-hidden="true">
+              <img src={asset("/images/rana.webp")} alt="" />
+            </div>
+            <h1 className="bot-empty__title">Hola, I’m Rana.</h1>
+            <p className="bot-empty__sub">Ask me about my work, how I design, or why we should work together.</p>
+            {composer}
+            {chips}
+          </section>
+        ) : (
+          <>
+            <div className="chat-stage">{stage}</div>
+            {editing ? null : chips}
+            {editing ? null : composer}
+          </>
         )}
       </main>
     </div>
