@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from "react";
 import { Link, NavLink } from "react-router-dom";
+import { flushSync } from "react-dom";
 import { asset } from "../asset";
 import { DotField } from "./DotField";
 
@@ -22,7 +23,19 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
       value={{
         theme,
         toggle() {
-          setTheme((current) => (current === "light" ? "dark" : "light"));
+          const next: Theme = theme === "light" ? "dark" : "light";
+          const root = document.documentElement;
+          const apply = () => {
+            flushSync(() => setTheme(next));
+            root.dataset.theme = next;
+          };
+          const doc = document as Document & { startViewTransition?: (cb: () => void) => { finished: Promise<void> } };
+          if (doc.startViewTransition && !window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+            root.classList.add("vt-theme");
+            doc.startViewTransition(apply).finished.finally(() => root.classList.remove("vt-theme"));
+          } else {
+            apply();
+          }
         },
       }}
     >
@@ -68,8 +81,53 @@ export function useTheme() {
   return value;
 }
 
+export function CairoTime() {
+  const [now, setNow] = useState(() => new Date());
+  useEffect(() => {
+    const t = window.setInterval(() => setNow(new Date()), 15000);
+    return () => window.clearInterval(t);
+  }, []);
+  const parts = new Intl.DateTimeFormat("en-GB", { timeZone: "Africa/Cairo", hour: "2-digit", minute: "2-digit", hour12: false }).formatToParts(now);
+  const h = parts.find((p) => p.type === "hour")?.value ?? "";
+  const m = parts.find((p) => p.type === "minute")?.value ?? "";
+  return (
+    <span className="site-nav__time" aria-label={`Cairo time ${h}:${m}`}>
+      Cairo, EG{" "}
+      <b>
+        {h}
+        <i>:</i>
+        {m}
+      </b>
+    </span>
+  );
+}
+
+const DROP_KEY = "chat-dropped";
+
 export function Nav() {
   const { theme, toggle } = useTheme();
+  const [chat, setChat] = useState<"wait" | "drop" | "idle">(() => {
+    try {
+      return sessionStorage.getItem(DROP_KEY) ? "idle" : "wait";
+    } catch {
+      return "idle";
+    }
+  });
+  useEffect(() => {
+    if (chat !== "wait") return;
+    const t = window.setTimeout(() => {
+      setChat("drop");
+      try {
+        sessionStorage.setItem(DROP_KEY, "1");
+      } catch {}
+    }, 6000);
+    return () => window.clearTimeout(t);
+  }, [chat]);
+  useEffect(() => {
+    if (chat !== "drop") return;
+    const t = window.setTimeout(() => setChat("idle"), 7500);
+    return () => window.clearTimeout(t);
+  }, [chat]);
   const [scrolled, setScrolled] = useState(false);
 
   useEffect(() => {
@@ -100,10 +158,12 @@ export function Nav() {
           </button>
         </nav>
       </header>
-      <Link className="chat-mark" to="/chat" aria-label="Ask my AI bot">
-        <img className="chat-mark__img" src={asset("/images/rana-headshot.webp")} alt="" />
-        <i className="chat-mark__live" aria-hidden="true" />
-        <span className="chat-mark__tip" aria-hidden="true">Ask my AI bot</span>
+      <Link className={`chat-mark is-${chat}`} to="/chat" aria-label="Ask me about my work: my AI bot">
+        <svg className="chat-mark__icon" viewBox="0 0 24 24" aria-hidden="true">
+          <path className="chat-mark__star" d="M11 2.5c.7 5.1 2.4 6.8 7.5 7.5-5.1.7-6.8 2.4-7.5 7.5-.7-5.1-2.4-6.8-7.5-7.5 5.1-.7 6.8-2.4 7.5-7.5Z" />
+          <path className="chat-mark__star chat-mark__star--sm" d="M18.5 15.5c.3 2 1 2.7 3 3-2 .3-2.7 1-3 3-.3-2-1-2.7-3-3 2-.3 2.7-1 3-3Z" />
+        </svg>
+        <span className="chat-mark__tip" aria-hidden="true">Ask me about my work</span>
       </Link>
     </>
   );
@@ -118,6 +178,9 @@ export function Footer({
   const base = (
     <div className="site-footer__base">
       <p>© 2026 Rana Ebrahim</p>
+      <p className="site-footer__time">
+        Local time in <CairoTime />
+      </p>
       <a
         className="u-link"
         href="#top"
@@ -252,6 +315,8 @@ export function useTapRing() {
   useEffect(() => {
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
     const onDown = (e: PointerEvent) => {
+      document.documentElement.style.setProperty("--vt-x", `${e.clientX}px`);
+      document.documentElement.style.setProperty("--vt-y", `${e.clientY}px`);
       const target = (e.target as Element | null)?.closest("a, button, [role='tab']");
       if (!target || e.button > 0) return;
       const ring = document.createElement("span");

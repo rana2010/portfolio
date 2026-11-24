@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { Dots, Footer, Nav } from "../components/Chrome";
 import { WorkList } from "../components/WorkList";
 
@@ -16,6 +16,28 @@ const stack = [
 ];
 
 export function Home() {
+  const hero = useRef<HTMLElement>(null);
+  useEffect(() => {
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    let raf = 0;
+    const update = () => {
+      raf = 0;
+      const el = hero.current;
+      if (!el) return;
+      const p = Math.min(1, Math.max(0, window.scrollY / (el.offsetHeight * 0.9)));
+      el.style.setProperty("--hero-p", p.toFixed(3));
+    };
+    const onScroll = () => {
+      if (!raf) raf = requestAnimationFrame(update);
+    };
+    update();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+      if (raf) cancelAnimationFrame(raf);
+    };
+  }, []);
+
   useEffect(() => {
     document.title = "Rana Ebrahim";
   }, []);
@@ -25,7 +47,7 @@ export function Home() {
       <Dots />
       <Nav />
       <main className="home-ds">
-        <section className="home-hero">
+        <section className="home-hero" ref={hero}>
           <p className="home-hero__label">Product designer · Cairo, Egypt</p>
           <h1 className="home-hero__title">
             I make <em>research-backed</em>

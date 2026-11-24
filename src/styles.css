@@ -5769,3 +5769,153 @@ a, button { -webkit-tap-highlight-color: transparent; }
   .evo-key { grid-template-columns: 1fr; }
 }
 @media (prefers-reduced-motion: reduce) { .evo-shot img, .evo-pin { animation: none; } }
+
+/* v0.9.2: process as a vertical timeline on one hairline */
+.ds-case .ds-flow { position: relative; display: flex; flex-direction: column; gap: var(--space-4); max-width: 640px; margin: 0 0 var(--space-8); padding: 4px 0 4px 36px; }
+.ds-case .ds-flow::before { content: ""; position: absolute; left: 7px; top: 10px; bottom: 10px; width: 1px; background: linear-gradient(to bottom, var(--ink-3), var(--line) 85%, transparent); }
+.ds-case .ds-flow li::after { display: none; }
+.ds-case .ds-flow li::before { content: ""; position: absolute; left: -36px; top: 4px; width: 15px; height: 15px; border-radius: 50%; background: var(--bg); box-shadow: inset 0 0 0 1.5px var(--ink-2); }
+.ds-case .ds-flow li:first-child::before { background: var(--ink); box-shadow: 0 0 0 4px color-mix(in srgb, var(--ink) 12%, transparent); }
+.ds-case .ds-flow__n { display: block; width: auto; height: auto; margin: 0 0 4px; background: none; color: var(--ink-3); font-size: 11px; line-height: 16px; font-weight: 500; letter-spacing: 0.14em; text-transform: uppercase; }
+.ds-case .ds-flow h3 { font-size: 18px; line-height: 26px; }
+.ds-case .ds-flow p { max-width: 52ch; }
+@media (max-width: 760px) { .ds-case .ds-flow { padding-left: 30px; } .ds-case .ds-flow li::before { left: -30px; } }
+
+/* v1.0: purposeful motion */
+/* page change and theme change: the new page grows in a circle from where you tapped */
+:root { --vt-x: 50vw; --vt-y: 0px; }
+::view-transition-old(root) { animation: none; }
+::view-transition-new(root) { animation: vt-reveal 700ms cubic-bezier(0.16, 1, 0.3, 1) both; }
+@keyframes vt-reveal { from { clip-path: circle(0 at var(--vt-x) var(--vt-y)); } to { clip-path: circle(150vmax at var(--vt-x) var(--vt-y)); } }
+html.vt-theme .site-nav { view-transition-name: none; }
+html.vt-theme .work-list__name, html.vt-theme .ds-hero__name, html.vt-theme .analyst-head h1 { view-transition-name: none !important; }
+.site-nav__theme svg { transition: transform 600ms cubic-bezier(0.16, 1, 0.3, 1); }
+.site-nav__theme:active svg { transform: rotate(-90deg) scale(0.85); }
+
+/* Cairo time */
+.site-nav__time { color: var(--ink-3); font-size: 12px; line-height: 16px; letter-spacing: 0.08em; text-transform: uppercase; white-space: nowrap; }
+.site-nav__time b { color: var(--ink-2); font-weight: 500; letter-spacing: 0.04em; font-variant-numeric: tabular-nums; }
+.site-nav__time i { font-style: normal; animation: clock-blink 2s steps(1) infinite; }
+@keyframes clock-blink { 50% { opacity: 0.2; } }
+@media (max-width: 760px) { .site-nav__time { display: none; } }
+
+/* hero eases away as you scroll */
+.home-hero__label, .home-hero__title, .home-hero__sub { transform-origin: left bottom; }
+.home-hero__title { transform: translateY(calc(var(--hero-p, 0) * -24px)) scale(calc(1 - var(--hero-p, 0) * 0.08)); opacity: calc(1 - var(--hero-p, 0) * 0.7); }
+.home-hero__sub, .home-hero__label { transform: translateY(calc(var(--hero-p, 0) * -40px)); opacity: calc(1 - var(--hero-p, 0) * 0.9); }
+
+/* chat photo drops in after 8 seconds, once per visit, with a hint */
+.chat-mark.is-wait { opacity: 0; transform: translateY(-120px); pointer-events: none; }
+.chat-mark.is-drop { animation: chat-drop 900ms cubic-bezier(0.34, 1.4, 0.5, 1) both; }
+@keyframes chat-drop { from { opacity: 0; transform: translateY(-140px); } 60% { opacity: 1; } to { opacity: 1; transform: none; } }
+.chat-mark.is-drop .chat-mark__tip { opacity: 1; transform: translate(0, -50%); transition-delay: 700ms; }
+@media (hover: none) { .chat-mark.is-drop .chat-mark__tip { display: block; } }
+
+/* floating preview on the work list (mouse only) */
+.work-list { position: relative; }
+.work-peek { position: absolute; z-index: 5; top: 0; left: 0; width: 280px; pointer-events: none; opacity: 0; transition: opacity 250ms var(--ease-expo); will-change: transform; }
+.work-peek.is-on { opacity: 1; }
+.work-peek__item { position: absolute; inset: 0 auto auto 0; width: 100%; padding: 8px; border-radius: 14px; background: var(--surface); box-shadow: 0 0 0 1px var(--line), 0 24px 60px rgba(0,0,0,0.35); opacity: 0; transform: scale(0.94) rotate(-2deg); transition: opacity 300ms var(--ease-expo), transform 450ms var(--ease-expo); }
+.work-peek__item.is-on { opacity: 1; transform: none; }
+.work-peek__item img, .work-peek__mock { display: block; width: 100%; height: 160px; border-radius: 8px; object-fit: cover; object-position: top left; }
+.work-peek__mock { display: flex; flex-direction: column; justify-content: center; gap: 8px; padding: 0 22px; background: #f5f4f2; }
+.work-peek__mock span { color: #121211; font-size: 14px; font-weight: 600; }
+.work-peek__mock i { display: block; height: 10px; border-radius: 5px; background: #e2e0dc; }
+.work-peek__mock i + i { width: 60%; }
+.work-peek__item p { margin: 8px 4px 2px; color: var(--ink); font-size: 13px; line-height: 18px; }
+
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-new(root) { animation: none; }
+  .home-hero__title, .home-hero__sub, .home-hero__label { transform: none; opacity: 1; }
+  .chat-mark.is-drop { animation: none; }
+  .site-nav__time i { animation: none; }
+}
+
+/* v1.0.1: clock in the hero label, icon chat button, stronger hero ease */
+.home-hero__label .site-nav__time { display: inline; color: inherit; font-size: inherit; line-height: inherit; letter-spacing: inherit; }
+.home-hero__label .site-nav__time b { color: var(--ink); font-weight: 500; }
+
+/* chat button: an icon, easy to spot */
+.chat-mark, .chat-mark:hover { width: 56px; height: 56px; display: grid; place-items: center; border-radius: 50%; background: var(--ink); color: var(--bg); box-shadow: 0 10px 30px rgba(0,0,0,0.3); }
+.chat-mark__icon { width: 26px; height: 26px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linejoin: round; transition: transform 450ms var(--ease-expo); }
+.chat-mark__spark { fill: var(--signal); stroke: none; transform-origin: 12.5px 11px; animation: spark 3.2s ease-in-out infinite; }
+@keyframes spark { 0%, 100% { transform: scale(1) rotate(0); } 50% { transform: scale(1.25) rotate(45deg); } }
+.chat-mark__img, .chat-mark__live, .chat-mark__bw { display: none; }
+@media (hover: hover) and (pointer: fine) { .chat-mark:hover .chat-mark__icon { transform: rotate(-8deg) scale(1.06); } }
+.chat-mark::before { content: ""; position: absolute; inset: 0; border-radius: 50%; box-shadow: 0 0 0 0 color-mix(in srgb, var(--ink) 45%, transparent); pointer-events: none; }
+.chat-mark.is-drop::before { animation: chat-ping 1.4s ease-out 900ms 2; }
+@keyframes chat-ping { from { box-shadow: 0 0 0 0 color-mix(in srgb, var(--ink) 45%, transparent); } to { box-shadow: 0 0 0 18px color-mix(in srgb, var(--ink) 0%, transparent); } }
+.chat-mark__tip { right: calc(100% + 14px); padding: 10px 14px; border-radius: 12px; font-size: 12px; letter-spacing: 0.1em; }
+.chat-mark.is-drop .chat-mark__tip { opacity: 1; transform: translate(0, -50%); }
+@media (max-width: 640px) { .chat-mark, .chat-mark:hover { width: 52px; height: 52px; } }
+
+/* hero shrinks more clearly as you scroll */
+.home-hero__title { transform: translateY(calc(var(--hero-p, 0) * -70px)) scale(calc(1 - var(--hero-p, 0) * 0.28)); opacity: calc(1 - var(--hero-p, 0) * 0.85); }
+.home-hero__sub, .home-hero__label { transform: translateY(calc(var(--hero-p, 0) * -90px)); opacity: calc(1 - var(--hero-p, 0)); }
+
+/* v1.0.2: monochrome chat button; clock in the footer */
+.chat-mark, .chat-mark:hover {
+  width: 48px; height: 48px; border-radius: 50%;
+  background: color-mix(in srgb, var(--bg) 80%, transparent);
+  -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px);
+  color: var(--ink);
+  box-shadow: inset 0 0 0 1px var(--line-control), 0 8px 24px rgba(0,0,0,0.18);
+}
+.chat-mark__icon { width: 20px; height: 20px; stroke-width: 1.5; }
+@media (hover: hover) and (pointer: fine) {
+  .chat-mark:hover { background: var(--ink); color: var(--bg); box-shadow: inset 0 0 0 1px var(--ink), 0 8px 24px rgba(0,0,0,0.18); transform: translateY(-2px); }
+  .chat-mark:hover .chat-mark__icon { transform: none; }
+}
+.chat-mark:active { transform: scale(0.94); }
+.chat-mark.is-drop::before { animation: chat-ping 1.6s ease-out 900ms 2; }
+@keyframes chat-ping { from { box-shadow: 0 0 0 0 color-mix(in srgb, var(--ink) 30%, transparent); } to { box-shadow: 0 0 0 14px color-mix(in srgb, var(--ink) 0%, transparent); } }
+.chat-mark__tip { padding: 8px 12px; border-radius: 10px; font-size: 11px; letter-spacing: 0.14em; }
+@media (max-width: 640px) { .chat-mark, .chat-mark:hover { width: 46px; height: 46px; } }
+
+.site-footer__time { color: var(--ink-3); }
+.site-footer__time .site-nav__time { display: inline; color: var(--ink-2); font-size: inherit; letter-spacing: inherit; text-transform: none; }
+.site-footer__time .site-nav__time b { color: var(--ink); }
+@media (max-width: 640px) { .site-footer__time { order: 3; width: 100%; } }
+.site-footer__base { flex-wrap: wrap; gap: 8px var(--space-3); align-items: baseline; }
+
+/* v1.0.3: chat button = solid monochrome circle with an AI sparkle */
+.chat-mark, .chat-mark:hover { width: 52px; height: 52px; background: var(--ink); color: var(--bg); -webkit-backdrop-filter: none; backdrop-filter: none; box-shadow: 0 10px 28px rgba(0,0,0,0.22); }
+.chat-mark__icon { width: 24px; height: 24px; }
+.chat-mark__star { fill: currentColor; stroke: none; transform-origin: 12px 10px; transition: transform 600ms var(--ease-expo); }
+.chat-mark__star--sm { transform-origin: 18.5px 18px; animation: star-blink 3.6s ease-in-out infinite; }
+@keyframes star-blink { 0%, 70%, 100% { opacity: 1; transform: scale(1); } 80% { opacity: 0.3; transform: scale(0.6); } }
+@media (hover: hover) and (pointer: fine) {
+  .chat-mark:hover { background: var(--ink); color: var(--bg); box-shadow: 0 14px 34px rgba(0,0,0,0.28); transform: translateY(-2px); }
+  .chat-mark:hover .chat-mark__star:not(.chat-mark__star--sm) { transform: rotate(90deg) scale(1.08); }
+}
+@media (max-width: 640px) { .chat-mark, .chat-mark:hover { width: 48px; height: 48px; } }
+@media (prefers-reduced-motion: reduce) { .chat-mark__star--sm { animation: none; } }
+
+/* v1.0.4: sparkle centred and in proportion to the button */
+.chat-mark, .chat-mark:hover { width: 48px; height: 48px; }
+.chat-mark__icon { width: 22px; height: 22px; overflow: visible; }
+.chat-mark__star { transform-origin: 11px 10px; }
+.chat-mark__star--sm { transform-origin: 18.5px 18.5px; }
+@media (max-width: 640px) { .chat-mark, .chat-mark:hover { width: 46px; height: 46px; } .chat-mark__icon { width: 21px; height: 21px; } }
+
+/* v1.0.5: the chat button falls like a ball, bounces, settles, then the tooltip shows */
+.chat-mark { transform-origin: 50% 100%; }
+.chat-mark.is-drop { animation: chat-ball 1500ms both; }
+@keyframes chat-ball {
+  0%   { opacity: 1; transform: translateY(-85vh) scale(1, 1);        animation-timing-function: cubic-bezier(0.55, 0, 1, 0.45); }
+  38%  { transform: translateY(0) scale(1.14, 0.84);                  animation-timing-function: cubic-bezier(0, 0.55, 0.45, 1); }
+  42%  { transform: translateY(-6px) scale(0.94, 1.06); }
+  58%  { transform: translateY(-70px) scale(1, 1);                    animation-timing-function: cubic-bezier(0.55, 0, 1, 0.45); }
+  72%  { transform: translateY(0) scale(1.08, 0.92);                  animation-timing-function: cubic-bezier(0, 0.55, 0.45, 1); }
+  82%  { transform: translateY(-22px) scale(1, 1);                    animation-timing-function: cubic-bezier(0.55, 0, 1, 0.45); }
+  90%  { transform: translateY(0) scale(1.04, 0.96); }
+  95%  { transform: translateY(-4px) scale(1, 1); }
+  100% { opacity: 1; transform: translateY(0) scale(1, 1); }
+}
+.chat-mark.is-drop::before { animation: chat-ping 1.6s ease-out 1500ms 2; }
+.chat-mark.is-drop .chat-mark__tip { opacity: 0; animation: tip-in 500ms var(--ease-expo) 1450ms forwards; }
+@keyframes tip-in { from { opacity: 0; transform: translate(8px, -50%); } to { opacity: 1; transform: translate(0, -50%); } }
+/* light mode: black button with a soft ground shadow; dark mode: off-white button */
+:root:not([data-theme="dark"]) .chat-mark { background: #0a0a0a; color: #f5f0eb; box-shadow: 0 10px 24px rgba(10,10,10,0.22), 0 2px 6px rgba(10,10,10,0.12); }
+:root[data-theme="dark"] .chat-mark { background: #f5f0eb; color: #0a0a0a; box-shadow: 0 10px 28px rgba(0,0,0,0.5); }
+@media (prefers-reduced-motion: reduce) { .chat-mark.is-drop { animation: none; } .chat-mark.is-drop .chat-mark__tip { animation: none; opacity: 1; } }
