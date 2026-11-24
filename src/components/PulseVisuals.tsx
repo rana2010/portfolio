@@ -257,3 +257,184 @@ export function PulsePrototype() {
     </figure>
   );
 }
+
+/* ---------- VIP chat: drifts down, hits SLA risk, rises to the top (auto loop) ---------- */
+const ROWS = [
+  { id: "r1", src: "/pulse/c/row1.webp", alt: "Chat with an SLA breach" },
+  { id: "r3", src: "/pulse/c/row3.webp", alt: "Chat at SLA risk" },
+  { id: "r4", src: "/pulse/c/row4.webp", alt: "Chat that needs closure" },
+  { id: "vip", src: "/pulse/c/row5-nobadge.webp", alt: "VIP customer chat, marked with a gold crown" },
+  { id: "r6", src: "/pulse/c/row6.webp", alt: "Chat at SLA risk" },
+  { id: "r7", src: "/pulse/c/row7.webp", alt: "Chat that needs closure" },
+];
+
+type Phase = "calm" | "risk" | "up";
+
+export function VipQueue() {
+  const [phase, setPhase] = useState<Phase>(reduce() ? "up" : "calm");
+  const [fading, setFading] = useState(false);
+  const box = useRef<HTMLDivElement>(null);
+  const tops = useRef<Map<string, number>>(new Map());
+  const flip = useRef(false);
+  const timers = useRef<number[]>([]);
+
+  const order = phase === "up" ? [ROWS[3], ...ROWS.filter((r) => r.id !== "vip")] : ROWS;
+
+  function measure() {
+    box.current?.querySelectorAll<HTMLElement>("[data-row]").forEach((n) => tops.current.set(n.dataset.row!, n.offsetTop));
+  }
+
+  useEffect(() => {
+    const el = box.current;
+    if (!el || !flip.current) return;
+    flip.current = false;
+    el.querySelectorAll<HTMLElement>("[data-row]").forEach((n) => {
+      const before = tops.current.get(n.dataset.row!);
+      if (before === undefined) return;
+      const dy = before - n.offsetTop;
+      if (!dy) return;
+      n.animate([{ transform: `translateY(${dy}px)` }, { transform: "translateY(0)" }], {
+        duration: n.dataset.row === "vip" ? 1000 : 800,
+        easing: "cubic-bezier(0.16, 1, 0.3, 1)",
+      });
+    });
+  }, [phase]);
+
+  useEffect(() => {
+    const el = box.current;
+    if (!el || reduce()) return;
+    const at = (ms: number, fn: () => void) => timers.current.push(window.setTimeout(fn, ms));
+    const clear = () => {
+      timers.current.forEach((t) => window.clearTimeout(t));
+      timers.current = [];
+    };
+    const cycle = () => {
+      at(1200, () => setPhase("risk"));
+      at(2600, () => {
+        measure();
+        flip.current = true;
+        setPhase("up");
+      });
+      at(5600, () => setFading(true));
+      at(6000, () => {
+        setPhase("calm");
+        setFading(false);
+      });
+      at(6400, cycle);
+    };
+    const io = new IntersectionObserver(
+      (entries) => {
+        clear();
+        if (entries[0].isIntersecting) {
+          setPhase("calm");
+          setFading(false);
+          cycle();
+        }
+      },
+      { threshold: 0.4 },
+    );
+    io.observe(el);
+    return () => {
+      io.disconnect();
+      clear();
+    };
+  }, []);
+
+  return (
+    <div className="pv-queue">
+      <div className={fading ? "pv-queue__list is-fading" : "pv-queue__list"} ref={box} aria-label="A VIP chat close to breaching its SLA moves to the top of the chat list">
+        {order.map((r) =>
+          r.id === "vip" ? (
+            <div key="vip" data-row="vip" className={phase === "up" ? "pv-queue__row is-vip is-up" : "pv-queue__row is-vip"}>
+              <img src={asset(r.src)} alt={r.alt} loading="lazy" />
+              <img className={phase === "calm" ? "pv-queue__badge" : "pv-queue__badge is-on"} src={asset("/pulse/c/row5.webp")} alt="" aria-hidden="true" loading="lazy" />
+            </div>
+          ) : (
+            <div key={r.id} data-row={r.id} className="pv-queue__row">
+              <img src={asset(r.src)} alt={r.alt} loading="lazy" />
+            </div>
+          ),
+        )}
+      </div>
+      <ol className="pv-queue__steps" aria-hidden="true">
+        <li className={phase === "calm" ? "is-on" : undefined}>VIP chat waiting</li>
+        <li className={phase === "risk" ? "is-on" : undefined}>Hits SLA risk</li>
+        <li className={phase === "up" ? "is-on" : undefined}>Moves to the top</li>
+      </ol>
+    </div>
+  );
+}
+
+/* ---------- Detour map: one chat, before and after ---------- */
+type Step = { label: string; out?: { title: string; tools: string[] } };
+
+const BEFORE: Step[] = [
+  { label: "Chat opens" },
+  { label: "Needs order and complaint history", out: { title: "Leaves the chat", tools: ["Zoho", "Order-tracking tool", "Personal notes"] } },
+  { label: "Back in the chat" },
+  { label: "Writes a reply", out: { title: "Leaves again", tools: ["Saved-replies notebook", "Paraphrase tool"] } },
+  { label: "Sends" },
+];
+
+const AFTER: Step[] = [
+  { label: "Chat opens" },
+  { label: "Reads the AI summary" },
+  { label: "Checks history in the panel" },
+  { label: "Edits the AI draft" },
+  { label: "Sends" },
+];
+
+function Row({ tag, steps, kind }: { tag: string; steps: Step[]; kind: "before" | "after" }) {
+  return (
+    <div className={`dm-row dm-row--${kind}`}>
+      <span className="dm-tag">{tag}</span>
+      <ol className="dm-steps" style={{ ["--n" as string]: steps.length }}>
+        {steps.map((s, i) => (
+          <li key={s.label} className={s.out ? "dm-step has-out" : "dm-step"} style={{ ["--i" as string]: i }}>
+            {s.out ? (
+              <div className="dm-out">
+                <em>{s.out.title}</em>
+                {s.out.tools.map((t) => (
+                  <span key={t}>{t}</span>
+                ))}
+              </div>
+            ) : null}
+            <i className="dm-dot" aria-hidden="true" />
+            <span className="dm-label">{s.label}</span>
+          </li>
+        ))}
+      </ol>
+    </div>
+  );
+}
+
+export function DetourMap() {
+  const ref = useRef<HTMLElement>(null);
+  const [inView, setInView] = useState(false);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    if (reduce()) {
+      setInView(true);
+      return;
+    }
+    const io = new IntersectionObserver(
+      (e) => {
+        if (e[0].isIntersecting) {
+          setInView(true);
+          io.disconnect();
+        }
+      },
+      { threshold: 0.35 },
+    );
+    io.observe(el);
+    return () => io.disconnect();
+  }, []);
+  return (
+    <figure ref={ref} className={inView ? "dm is-in" : "dm"}>
+      <Row tag="Before" steps={BEFORE} kind="before" />
+      <Row tag="After" steps={AFTER} kind="after" />
+      <figcaption>One chat, before and after. The redesign keeps the agent inside the chat.</figcaption>
+    </figure>
+  );
+}

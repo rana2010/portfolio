@@ -1,13 +1,12 @@
 import { useEffect, type ReactNode } from "react";
-import { Compare, Piece, PulsePrototype, Stage } from "../components/PulseVisuals";
-import { Link } from "react-router-dom";
+import { Compare, DetourMap, Piece, PulsePrototype, Stage, VipQueue } from "../components/PulseVisuals";
 import { Dots, Footer, Nav } from "../components/Chrome";
 
 const problems = [
-  "Data without hierarchy. The MVP’s side panel listed 20+ equal fields, and “Is VIP: No” looked like the rest.",
-  "Detours. Agents left for Zoho, an internal order-tracking tool and personal notes: slower replies, repeated questions, SLA risk.",
-  "Passive dashboard. TLs saw numbers on a manually refreshed screen, with no way to act.",
-  "AI bypassed. AI replies were the business’s main bet, and agents weren’t using them.",
+  { title: "Data without hierarchy", body: "The side panel listed 20+ fields at the same weight. “Is VIP: No” looked like everything else." },
+  { title: "Detours", body: "Agents left for Zoho, an internal order-tracking tool and personal notes: slower replies, repeated questions, SLA risk." },
+  { title: "A passive dashboard", body: "Team leads saw numbers on a screen they refreshed by hand, with no way to act on them." },
+  { title: "AI bypassed", body: "AI replies were the business’s main bet, and agents weren’t using them." },
 ];
 
 const steps = [
@@ -61,41 +60,13 @@ const personas = [
     role: "L1 agent",
     where: "In the chat",
     asks: "Has this customer complained before, and what happened?",
-    constraint: "Handles up to 3 chats at once, in Arabic and English.",
+    pain: "Can’t see a customer’s complaint history without leaving the chat, while handling up to 3 chats in Arabic and English.",
   },
   {
     role: "Team lead",
     where: "On the dashboard",
-    asks: "Which chat is breaching, and who do I contact?",
-    constraint: "Watches several queues and manages people, not chats.",
-  },
-];
-
-const modules = [
-  {
-    title: "Conversation details panel",
-    body: "Order, complaint history, VIP status and live timers beside the chat, ordered by what agents need first.",
-    src: "/pulse/m-panel.webp",
-    alt: "Conversation details in focus: customer, VIP, order, and live timers",
-  },
-  {
-    title: "AI summary and replies",
-    body: "A summary at the top of every chat, AI replies drafted in the composer, and a Generating state while it writes.",
-    src: "/pulse/m-ai.webp",
-    alt: "The chat menu with AI Replies turned on, under an AI summary",
-  },
-  {
-    title: "VIP signals",
-    body: "A gold crown and VVIP badge that follow the customer: in the chat list, in the chat and in the details panel.",
-    src: "/pulse/m-vip.webp",
-    alt: "A VIP badge on the customer, seen while choosing the chat",
-  },
-  {
-    title: "Team lead dashboard",
-    body: "Team leads asked one question: which chat is breaching, and who do I contact? v1 (shipped) answers the first half with a live breach banner, queue counts and each agent’s load. v2 (proposed, from the team lead workflow session) answers the second: every alert carries View or Assign, and an agent drawer ends in Message Agent. v2 stayed a proposal because of engineering constraints.",
-    src: "/pulse/m-dash.webp",
-    alt: "Team lead dashboard with a breach signal and Message Agent",
-    before: { src: "/pulse/mvp-dashboard.webp", alt: "The earlier realtime dashboard, refreshed by hand" },
+    asks: "Where are breaches coming from, and who has room to take more?",
+    pain: "Can’t see SLA risk or rebalance workload across active agents in real time.",
   },
 ];
 
@@ -123,16 +94,6 @@ const decisions = [
   },
 ];
 
-function Lead({ text }: { text: string }) {
-  const i = text.indexOf(". ");
-  if (i === -1) return <>{text}</>;
-  return (
-    <>
-      <strong>{text.slice(0, i + 1)}</strong> {text.slice(i + 2)}
-    </>
-  );
-}
-
 function Section({ label, children }: { label: string; children: ReactNode }) {
   return (
     <section className="ds-section">
@@ -140,54 +101,6 @@ function Section({ label, children }: { label: string; children: ReactNode }) {
       <div className="ds-section__body">{children}</div>
     </section>
   );
-}
-
-function moduleVisual(title: string) {
-  if (title === "Conversation details panel") {
-    return (
-      <Stage>
-        <Piece src="/pulse/c/after-panel.webp" alt="Conversation details panel" w={300} />
-      </Stage>
-    );
-  }
-  if (title === "AI summary and replies") {
-    return (
-      <Stage className="pv-stage--ai">
-        <div className="pv-col">
-          <Piece src="/pulse/c/sum-collapsed.webp" alt="AI summary card" w={420} />
-          <Piece src="/pulse/c/ai-suggestion.webp" alt="AI suggestion" w={420} />
-          <Piece src="/pulse/c/comp-editing.webp" alt="Composer while editing an AI reply" w={420} />
-        </div>
-        <Piece className="pv-float pv-surface" src="/pulse/c/menu.webp" alt="Chat menu with AI Replies turned on" w={150} />
-      </Stage>
-    );
-  }
-  if (title === "VIP signals") {
-    return (
-      <Stage className="pv-stage--vip">
-        <Piece src="/pulse/c/panel-vip.webp" alt="Details panel for a VVIP customer" w={260} />
-        <div className="pv-col">
-          <Piece className="pv-badge pv-surface" src="/pulse/c/vvip.webp" alt="VVIP badge" w={116} />
-          <Piece className="pv-surface" src="/pulse/c/bubble-vip.webp" alt="A message from a VVIP customer" w={400} />
-        </div>
-      </Stage>
-    );
-  }
-  if (title === "Team lead dashboard") {
-    return (
-      <>
-        <Compare
-          items={[
-            { label: "Before", src: "/pulse/c/dash-before.webp", alt: "The MVP dashboard, refreshed by hand. Agent emails and chat codes hidden." },
-            { label: "v1 · shipped", src: "/pulse/c/dash-v1.webp", alt: "Dashboard v1: breach banner, live counts, chats and agents" },
-            { label: "v2 · proposed", src: "/pulse/c/dash-v2.webp", alt: "Dashboard v2: agents overview, notifications center and thresholds" },
-          ]}
-          caption="Before: refreshed by hand. v1 (shipped): live counts and a breach banner. v2 (proposed): an agents overview, a notifications center with View and Assign, and thresholds, shaped by the team lead workflow session."
-        />
-      </>
-    );
-  }
-  return null;
 }
 
 export function CaseStudy() {
@@ -201,9 +114,6 @@ export function CaseStudy() {
       <Nav />
       <main>
         <header className="ds-hero">
-          <Link className="ds-back" to="/projects">
-            <span aria-hidden="true">←</span> Work
-          </Link>
           <h1 className="ds-hero__title">
             Removing
             <br />
@@ -216,7 +126,7 @@ export function CaseStudy() {
           </p>
           <dl className="ds-meta">
             <div>
-              <dt>Client</dt>
+              <dt>Company</dt>
               <dd>noon</dd>
             </div>
             <div>
@@ -237,7 +147,7 @@ export function CaseStudy() {
             </div>
             <div>
               <dt>Status</dt>
-              <dd>Shipped, in daily use</dd>
+              <dd>Shipped</dd>
             </div>
           </dl>
         </header>
@@ -269,19 +179,15 @@ export function CaseStudy() {
             Pulse is noon’s internal support platform: agent chat, a live dashboard for team
             leads and a QA Center. I was the only product designer, working with a PM.
           </p>
-          {problems.map((item) => (
-            <p key={item}>
-              <Lead text={item} />
-            </p>
-          ))}
-          <Compare
-            tall
-            items={[
-              { label: "Before", src: "/pulse/c/before-panel.webp", alt: "The MVP side panel: every field at the same weight. Personal data hidden." },
-              { label: "After", src: "/pulse/c/after-panel.webp", alt: "The redesigned panel: customer, context and conversation groups, with status as badges" },
-            ]}
-            caption="The side panel. Before: 20+ fields at the same weight. After: grouped by what agents check first, with status as badges. Personal data hidden."
-          />
+          <ul className="ds-problems">
+            {problems.map((p) => (
+              <li key={p.title}>
+                <b>{p.title}</b>
+                <span>{p.body}</span>
+              </li>
+            ))}
+          </ul>
+          <DetourMap />
         </Section>
 
         <Section label="Who uses it">
@@ -292,8 +198,8 @@ export function CaseStudy() {
                 <p className="ds-persona__where">{p.where}</p>
                 <p className="ds-persona__k ds-persona__k--asks">Asks</p>
                 <p className="ds-persona__q">{p.asks}</p>
-                <p className="ds-persona__k">Constraint</p>
-                <p className="ds-persona__v">{p.constraint}</p>
+                <p className="ds-persona__k">Pain point</p>
+                <p className="ds-persona__v">{p.pain}</p>
               </article>
             ))}
           </div>
@@ -315,7 +221,7 @@ export function CaseStudy() {
               <span>Agents opened other tools for details already on the chat screen. It was there, just not findable.</span>
             </li>
             <li>
-              <b>4 of 6 agents</b>
+              <b>6 of 6 agents</b>
               <span>kept canned replies in their own notebooks. The workarounds held what the UI should have.</span>
             </li>
             <li>
@@ -323,11 +229,11 @@ export function CaseStudy() {
               <span>Fixing a long, robotic draft took longer than pasting a saved reply, so agents skipped it.</span>
             </li>
             <li>
-              <b>Team leads manage people</b>
-              <span>On a breach, they contact the agent, not the chat.</span>
+              <b>Team leads manage workload, live</b>
+              <span>They need to see where breaches come from as they happen, to rebalance work across active agents and keep SLAs.</span>
             </li>
           </ul>
-          <p className="ds-caption">“4 of 6” comes from one round of 6 agent interviews.</p>
+          <p className="ds-caption">Counts come from one round of 6 agent interviews.</p>
           <blockquote className="ds-quote">
             <p>
               “When a chat starts, I need to immediately see if the customer has previous
@@ -375,21 +281,108 @@ export function CaseStudy() {
         </Section>
 
         <Section label="What I designed">
-          <ol className="ds-modules">
-            {modules.map((m) => (
-              <li key={m.title}>
-                <div>
-                  <h3>{m.title}</h3>
-                  <p>{m.body}</p>
-                  {moduleVisual(m.title)}
-                </div>
-              </li>
-            ))}
-          </ol>
-        </Section>
+          <div className="ds-branch">
+            <header className="ds-branch__head">
+              <span>01</span>
+              <h3>The agent chat workspace</h3>
+              <p>Everything an agent needs for the chat in front of them, without leaving it.</p>
+            </header>
 
-        <Section label="Try it">
-          <PulsePrototype />
+            <div className="ds-comp">
+              <h4>Conversation details panel</h4>
+              <p>Customer, context and conversation, grouped in the order agents check them, with status as badges instead of more text.</p>
+              <Compare
+                tall
+                items={[
+                  { label: "Before", src: "/pulse/c/before-panel.webp", alt: "The MVP side panel: every field at the same weight. Personal data hidden." },
+                  { label: "After", src: "/pulse/c/after-panel.webp", alt: "The redesigned panel: customer, context and conversation groups, with status as badges" },
+                ]}
+                caption="Before: 20+ fields at the same weight. After: grouped, with live timers and badges. Personal data hidden."
+              />
+              <Stage caption="Interaction history: the customer’s past tickets and their status, answering “has this customer complained before?” without leaving the chat.">
+                <Piece src="/pulse/c/history.webp" alt="Interaction history card: a past ticket, its summary and status" w={340} />
+              </Stage>
+            </div>
+
+            <div className="ds-comp">
+              <h4>AI summary</h4>
+              <p>Opens every chat, so the agent knows the problem before reading the thread. Short by default, expandable, with a loading state.</p>
+              <Stage className="pv-stage--col">
+                <Piece src="/pulse/c/sum-loading.webp" alt="AI summary, loading" w={460} />
+                <Piece src="/pulse/c/sum-collapsed.webp" alt="AI summary, short" w={460} />
+                <Piece src="/pulse/c/sum-expanded.webp" alt="AI summary, expanded" w={460} />
+              </Stage>
+            </div>
+
+            <div className="ds-comp">
+              <h4>Composer and AI replies</h4>
+              <p>AI drafts the reply in the composer and the agent edits before sending. AI Replies stays a per-chat toggle in the chat menu.</p>
+              <Stage className="pv-stage--ai">
+                <div className="pv-col">
+                  <Piece src="/pulse/c/ai-suggestion.webp" alt="AI suggestion" w={420} />
+                  <Piece src="/pulse/c/comp-generating.webp" alt="Composer while the AI reply is generating" w={420} />
+                  <Piece src="/pulse/c/comp-editing.webp" alt="Composer while editing an AI reply" w={420} />
+                  <Piece src="/pulse/c/comp-empty.webp" alt="Composer, empty" w={420} />
+                </div>
+                <Piece className="pv-float pv-surface" src="/pulse/c/menu.webp" alt="Chat menu with AI Replies turned on" w={150} />
+              </Stage>
+            </div>
+
+            <div className="ds-comp">
+              <h4>Messages</h4>
+              <p>Arabic reads right to left, AI-drafted replies are marked, and a failed send says so with Try again.</p>
+              <Stage className="pv-stage--col">
+                <Piece className="pv-surface" src="/pulse/c/bubble-ar.webp" alt="Arabic message, right to left" w={460} />
+                <Piece className="pv-surface" src="/pulse/c/bubble-ai.webp" alt="AI-drafted reply" w={460} />
+                <Piece className="pv-surface" src="/pulse/c/bubble-failed.webp" alt="Failed send with Try again" w={460} />
+              </Stage>
+            </div>
+
+            <div className="ds-comp">
+              <h4>VIP signals</h4>
+              <p>A gold crown and VVIP badge follow the customer, in the list and in the details panel. When a VIP chat drifts down the list and gets close to breaching its SLA, it moves back to the top.</p>
+              <Stage className="pv-stage--vip">
+                <VipQueue />
+                <Piece src="/pulse/c/panel-vip.webp" alt="Details panel for a VVIP customer, with the crown and VVIP badge" w={260} />
+              </Stage>
+            </div>
+
+            <p className="ds-branch__note">
+              Agents read this screen for whole shifts, so I tested several text and background
+              combinations before settling the palette. The final colours pass WCAG AA contrast.
+            </p>
+          </div>
+
+          <div className="ds-branch">
+            <header className="ds-branch__head">
+              <span>02</span>
+              <h3>The team lead realtime dashboard</h3>
+              <p>Where breaches come from, and who has room to take more, as it happens.</p>
+            </header>
+
+            <div className="ds-comp">
+              <h4>From refresh to real time</h4>
+              <p>
+                v1 (shipped) made the screen live: queue counts, a breach banner that names the
+                breaching chats, and each agent’s load. v2 (proposed, from the team lead workflow
+                session) puts the action next to the signal: View or Assign on every alert, an
+                agents overview, and an agent drawer that ends in Message Agent. v2 stayed a
+                proposal because of engineering constraints.
+              </p>
+              <Compare
+                items={[
+                  { label: "Before", src: "/pulse/c/dash-before.webp", alt: "The MVP dashboard, refreshed by hand. Agent emails and chat codes hidden." },
+                  { label: "v1 · shipped", src: "/pulse/c/dash-v1.webp", alt: "Dashboard v1: breach banner, live counts, chats and agents" },
+                  { label: "v2 · proposed", src: "/pulse/c/dash-v2.webp", alt: "Dashboard v2: agents overview, notifications center and thresholds" },
+                ]}
+              />
+            </div>
+
+            <div className="ds-comp">
+              <h4>Try the proposed v2</h4>
+              <PulsePrototype />
+            </div>
+          </div>
         </Section>
 
         <Section label="Constraints and decisions">
@@ -407,39 +400,17 @@ export function CaseStudy() {
           </div>
         </Section>
 
-        <Section label="Craft">
-          <p>
-            Bad days got the same care: failed sends, Arabic right to left, loading states, and a
-            palette tested for long shifts that passes WCAG AA contrast.
-          </p>
-          <div className="pv-craft">
-            <Stage className="pv-stage--col" caption="Bubbles: Arabic right to left, an AI reply, a failed send">
-              <Piece className="pv-surface" src="/pulse/c/bubble-ar.webp" alt="Arabic message, right to left" w={330} />
-              <Piece className="pv-surface" src="/pulse/c/bubble-ai.webp" alt="AI-drafted reply" w={330} />
-              <Piece className="pv-surface" src="/pulse/c/bubble-failed.webp" alt="Failed send with Try again" w={330} />
-            </Stage>
-            <Stage className="pv-stage--col" caption="AI summary: loading, short, expanded">
-              <Piece src="/pulse/c/sum-loading.webp" alt="AI summary loading" w={330} />
-              <Piece src="/pulse/c/sum-collapsed.webp" alt="AI summary, short" w={330} />
-              <Piece src="/pulse/c/sum-expanded.webp" alt="AI summary, expanded" w={330} />
-            </Stage>
-            <Stage className="pv-stage--col" caption="Composer: empty, generating, editing a draft">
-              <Piece src="/pulse/c/comp-empty.webp" alt="Composer, empty" w={330} />
-              <Piece src="/pulse/c/comp-generating.webp" alt="Composer, generating a reply" w={330} />
-              <Piece src="/pulse/c/comp-editing.webp" alt="Composer, editing an AI draft" w={330} />
-            </Stage>
-          </div>
-        </Section>
 
         <Section label="Outcome">
-          <ul className="ds-outcome">
-            <li><b>20%</b><span>lower average handling time in the first 6 months, with no other workflow changes (per PM)</span></li>
-            <li><b>AI first</b><span>AI is the default path for agents</span></li>
-            <li><b>Live</b><span>team leads see breaches as they happen, not on refresh</span></li>
-          </ul>
-          <p className="ds-trade">
-            <b>Next time</b>
-            Track tab switching and AI-draft edits, to see which decision did the work.
+          <p className="ds-outcome__big">
+            <b>20%</b> lower average handling time in the first 6 months, with no other workflow
+            changes (per PM).
+          </p>
+          <p className="ds-outcome__line">
+            AI is the default path for agents, and team leads see breaches as they happen.
+          </p>
+          <p className="ds-outcome__next">
+            Next time: track tab switching and AI-draft edits, to see which decision did the work.
           </p>
         </Section>
 
