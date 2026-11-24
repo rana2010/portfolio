@@ -102,7 +102,7 @@ export function CairoTime() {
   );
 }
 
-const DROP_KEY = "chat-dropped";
+let droppedThisLoad = false;
 
 type Frame = { t: number; x: number; y: number; sx?: number; sy?: number };
 const UP = "cubic-bezier(0, 0.55, 0.45, 1)";
@@ -185,20 +185,13 @@ function bounceIn(el: HTMLElement, onSettled: () => void, onDone: () => void) {
 
 export function Nav() {
   const { theme, toggle } = useTheme();
-  const [chat, setChat] = useState<"wait" | "drop" | "idle">(() => {
-    try {
-      return sessionStorage.getItem(DROP_KEY) ? "idle" : "wait";
-    } catch {
-      return "idle";
-    }
-  });
+  // plays on every full page load (including refresh), not on in-site navigation
+  const [chat, setChat] = useState<"wait" | "drop" | "idle">(() => (droppedThisLoad ? "idle" : "wait"));
   useEffect(() => {
     if (chat !== "wait") return;
     const t = window.setTimeout(() => {
+      droppedThisLoad = true;
       setChat("drop");
-      try {
-        sessionStorage.setItem(DROP_KEY, "1");
-      } catch {}
     }, 6000);
     return () => window.clearTimeout(t);
   }, [chat]);
