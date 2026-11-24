@@ -17,7 +17,7 @@ const DEFAULTS: Record<string, string> = {
     "Hola! Try out my AI bot. I’m Rana—an MVP version while I finish building my full assistant. Ask me about my work, my creative process, or why we should work together!",
   hire: "Aside from being genuinely fun to have around, I bring about 3 years designing products at noon, Fawry and Promolinks. I like to dig deep in user behavior and what can make their journey better while also achieving business needs. Yes, I use AI gracefully.",
   projects:
-    "At noon I was the only designer in the customer support tech squad. My biggest project is Pulse, an AI support workspace used by 200+ agents; AHT dropped 20% after launch (per PM). I also designed the QA Center, Echo (our CRM replacing Zoho) and AI Analyst, which I vibe-coded. Check out Selected work for more.",
+    "At noon I was the only designer in the customer support tech squad. My biggest project is Pulse, an AI support workspace used by 200+ agents; average handling time dropped 20% in the first 6 months. I also designed the QA Center, Echo (our CRM replacing Zoho) and AI Analyst, which I vibe-coded. Check out Selected work for more.",
   design:
     "I start with understanding the problem. The first brief with the PM is valuable in my process. Then I benchmark the market, dig into user behavior through research, and move into wireframing and design — all through collaboration with PMs.",
   chat: "Skip the bot and let’s chat in person, on LinkedIn or email.",

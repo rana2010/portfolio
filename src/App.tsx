@@ -23,12 +23,51 @@ function countView(path: string) {
   send();
 }
 
+// Gentle reveal as things scroll into view (desktop and touch). Skipped for reduced motion.
+const REVEAL =
+  ".ds-section, .ds-stats > div, .ds-hero-compare, .work-list li, .home-about__body > *, .gallery__item, " +
+  ".ds-problems li, .ds-finds li, .ds-persona, .ds-dgrid article, .ds-comp, .moscow-grid li, .site-footer__big";
+
+function useReveal(key: string) {
+  useEffect(() => {
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    let io: IntersectionObserver | null = null;
+    const t = window.setTimeout(() => {
+      const items = Array.from(document.querySelectorAll<HTMLElement>(REVEAL));
+      io = new IntersectionObserver(
+        (entries) => {
+          entries.forEach((e) => {
+            if (!e.isIntersecting) return;
+            e.target.classList.add("rv-in");
+            io?.unobserve(e.target);
+          });
+        },
+        { threshold: 0.08, rootMargin: "0px 0px -6% 0px" },
+      );
+      items.forEach((el) => {
+        if (el.classList.contains("rv")) return;
+        const sibs = el.parentElement ? Array.from(el.parentElement.children) : [];
+        const i = Math.min(sibs.indexOf(el), 5);
+        el.style.setProperty("--rv-delay", `${Math.max(i, 0) * 70}ms`);
+        el.classList.add("rv");
+        io!.observe(el);
+      });
+    }, 60);
+    return () => {
+      window.clearTimeout(t);
+      io?.disconnect();
+    };
+  }, [key]);
+}
+
 export function App() {
   const { pathname, search } = useLocation();
 
   useEffect(() => {
     window.scrollTo(0, 0);
   }, [pathname]);
+
+  useReveal(pathname);
 
   useEffect(() => {
     countView(pathname);

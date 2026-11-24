@@ -114,15 +114,16 @@ export function CaseStudy() {
       <Nav />
       <main>
         <header className="ds-hero">
+          <p className="ds-hero__eyebrow">Case study · noon</p>
           <h1 className="ds-hero__title">
             Removing
             <br />
             the detours
           </h1>
           <p className="ds-hero__lede">
-            Agents built workarounds: extra tabs, personal notes, paraphrase tools. Team leads
-            could see problems but couldn’t act on them. I redesigned Pulse so the detours
-            aren’t needed.
+            <strong>Agents built workarounds: extra tabs, personal notes, paraphrase tools.</strong>{" "}
+            Team leads could see problems but couldn’t act on them. I redesigned Pulse so the
+            detours aren’t needed.
           </p>
           <dl className="ds-meta">
             <div>
@@ -166,7 +167,7 @@ export function CaseStudy() {
           <p className="ds-stats__label">Results</p>
           <div>
             <p>20%</p>
-            <span>lower average handling time in the first 6 months (per PM)</span>
+            <span>lower average handling time in the first 6 months</span>
           </div>
           <div>
             <p>200+</p>
@@ -404,13 +405,10 @@ export function CaseStudy() {
         <Section label="Outcome">
           <p className="ds-outcome__big">
             <b>20%</b> lower average handling time in the first 6 months, with no other workflow
-            changes (per PM).
+            changes.
           </p>
           <p className="ds-outcome__line">
             AI is the default path for agents, and team leads see breaches as they happen.
-          </p>
-          <p className="ds-outcome__next">
-            Next time: track tab switching and AI-draft edits, to see which decision did the work.
           </p>
         </Section>
 

@@ -4,17 +4,23 @@ export const work = [
   {
     name: "Pulse",
     to: "/work/pulse",
-    description: "Product design for one of the Middle East's largest online shopping platforms.",
+    description: "An AI-first chat workspace and live dashboard for noon’s support team, used by 200+ agents.",
+    status: "Shipped",
+    tone: "shipped",
   },
   {
     name: "Echo",
     to: "/work/echo",
-    description: "I owned the design of Echo, noon’s internal CRM built to replace Zoho.",
+    description: "noon’s internal CRM.",
+    status: "In development",
+    tone: "progress",
   },
   {
     name: "AI Analyst",
     to: "/work/analyst",
-    description: "A chatbot for customer support analytics, vibe coded.",
+    description: "Designed and built through Cursor: a customer support analytics chatbot.",
+    status: "Built in code",
+    tone: "code",
   },
 ];
 
@@ -31,7 +37,10 @@ export function WorkList({ heading = "Selected work" }: { heading?: string }) {
             <Link to={item.to}>
               <span className="work-list__n">{String(i + 1).padStart(2, "0")}</span>
               <span className="work-list__name">{item.name}</span>
-              <span className="work-list__meta">{item.description}</span>
+              <span className="work-list__meta">
+                {item.description}
+                <span className={`work-chip work-chip--${item.tone}`}>{item.status}</span>
+              </span>
               <span className="work-list__arrow" aria-hidden="true">
                 →
               </span>

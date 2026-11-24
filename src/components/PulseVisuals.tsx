@@ -365,48 +365,33 @@ export function VipQueue() {
   );
 }
 
-/* ---------- Detour map: one chat, before and after ---------- */
-type Step = { label: string; out?: { title: string; tools: string[] } };
-
-const BEFORE: Step[] = [
-  { label: "Chat opens" },
-  { label: "Needs order and complaint history", out: { title: "Leaves the chat", tools: ["Zoho", "Order-tracking tool", "Personal notes"] } },
-  { label: "Back in the chat" },
-  { label: "Writes a reply", out: { title: "Leaves again", tools: ["Saved-replies notebook", "Paraphrase tool"] } },
-  { label: "Sends" },
+/* ---------- Journey map: one chat, before and after ---------- */
+const STAGES = [
+  {
+    stage: "Open the chat",
+    before: { text: "Chat opens with no context" },
+    pain: "",
+    after: "An AI summary opens with the chat",
+  },
+  {
+    stage: "Find context",
+    before: { text: "Leaves the chat", tools: ["Zoho", "Order-tracking tool", "Personal notes"] },
+    pain: "4 of 6 had no order or complaint history in the chat. What was on screen wasn’t findable.",
+    after: "Order and history sit in the side panel",
+  },
+  {
+    stage: "Write the reply",
+    before: { text: "Leaves again", tools: ["Saved-replies notebook", "Paraphrase tool"] },
+    pain: "Fixing an AI draft took longer than pasting a saved reply.",
+    after: "AI drafts the reply, the agent edits it",
+  },
+  {
+    stage: "Send",
+    before: { text: "Sends" },
+    pain: "Slower replies, repeated questions, SLA risk.",
+    after: "Sends without leaving the chat",
+  },
 ];
-
-const AFTER: Step[] = [
-  { label: "Chat opens" },
-  { label: "Reads the AI summary" },
-  { label: "Checks history in the panel" },
-  { label: "Edits the AI draft" },
-  { label: "Sends" },
-];
-
-function Row({ tag, steps, kind }: { tag: string; steps: Step[]; kind: "before" | "after" }) {
-  return (
-    <div className={`dm-row dm-row--${kind}`}>
-      <span className="dm-tag">{tag}</span>
-      <ol className="dm-steps" style={{ ["--n" as string]: steps.length }}>
-        {steps.map((s, i) => (
-          <li key={s.label} className={s.out ? "dm-step has-out" : "dm-step"} style={{ ["--i" as string]: i }}>
-            {s.out ? (
-              <div className="dm-out">
-                <em>{s.out.title}</em>
-                {s.out.tools.map((t) => (
-                  <span key={t}>{t}</span>
-                ))}
-              </div>
-            ) : null}
-            <i className="dm-dot" aria-hidden="true" />
-            <span className="dm-label">{s.label}</span>
-          </li>
-        ))}
-      </ol>
-    </div>
-  );
-}
 
 export function DetourMap() {
   const ref = useRef<HTMLElement>(null);
@@ -425,16 +410,58 @@ export function DetourMap() {
           io.disconnect();
         }
       },
-      { threshold: 0.35 },
+      { threshold: 0.3 },
     );
     io.observe(el);
     return () => io.disconnect();
   }, []);
+
   return (
-    <figure ref={ref} className={inView ? "dm is-in" : "dm"}>
-      <Row tag="Before" steps={BEFORE} kind="before" />
-      <Row tag="After" steps={AFTER} kind="after" />
-      <figcaption>One chat, before and after. The redesign keeps the agent inside the chat.</figcaption>
+    <figure ref={ref} className={inView ? "jm is-in" : "jm"}>
+      <header className="jm-head">
+        <h4>An agent’s journey through one chat</h4>
+        <p>Before and after the redesign</p>
+      </header>
+      <div className="jm-grid" role="table" aria-label="Agent journey, before and after">
+        <div className="jm-rowlabel jm-rowlabel--stage" role="rowheader">Stage</div>
+        {STAGES.map((s, i) => (
+          <div key={s.stage} className="jm-stage" role="columnheader" style={{ ["--i" as string]: i }}>
+            <span>0{i + 1}</span>
+            {s.stage}
+          </div>
+        ))}
+
+        <div className="jm-rowlabel" role="rowheader">Before</div>
+        {STAGES.map((s, i) => (
+          <div key={s.stage} className={s.before.tools ? "jm-cell jm-before is-out" : "jm-cell jm-before"} role="cell" style={{ ["--i" as string]: i }}>
+            <i className="jm-dot" aria-hidden="true" />
+            <p>{s.before.text}</p>
+            {s.before.tools ? (
+              <div className="jm-tools">
+                {s.before.tools.map((t) => (
+                  <span key={t}>{t}</span>
+                ))}
+              </div>
+            ) : null}
+          </div>
+        ))}
+
+        <div className="jm-rowlabel jm-rowlabel--pain" role="rowheader">Pain point</div>
+        {STAGES.map((s, i) => (
+          <div key={s.stage} className="jm-cell jm-pain" role="cell" style={{ ["--i" as string]: i }}>
+            {s.pain ? <p>{s.pain}</p> : <p className="jm-none">—</p>}
+          </div>
+        ))}
+
+        <div className="jm-rowlabel jm-rowlabel--after" role="rowheader">After</div>
+        {STAGES.map((s, i) => (
+          <div key={s.stage} className="jm-cell jm-after" role="cell" style={{ ["--i" as string]: i }}>
+            <i className="jm-dot" aria-hidden="true" />
+            <p>{s.after}</p>
+          </div>
+        ))}
+      </div>
+      <figcaption>Pain points come from agent interviews and focus groups. The redesign keeps the agent inside the chat.</figcaption>
     </figure>
   );
 }
