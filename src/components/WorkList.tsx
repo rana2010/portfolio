@@ -34,9 +34,9 @@ export function WorkList({ heading = "Selected work" }: { heading?: string }) {
       <ol>
         {work.map((item, i) => (
           <li key={item.name}>
-            <Link to={item.to}>
+            <Link to={item.to} viewTransition>
               <span className="work-list__n">{String(i + 1).padStart(2, "0")}</span>
-              <span className="work-list__name">{item.name}</span>
+              <span className="work-list__name" style={{ viewTransitionName: `work-${item.to.split("/").pop()}` }}>{item.name}</span>
 <span className="work-list__meta">{item.description}</span>
               <span className="work-list__arrow" aria-hidden="true">
                 →

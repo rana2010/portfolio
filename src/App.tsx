@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useLayoutEffect } from "react";
 import { Route, Routes, useLocation } from "react-router-dom";
 import { Chat } from "./pages/Chat";
 import { Home } from "./pages/Home";
@@ -7,7 +7,7 @@ import { CaseStudy } from "./pages/CaseStudy";
 import { Echo } from "./pages/Echo";
 import { Analyst } from "./pages/Analyst";
 import { Handcrafted } from "./pages/Handcrafted";
-import { ThemeProvider } from "./components/Chrome";
+import { ThemeProvider, useTapRing } from "./components/Chrome";
 import { EditProvider } from "./components/EditContext";
 
 type GoatCounter = { count: (vars?: { path?: string }) => void };
@@ -63,7 +63,9 @@ function useReveal(key: string) {
 export function App() {
   const { pathname, search } = useLocation();
 
-  useEffect(() => {
+  useTapRing();
+
+  useLayoutEffect(() => {
     window.scrollTo(0, 0);
   }, [pathname]);
 

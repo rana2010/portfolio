@@ -1,6 +1,6 @@
 import { useEffect, type ReactNode } from "react";
-import { Compare, DetourMap, Piece, PulsePrototype, Stage, VipQueue } from "../components/PulseVisuals";
-import { Dots, Footer, Nav } from "../components/Chrome";
+import { Compare, DetourMap, Evolution, Piece, PulsePrototype, Stage, VipQueue } from "../components/PulseVisuals";
+import { Dots, Footer, Nav, ReadProgress } from "../components/Chrome";
 
 const problems = [
   { title: "Data without hierarchy", body: "The side panel listed 20+ fields at the same weight. “Is VIP: No” looked like everything else." },
@@ -112,9 +112,10 @@ export function CaseStudy() {
     <div className="page case ds-case">
       <Dots />
       <Nav />
+      <ReadProgress />
       <main>
         <header className="ds-hero">
-          <p className="ds-hero__eyebrow">Case study · noon <span className="work-chip">Shipped</span></p>
+          <p className="ds-hero__eyebrow"><span className="ds-hero__name" style={{ viewTransitionName: "work-pulse" }}>Pulse</span> · Case study · noon <span className="work-chip">Shipped</span></p>
           <h1 className="ds-hero__title">
             Removing
             <br />
@@ -251,9 +252,10 @@ export function CaseStudy() {
         </blockquote>
 
         <Section label="Process">
-          <ol className="ds-steps">
+          <ol className="ds-flow">
             {steps.map((step) => (
               <li key={step.n}>
+                <span className="ds-flow__n">{Number(step.n)}</span>
                 <h3>{step.title}</h3>
                 <p>{step.body}</p>
               </li>
@@ -363,18 +365,42 @@ export function CaseStudy() {
 
             <div className="ds-comp">
               <h4>From refresh to real time</h4>
-              <p>
-                v1 (shipped) made the screen live: queue counts, a breach banner that names the
-                breaching chats, and each agent’s load. v2 (proposed, from the team lead workflow
-                session) puts the action next to the signal: View or Assign on every alert, an
-                agents overview, and an agent drawer that ends in Message Agent. v2 stayed a
-                proposal because of engineering constraints.
-              </p>
-              <Compare
-                items={[
-                  { label: "Before", src: "/pulse/c/dash-before.webp", alt: "The MVP dashboard, refreshed by hand. Agent emails and chat codes hidden." },
-                  { label: "v1 · shipped", src: "/pulse/c/dash-v1.webp", alt: "Dashboard v1: breach banner, live counts, chats and agents" },
-                  { label: "v2 · proposed", src: "/pulse/c/dash-v2.webp", alt: "Dashboard v2: agents overview, notifications center and thresholds" },
+              <Evolution
+                note="v2 stayed a proposal because of engineering constraints."
+                steps={[
+                  {
+                    label: "Before",
+                    line: "Refreshed by hand",
+                    src: "/pulse/c/dash-before.webp",
+                    alt: "The MVP dashboard, refreshed by hand. Agent emails and chat codes hidden.",
+                    pins: [{ x: 94, y: 6, text: "Numbers only update when someone presses Refresh." }],
+                  },
+                  {
+                    label: "v1",
+                    tag: "Shipped",
+                    line: "Live counts and a breach banner",
+                    src: "/pulse/c/dash-v1.webp",
+                    alt: "Dashboard v1: breach banner, live counts, chats and agents",
+                    pins: [
+                      { x: 9, y: 15.5, text: "The breach banner names the breaching chats." },
+                      { x: 30, y: 29, text: "Queue, active and missed counts update live." },
+                      { x: 74, y: 62, text: "Each agent’s load, to see who has room." },
+                    ],
+                  },
+                  {
+                    label: "v2",
+                    tag: "Proposed",
+                    line: "The action next to every alert",
+                    src: "/pulse/c/dash-v2.webp",
+                    alt: "Dashboard v2: agents overview, notifications center and thresholds",
+                    pins: [
+                      { x: 13, y: 22, text: "Agents overview: occupied, idle, on a break." },
+                      { x: 53, y: 18, text: "Notifications center: what’s wrong, and for how long." },
+                      { x: 88, y: 29, text: "View or Assign, right next to the alert." },
+                      { x: 89, y: 6.5, text: "Thresholds decide when a chat gets flagged." },
+                      { x: 62, y: 62, text: "Load per agent, to rebalance work live." },
+                    ],
+                  },
                 ]}
               />
             </div>

@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
+import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from "react";
 import { Link, NavLink } from "react-router-dom";
 import { asset } from "../asset";
 import { DotField } from "./DotField";
@@ -84,12 +84,12 @@ export function Nav() {
   return (
     <>
       <header className={scrolled ? "site-nav is-scrolled" : "site-nav"}>
-        <Link className="site-nav__name" to="/">
+        <Link className="site-nav__name" to="/" viewTransition>
           Rana Ebrahim
         </Link>
         <nav className="site-nav__links" aria-label="Main">
-          <NavLink to="/projects">Selected work</NavLink>
-          <NavLink to="/handcrafted">Handcrafted</NavLink>
+          <NavLink to="/projects" viewTransition>Selected work</NavLink>
+          <NavLink to="/handcrafted" viewTransition>Handcrafted</NavLink>
           <button
             className="site-nav__theme"
             type="button"
@@ -134,7 +134,7 @@ export function Footer({
   if (next) {
     return (
       <footer className="site-footer site-footer--case">
-        <Link className="ds-next" to={next.to}>
+        <Link className="ds-next" to={next.to} viewTransition>
           <span className="ds-next__label">Next</span>
           <span className="ds-next__title">{next.name}</span>
         </Link>
@@ -217,4 +217,52 @@ export function BrowserFrame({
       </div>
     </div>
   );
+}
+
+
+/* Thin reading-progress line at the top of a case study */
+export function ReadProgress() {
+  const bar = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    let raf = 0;
+    const update = () => {
+      raf = 0;
+      const doc = document.documentElement;
+      const max = doc.scrollHeight - window.innerHeight;
+      const p = max > 0 ? Math.min(1, Math.max(0, window.scrollY / max)) : 0;
+      if (bar.current) bar.current.style.transform = `scaleX(${p})`;
+    };
+    const onScroll = () => {
+      if (!raf) raf = requestAnimationFrame(update);
+    };
+    update();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("resize", onScroll);
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+      window.removeEventListener("resize", onScroll);
+      if (raf) cancelAnimationFrame(raf);
+    };
+  }, []);
+  return <div className="read-progress" ref={bar} aria-hidden="true" />;
+}
+
+/* A small ring that expands from where a link or button is tapped or clicked */
+export function useTapRing() {
+  useEffect(() => {
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    const onDown = (e: PointerEvent) => {
+      const target = (e.target as Element | null)?.closest("a, button, [role='tab']");
+      if (!target || e.button > 0) return;
+      const ring = document.createElement("span");
+      ring.className = "tap-ring";
+      ring.style.left = `${e.clientX}px`;
+      ring.style.top = `${e.clientY}px`;
+      document.body.appendChild(ring);
+      ring.addEventListener("animationend", () => ring.remove(), { once: true });
+      window.setTimeout(() => ring.remove(), 900);
+    };
+    window.addEventListener("pointerdown", onDown, { passive: true });
+    return () => window.removeEventListener("pointerdown", onDown);
+  }, []);
 }
