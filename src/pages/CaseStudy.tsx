@@ -1,39 +1,28 @@
 import { useEffect, type ReactNode } from "react";
+import { Compare, Piece, PulsePrototype, Stage } from "../components/PulseVisuals";
 import { Link } from "react-router-dom";
-import { asset } from "../asset";
-import { BrowserFrame, Dots, Footer, Nav } from "../components/Chrome";
+import { Dots, Footer, Nav } from "../components/Chrome";
 
 const problems = [
   "Data without hierarchy. The MVP’s side panel listed 20+ equal fields, and “Is VIP: No” looked like the rest.",
   "Detours. Agents left for Zoho, an internal order-tracking tool and personal notes: slower replies, repeated questions, SLA risk.",
   "Passive dashboard. TLs saw numbers on a manually refreshed screen, with no way to act.",
-  "AI bypassed. The business’s core bet wasn’t being used.",
-];
-
-const insights = [
-  "Workarounds were symptoms. Notes held ticket context and saved replies the UI should have provided.",
-  "It was effort. Agents skipped AI because a saved reply was faster than fixing a long, robotic one.",
-  "TLs manage people. On a breach they contact the agent.",
+  "AI bypassed. AI replies were the business’s main bet, and agents weren’t using them.",
 ];
 
 const steps = [
   {
     n: "01",
     title: "Research → MoSCoW",
-    body: "Must: unified context panel, direct ticket access. Should: AI summary, performance dashboard, VIP tagging. Could: internal notes, translation. Won’t: an AI that replaces humans.",
+    body: "Every research finding became a card, sorted into Must, Should, Could and Won’t. The board is below.",
   },
   {
     n: "02",
-    title: "Sitemaps & key flows",
-    body: "Two role-based surfaces, one design system.",
-  },
-  {
-    n: "03",
     title: "Benchmarking",
     body: "Zendesk, Tidio, Intercom, Front and more gave options. Research decided which fit our agents.",
   },
   {
-    n: "04",
+    n: "03",
     title: "Iterating with the PM",
     body: "Every new flow sent me back to research. Even the timestamp position in Arabic bubbles got a debate.",
   },
@@ -86,46 +75,51 @@ const modules = [
   {
     title: "Conversation details panel",
     body: "Order, complaint history, VIP status and live timers beside the chat, ordered by what agents need first.",
-    src: "/pulse/panel.webp",
+    src: "/pulse/m-panel.webp",
     alt: "Conversation details in focus: customer, VIP, order, and live timers",
   },
   {
     title: "AI summary and replies",
-    body: "An AI summary opens each chat and drafts stay editable, with a Generating skeleton so the screen never waits.",
-    src: "/pulse/ai.webp",
-    alt: "AI replies turned on, with an editable draft and a generating state",
+    body: "A summary at the top of every chat, AI replies drafted in the composer, and a Generating state while it writes.",
+    src: "/pulse/m-ai.webp",
+    alt: "The chat menu with AI Replies turned on, under an AI summary",
   },
   {
     title: "VIP signals",
-    body: "A gold crown and VVIP badge on the customer, seen at the moment an agent picks the next chat.",
-    src: "/pulse/vip.webp",
+    body: "A gold crown and VVIP badge that follow the customer: in the chat list, in the chat and in the details panel.",
+    src: "/pulse/m-vip.webp",
     alt: "A VIP badge on the customer, seen while choosing the chat",
   },
   {
     title: "Team lead dashboard",
-    body: "A breach banner with inline View and Assign, an agent drawer with Message Agent, a status donut and a department filter.",
-    src: "/pulse/dashboard.webp",
+    body: "Team leads asked one question: which chat is breaching, and who do I contact? v1 (shipped) answers the first half with a live breach banner, queue counts and each agent’s load. v2 (proposed, from the team lead workflow session) answers the second: every alert carries View or Assign, and an agent drawer ends in Message Agent. v2 stayed a proposal because of engineering constraints.",
+    src: "/pulse/m-dash.webp",
     alt: "Team lead dashboard with a breach signal and Message Agent",
+    before: { src: "/pulse/mvp-dashboard.webp", alt: "The earlier realtime dashboard, refreshed by hand" },
   },
 ];
 
 const decisions = [
   {
-    constraint: "Notes existed because context and saved replies lived somewhere else.",
-    decision:
-      "Build what the workarounds were doing: a side panel with live timers and interaction history, and AI replies in the composer.",
-    tradeoff: "We left out in-chat notes, which pushed agents toward AI replies instead of their own scripts.",
+    constraint: "Context and saved replies lived outside the chat.",
+    decision: "Bring them in: a side panel with live timers and history, and AI replies in the composer.",
+    tradeoff: "No in-chat notes, so agents lean on AI replies, not their own scripts.",
   },
   {
-    constraint: "Agents skipped AI because fixing a draft cost more than pasting a saved reply.",
-    decision: "Make AI the default: a summary opens every chat and drafts stay editable, so agents review before sending.",
-    tradeoff: "A per-chat Turn off AI with a confirm step instead of a global toggle. AI stays consistent and agents keep control.",
+    constraint: "Fixing an AI draft took longer than pasting a saved reply.",
+    decision: "AI by default: a summary opens every chat, and drafts stay editable before sending.",
+    tradeoff: "Turn off AI per chat, with a confirm step, instead of a global toggle.",
   },
   {
     constraint: "A stakeholder asked for a buzzing alert on VIP chats.",
     decision:
-      "A gold crown and VVIP badge instead. A buzz interrupts mid-reply; the crown costs no attention, and aging VIP chats still pick up SLA badges.",
-    tradeoff: "Team leads lost some numbers too: CSAT, closed chats and the concurrency column were cut. If nobody acts on a metric, it goes.",
+      "A crown and VVIP badge instead. Agents juggle up to 3 chats mid-sentence; a buzz breaks the reply they are writing and adds stress. The crown is there when they pick the next chat, the moment it matters.",
+    tradeoff: "A quieter signal. Aging VIP chats still escalate with SLA badges.",
+  },
+  {
+    constraint: "Team leads saw numbers they couldn’t act on.",
+    decision: "Put the action next to the signal: live breaches in v1; View, Assign and Message Agent proposed in v2.",
+    tradeoff: "CSAT, closed chats and concurrency were cut from v1: none helped act on this screen.",
   },
 ];
 
@@ -148,13 +142,52 @@ function Section({ label, children }: { label: string; children: ReactNode }) {
   );
 }
 
-function Shot({ src, alt, caption }: { src: string; alt: string; caption?: string }) {
-  return (
-    <figure className="ds-figure">
-      <img src={asset(src)} alt={alt} loading="lazy" />
-      {caption ? <figcaption>{caption}</figcaption> : null}
-    </figure>
-  );
+function moduleVisual(title: string) {
+  if (title === "Conversation details panel") {
+    return (
+      <Stage>
+        <Piece src="/pulse/c/after-panel.webp" alt="Conversation details panel" w={300} />
+      </Stage>
+    );
+  }
+  if (title === "AI summary and replies") {
+    return (
+      <Stage className="pv-stage--ai">
+        <div className="pv-col">
+          <Piece src="/pulse/c/sum-collapsed.webp" alt="AI summary card" w={420} />
+          <Piece src="/pulse/c/ai-suggestion.webp" alt="AI suggestion" w={420} />
+          <Piece src="/pulse/c/comp-editing.webp" alt="Composer while editing an AI reply" w={420} />
+        </div>
+        <Piece className="pv-float pv-surface" src="/pulse/c/menu.webp" alt="Chat menu with AI Replies turned on" w={150} />
+      </Stage>
+    );
+  }
+  if (title === "VIP signals") {
+    return (
+      <Stage className="pv-stage--vip">
+        <Piece src="/pulse/c/panel-vip.webp" alt="Details panel for a VVIP customer" w={260} />
+        <div className="pv-col">
+          <Piece className="pv-badge pv-surface" src="/pulse/c/vvip.webp" alt="VVIP badge" w={116} />
+          <Piece className="pv-surface" src="/pulse/c/bubble-vip.webp" alt="A message from a VVIP customer" w={400} />
+        </div>
+      </Stage>
+    );
+  }
+  if (title === "Team lead dashboard") {
+    return (
+      <>
+        <Compare
+          items={[
+            { label: "Before", src: "/pulse/c/dash-before.webp", alt: "The MVP dashboard, refreshed by hand. Agent emails and chat codes hidden." },
+            { label: "v1 · shipped", src: "/pulse/c/dash-v1.webp", alt: "Dashboard v1: breach banner, live counts, chats and agents" },
+            { label: "v2 · proposed", src: "/pulse/c/dash-v2.webp", alt: "Dashboard v2: agents overview, notifications center and thresholds" },
+          ]}
+          caption="Before: refreshed by hand. v1 (shipped): live counts and a breach banner. v2 (proposed): an agents overview, a notifications center with View and Assign, and thresholds, shaped by the team lead workflow session."
+        />
+      </>
+    );
+  }
+  return null;
 }
 
 export function CaseStudy() {
@@ -209,16 +242,18 @@ export function CaseStudy() {
           </dl>
         </header>
 
-        <figure className="ds-figure ds-figure--hero">
-          <BrowserFrame
-            label="Pulse / Workspace"
-            src="/pulse/workspace.webp"
-            alt="Pulse workspace with an AI summary, the chat, and conversation details"
+        <div className="ds-hero-compare">
+          <Compare
+            items={[
+              { label: "Before", src: "/pulse/c/home-before.webp", alt: "The MVP agent inbox, light and flat. Personal data hidden." },
+              { label: "After", src: "/pulse/workspace.webp", alt: "Pulse workspace with an AI summary, the chat, and conversation details" },
+            ]}
+            caption="The agent workspace, before and after: summary, chat and customer details on one screen. Personal data hidden."
           />
-          <figcaption>The redesigned workspace: summary, chat and customer details on one screen.</figcaption>
-        </figure>
+        </div>
 
         <div className="ds-stats">
+          <p className="ds-stats__label">Results</p>
           <div>
             <p>20%</p>
             <span>lower average handling time in the first 6 months (per PM)</span>
@@ -226,14 +261,6 @@ export function CaseStudy() {
           <div>
             <p>200+</p>
             <span>agents across noon marketplaces use it daily</span>
-          </div>
-          <div>
-            <p>2</p>
-            <span>languages, Arabic right to left and English</span>
-          </div>
-          <div>
-            <p>12</p>
-            <span>months, 8 to design and ship and 4 iterating</span>
           </div>
         </div>
 
@@ -247,11 +274,14 @@ export function CaseStudy() {
               <Lead text={item} />
             </p>
           ))}
-          <div className="ds-pair">
-            <Shot src="/pulse/mvp-inbox.webp" alt="The earlier inbox, with a flat side panel of equal fields" />
-            <Shot src="/pulse/mvp-dashboard.webp" alt="The earlier realtime dashboard, refreshed by hand" />
-          </div>
-          <p className="ds-caption">Before: the MVP inbox and the hand-refreshed dashboard.</p>
+          <Compare
+            tall
+            items={[
+              { label: "Before", src: "/pulse/c/before-panel.webp", alt: "The MVP side panel: every field at the same weight. Personal data hidden." },
+              { label: "After", src: "/pulse/c/after-panel.webp", alt: "The redesigned panel: customer, context and conversation groups, with status as badges" },
+            ]}
+            caption="The side panel. Before: 20+ fields at the same weight. After: grouped by what agents check first, with status as badges. Personal data hidden."
+          />
         </Section>
 
         <Section label="Who uses it">
@@ -275,22 +305,29 @@ export function CaseStudy() {
             two focus groups in Arabic and English, a team lead workflow session, all
             synthesized in Dovetail.
           </p>
-          <div className="ds-findings">
-            <div>
-              <p>4 of 6</p>
-              <span>agents had no order or complaint history in the chat</span>
-            </div>
-            <div>
-              <p>4 of 6</p>
-              <span>kept canned replies in their own notebooks</span>
-            </div>
-          </div>
-          <p className="ds-caption">From one round of 6 agent interviews.</p>
-          {insights.map((item) => (
-            <p key={item}>
-              <Lead text={item} />
-            </p>
-          ))}
+          <ul className="ds-finds">
+            <li>
+              <b>4 of 6 agents</b>
+              <span>had no order or complaint history in the chat, so they left it to look.</span>
+            </li>
+            <li>
+              <b>Hidden in plain sight</b>
+              <span>Agents opened other tools for details already on the chat screen. It was there, just not findable.</span>
+            </li>
+            <li>
+              <b>4 of 6 agents</b>
+              <span>kept canned replies in their own notebooks. The workarounds held what the UI should have.</span>
+            </li>
+            <li>
+              <b>AI felt like effort</b>
+              <span>Fixing a long, robotic draft took longer than pasting a saved reply, so agents skipped it.</span>
+            </li>
+            <li>
+              <b>Team leads manage people</b>
+              <span>On a breach, they contact the agent, not the chat.</span>
+            </li>
+          </ul>
+          <p className="ds-caption">“4 of 6” comes from one round of 6 agent interviews.</p>
           <blockquote className="ds-quote">
             <p>
               “When a chat starts, I need to immediately see if the customer has previous
@@ -335,11 +372,6 @@ export function CaseStudy() {
             they had no reason to keep saved replies elsewhere, and we wanted them learning the
             AI replies instead of falling back on old habits. So we never built them.
           </p>
-          <Shot
-            src="/pulse/process.webp"
-            alt="Benchmark notes on Zendesk, beside the live agent workspace"
-            caption="Benchmarks gave options. Research decided which fit our agents."
-          />
         </Section>
 
         <Section label="What I designed">
@@ -349,63 +381,65 @@ export function CaseStudy() {
                 <div>
                   <h3>{m.title}</h3>
                   <p>{m.body}</p>
-                  <Shot src={m.src} alt={m.alt} />
+                  {moduleVisual(m.title)}
                 </div>
               </li>
             ))}
           </ol>
         </Section>
 
+        <Section label="Try it">
+          <PulsePrototype />
+        </Section>
+
         <Section label="Constraints and decisions">
-          <dl className="ds-decisions">
-            {decisions.map((d) => (
-              <div key={d.constraint}>
-                <dt>{d.constraint}</dt>
-                <dd>
-                  {d.decision}
-                  <span className="ds-trade">
-                    <b>Trade-off</b>
-                    {d.tradeoff}
-                  </span>
-                </dd>
-              </div>
+          <div className="ds-dgrid">
+            {decisions.map((d, i) => (
+              <article key={d.constraint}>
+                <span className="ds-dgrid__n">0{i + 1}</span>
+                <h3>{d.constraint}</h3>
+                <p>{d.decision}</p>
+                <p className="ds-dgrid__trade">
+                  <b>Trade-off</b> {d.tradeoff}
+                </p>
+              </article>
             ))}
-          </dl>
+          </div>
         </Section>
 
         <Section label="Craft">
           <p>
-            Failed send with Try again, a return-details card, right-to-left Arabic bubbles,
-            empty and skeleton states. The screens agents see on a bad day got the same care.
+            Bad days got the same care: failed sends, Arabic right to left, loading states, and a
+            palette tested for long shifts that passes WCAG AA contrast.
           </p>
-          <figure className="ds-figure">
-            <BrowserFrame
-              label="Loading state"
-              src="/pulse/loading.webp"
-              alt="Skeleton loading state of the Pulse workspace"
-            />
-          </figure>
-          <Shot
-            src="/pulse/craft.webp"
-            alt="States for the summary, composer, alerts, chat list, and message bubbles"
-          />
+          <div className="pv-craft">
+            <Stage className="pv-stage--col" caption="Bubbles: Arabic right to left, an AI reply, a failed send">
+              <Piece className="pv-surface" src="/pulse/c/bubble-ar.webp" alt="Arabic message, right to left" w={330} />
+              <Piece className="pv-surface" src="/pulse/c/bubble-ai.webp" alt="AI-drafted reply" w={330} />
+              <Piece className="pv-surface" src="/pulse/c/bubble-failed.webp" alt="Failed send with Try again" w={330} />
+            </Stage>
+            <Stage className="pv-stage--col" caption="AI summary: loading, short, expanded">
+              <Piece src="/pulse/c/sum-loading.webp" alt="AI summary loading" w={330} />
+              <Piece src="/pulse/c/sum-collapsed.webp" alt="AI summary, short" w={330} />
+              <Piece src="/pulse/c/sum-expanded.webp" alt="AI summary, expanded" w={330} />
+            </Stage>
+            <Stage className="pv-stage--col" caption="Composer: empty, generating, editing a draft">
+              <Piece src="/pulse/c/comp-empty.webp" alt="Composer, empty" w={330} />
+              <Piece src="/pulse/c/comp-generating.webp" alt="Composer, generating a reply" w={330} />
+              <Piece src="/pulse/c/comp-editing.webp" alt="Composer, editing an AI draft" w={330} />
+            </Stage>
+          </div>
         </Section>
 
         <Section label="Outcome">
-          <p>
-            <strong>
-              Average handling time dropped 20% in the first 6 months after agents onboarded,
-              with no other workflow changes (per PM).
-            </strong>
-          </p>
-          <p>
-            AI is now the default path for agents, and every alert on the team lead dashboard
-            ends in one action.
-          </p>
+          <ul className="ds-outcome">
+            <li><b>20%</b><span>lower average handling time in the first 6 months, with no other workflow changes (per PM)</span></li>
+            <li><b>AI first</b><span>AI is the default path for agents</span></li>
+            <li><b>Live</b><span>team leads see breaches as they happen, not on refresh</span></li>
+          </ul>
           <p className="ds-trade">
             <b>Next time</b>
-            That 20% is one number for the whole redesign. I would track tab switching and how
-            often agents edit AI drafts, to see which decisions did the work.
+            Track tab switching and AI-draft edits, to see which decision did the work.
           </p>
         </Section>
 

@@ -10,12 +10,29 @@ import { Handcrafted } from "./pages/Handcrafted";
 import { ThemeProvider } from "./components/Chrome";
 import { EditProvider } from "./components/EditContext";
 
+type GoatCounter = { count: (vars?: { path?: string }) => void };
+
+// Count each page view in this single-page app (GoatCounter only counts the first load on its own).
+function countView(path: string) {
+  let tries = 0;
+  const send = () => {
+    const gc = (window as Window & { goatcounter?: GoatCounter }).goatcounter;
+    if (gc?.count) gc.count({ path });
+    else if (tries++ < 20) window.setTimeout(send, 250);
+  };
+  send();
+}
+
 export function App() {
-  const { pathname } = useLocation();
+  const { pathname, search } = useLocation();
 
   useEffect(() => {
     window.scrollTo(0, 0);
   }, [pathname]);
+
+  useEffect(() => {
+    countView(pathname);
+  }, [pathname, search]);
 
   return (
     <EditProvider>

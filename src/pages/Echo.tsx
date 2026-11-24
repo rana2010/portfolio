@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { asset } from "../asset";
 import { Dots, Footer, Nav } from "../components/Chrome";
-import { Editable, useEdit } from "../components/EditContext";
+import { Editable } from "../components/EditContext";
 
 const glance = [
   ["role", "Role", "Product Designer, owning Echo's design end to end"],
@@ -56,7 +56,6 @@ function Figure({
 }
 
 export function Echo() {
-  const { editing, toggleEdit } = useEdit();
 
   useEffect(() => {
     document.title = "Echo · Rana Ebrahim";
@@ -253,14 +252,6 @@ export function Echo() {
           </section>
         </main>
         <Footer next={{ name: "AI Analyst", to: "/work/analyst" }} />
-        <button
-          type="button"
-          className={editing ? "edit-toggle is-on" : "edit-toggle"}
-          aria-pressed={editing}
-          onClick={toggleEdit}
-        >
-          {editing ? "Done" : "Edit"}
-        </button>
       </div>
     );
   }
