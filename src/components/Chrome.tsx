@@ -104,6 +104,85 @@ export function CairoTime() {
 
 const DROP_KEY = "chat-dropped";
 
+type Frame = { t: number; x: number; y: number; sx?: number; sy?: number };
+const UP = "cubic-bezier(0, 0.55, 0.45, 1)";
+const DOWN = "cubic-bezier(0.55, 0, 1, 0.45)";
+
+/* The chat button falls, bounces, hops along the bottom of the screen, comes back and settles.
+   Each landing sends a ripple along the "floor". Returns a cleanup function. */
+function bounceIn(el: HTMLElement, onSettled: () => void, onDone: () => void) {
+  const H = Math.round(window.innerHeight * 0.85);
+  const W = Math.min(300, Math.round(window.innerWidth * 0.5));
+  const f: Frame[] = [
+    { t: 0, x: 0, y: -H },
+    { t: 560, x: 0, y: 0, sx: 1.16, sy: 0.82 },
+    { t: 620, x: 0, y: -6, sx: 0.94, sy: 1.06 },
+    { t: 860, x: 0, y: -80 },
+    { t: 1080, x: 0, y: 0, sx: 1.1, sy: 0.9 },
+    // hop left along the floor
+    { t: 1290, x: -W * 0.17, y: -58, sx: 0.96, sy: 1.05 },
+    { t: 1480, x: -W * 0.34, y: 0, sx: 1.1, sy: 0.9 },
+    { t: 1670, x: -W * 0.52, y: -48, sx: 0.96, sy: 1.05 },
+    { t: 1850, x: -W * 0.7, y: 0, sx: 1.08, sy: 0.92 },
+    { t: 2020, x: -W * 0.85, y: -34, sx: 0.97, sy: 1.04 },
+    { t: 2180, x: -W, y: 0, sx: 1.08, sy: 0.92 },
+    // and back home
+    { t: 2400, x: -W * 0.66, y: -52, sx: 0.96, sy: 1.05 },
+    { t: 2620, x: -W * 0.33, y: 0, sx: 1.08, sy: 0.92 },
+    { t: 2820, x: -W * 0.15, y: -36, sx: 0.97, sy: 1.04 },
+    { t: 3000, x: 0, y: 0, sx: 1.06, sy: 0.94 },
+    { t: 3120, x: 0, y: -10 },
+    { t: 3240, x: 0, y: 0, sx: 1.02, sy: 0.98 },
+    { t: 3340, x: 0, y: 0 },
+  ];
+  const total = f[f.length - 1].t;
+  const kf = f.map((p, i) => {
+    const next = f[i + 1];
+    const easing = next ? (next.y < p.y ? UP : DOWN) : "linear";
+    return { offset: p.t / total, transform: `translate(${p.x}px, ${p.y}px) scale(${p.sx ?? 1}, ${p.sy ?? 1})`, easing };
+  });
+  el.style.opacity = "1";
+  const ball = el.animate(kf, { duration: total, fill: "both" });
+
+  // a soft shadow on the floor that follows the ball and shrinks as it rises
+  const shadow = document.createElement("span");
+  shadow.className = "chat-shadow";
+  document.body.appendChild(shadow);
+  const r = el.getBoundingClientRect();
+  shadow.style.left = `${r.left + r.width / 2}px`;
+  shadow.style.top = `${r.bottom}px`;
+  const skf = f.map((p) => {
+    const k = Math.max(0, 1 - Math.min(1, -p.y / 160));
+    return { offset: p.t / total, transform: `translate(calc(-50% + ${p.x}px), -50%) scale(${0.5 + k * 0.5})`, opacity: k * 0.9 };
+  });
+  const shade = shadow.animate(skf, { duration: total, fill: "both" });
+
+  // ripples along the bottom of the screen at each landing
+  const timers: number[] = [];
+  f.forEach((p) => {
+    if (p.y !== 0 || !p.sx || p.sx < 1.05) return;
+    timers.push(
+      window.setTimeout(() => {
+        const ring = document.createElement("span");
+        ring.className = "floor-ripple";
+        ring.style.left = `${r.left + r.width / 2 + p.x}px`;
+        ring.style.top = `${r.bottom}px`;
+        document.body.appendChild(ring);
+        window.setTimeout(() => ring.remove(), 900);
+      }, p.t),
+    );
+  });
+  timers.push(window.setTimeout(onSettled, total + 80));
+  timers.push(window.setTimeout(onDone, total + 5200));
+  return () => {
+    timers.forEach((t) => window.clearTimeout(t));
+    ball.cancel();
+    shade.cancel();
+    shadow.remove();
+    el.style.opacity = "";
+  };
+}
+
 export function Nav() {
   const { theme, toggle } = useTheme();
   const [chat, setChat] = useState<"wait" | "drop" | "idle">(() => {
@@ -123,10 +202,24 @@ export function Nav() {
     }, 6000);
     return () => window.clearTimeout(t);
   }, [chat]);
+  const mark = useRef<HTMLAnchorElement>(null);
+  const [tip, setTip] = useState(false);
   useEffect(() => {
     if (chat !== "drop") return;
-    const t = window.setTimeout(() => setChat("idle"), 7500);
-    return () => window.clearTimeout(t);
+    const el = mark.current;
+    if (!el) return;
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      setTip(true);
+      const t = window.setTimeout(() => {
+        setTip(false);
+        setChat("idle");
+      }, 5000);
+      return () => window.clearTimeout(t);
+    }
+    return bounceIn(el, () => setTip(true), () => {
+      setTip(false);
+      setChat("idle");
+    });
   }, [chat]);
   const [scrolled, setScrolled] = useState(false);
 
@@ -158,7 +251,7 @@ export function Nav() {
           </button>
         </nav>
       </header>
-      <Link className={`chat-mark is-${chat}`} to="/chat" aria-label="Ask me about my work: my AI bot">
+      <Link ref={mark} className={`chat-mark is-${chat}${tip ? " tip-on" : ""}`} to="/chat" aria-label="Ask me about my work: my AI bot">
         <svg className="chat-mark__icon" viewBox="0 0 24 24" aria-hidden="true">
           <path className="chat-mark__star" d="M11 2.5c.7 5.1 2.4 6.8 7.5 7.5-5.1.7-6.8 2.4-7.5 7.5-.7-5.1-2.4-6.8-7.5-7.5 5.1-.7 6.8-2.4 7.5-7.5Z" />
           <path className="chat-mark__star chat-mark__star--sm" d="M18.5 15.5c.3 2 1 2.7 3 3-2 .3-2.7 1-3 3-.3-2-1-2.7-3-3 2-.3 2.7-1 3-3Z" />
