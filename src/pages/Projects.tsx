@@ -17,7 +17,7 @@ export function Projects() {
           <br />
           work
         </h1>
-        <WorkList heading="Projects" />
+        <WorkList heading="Case studies" />
       </main>
       <Footer />
     </div>

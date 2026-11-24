@@ -21,8 +21,9 @@ export function App() {
     <EditProvider>
       <ThemeProvider>
         <Routes>
-          <Route path="/" element={<Chat />} />
+          <Route path="/" element={<Home />} />
           <Route path="/home" element={<Home />} />
+          <Route path="/chat" element={<Chat />} />
           <Route path="/projects" element={<Projects />} />
           <Route path="/handcrafted" element={<Handcrafted />} />
           <Route path="/work/pulse" element={<CaseStudy />} />

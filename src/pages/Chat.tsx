@@ -17,13 +17,13 @@ const DEFAULTS: Record<string, string> = {
     "Hola! Try out my AI bot. I’m Rana—an MVP version while I finish building my full assistant. Ask me about my work, my creative process, or why we should work together!",
   hire: "Aside from being genuinely fun to have around, I bring about 3 years designing products at noon, Fawry and Promolinks. I like to dig deep in user behavior and what can make their journey better while also achieving business needs. Yes, I use AI gracefully.",
   projects:
-    "At noon I was the only designer in the customer support tech squad. My biggest project is Pulse, an AI support workspace used by 200+ agents; AHT dropped 20% after launch (per PM). I also designed the QA Center, Echo (our CRM replacing Zoho) and AI Analyst, which I vibe-coded. Check out my projects tab for more.",
+    "At noon I was the only designer in the customer support tech squad. My biggest project is Pulse, an AI support workspace used by 200+ agents; AHT dropped 20% after launch (per PM). I also designed the QA Center, Echo (our CRM replacing Zoho) and AI Analyst, which I vibe-coded. Check out Selected work for more.",
   design:
     "I start with understanding the problem. The first brief with the PM is valuable in my process. Then I benchmark the market, dig into user behavior through research, and move into wireframing and design — all through collaboration with PMs.",
-  chat: "Hey there! Skip the bot and message me on LinkedIn or email me directly.",
+  chat: "Skip the bot and let’s chat in person, on LinkedIn or email.",
   relocate:
     "Yes! I’m currently based in Cairo and completely open to relocating, especially to Europe or joining remote product teams.",
-  open: "I’m actively interviewing right now and open to full-time product design roles or select remote teams. Message me on LinkedIn or email and let’s talk!",
+  open: "I’m open to full-time product design roles or select remote teams. Message me on LinkedIn or email and let’s talk!",
 };
 
 const FIELDS = [
@@ -158,7 +158,7 @@ export function Chat() {
       <ol className="chat-log" ref={logRef} aria-busy={typing}>
         {messages.map((message) => (
           <li key={message.id} className={message.from === "you" ? "chat-msg is-you" : "chat-msg"}>
-            {message.from === "rana" ? <img src={asset("/images/rana.webp")} alt="" /> : null}
+            {message.from === "rana" ? <img src={asset("/images/rana-headshot.webp")} alt="" /> : null}
             <div className="chat-body">
               <p>{message.from === "rana" ? withLinks(message.text) : message.text}</p>
               <time dateTime={new Date(message.at).toISOString()}>{formatTime(message.at)}</time>
@@ -167,7 +167,7 @@ export function Chat() {
         ))}
         {typing ? (
           <li className="chat-msg is-typing">
-            <img src={asset("/images/rana.webp")} alt="" />
+            <img src={asset("/images/rana-headshot.webp")} alt="" />
             <div className="chat-body">
               <p className="chat-typing" aria-label="Rana is typing">
                 <i />
@@ -249,7 +249,7 @@ export function Chat() {
       <main className="chat">
         <div className="chat-head">
           <div className="chat-tools">
-            <Link className="chat-name-ds" to="/home">
+            <Link className="chat-name-ds" to="/">
               Rana Ebrahim
             </Link>
             <span className="chat-v">my bot.v1</span>
@@ -264,15 +264,12 @@ export function Chat() {
               </button>
             ) : null}
           </div>
-          <Link className="chat-exit u-link" to="/home">
+          <Link className="chat-exit u-link" to="/">
             Go to portfolio →
           </Link>
         </div>
         {empty && !editing ? (
           <section className="bot-empty">
-            <div className="bot-avatar" aria-hidden="true">
-              <img src={asset("/images/rana.webp")} alt="" />
-            </div>
             <h1 className="bot-empty__title">Hola, I’m Rana.</h1>
             <p className="bot-empty__sub">Ask me about my work, how I design, or why we should work together.</p>
             {composer}

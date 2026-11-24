@@ -84,11 +84,11 @@ export function Nav() {
   return (
     <>
       <header className={scrolled ? "site-nav is-scrolled" : "site-nav"}>
-        <Link className="site-nav__name" to="/home">
+        <Link className="site-nav__name" to="/">
           Rana Ebrahim
         </Link>
         <nav className="site-nav__links" aria-label="Main">
-          <NavLink to="/projects">Projects</NavLink>
+          <NavLink to="/projects">Selected work</NavLink>
           <NavLink to="/handcrafted">Handcrafted</NavLink>
           <button
             className="site-nav__theme"
@@ -100,11 +100,10 @@ export function Nav() {
           </button>
         </nav>
       </header>
-      <Link className="chat-mark" to="/" aria-label="Talk to Rana">
-        <svg viewBox="0 0 24 24" aria-hidden="true">
-          <circle cx="12" cy="10" r="6" fill="currentColor" />
-          <path fill="currentColor" d="M8.1 14.7 5.4 19.6 12.2 15.5Z" />
-        </svg>
+      <Link className="chat-mark" to="/chat" aria-label="Ask my AI bot">
+        <img className="chat-mark__img" src={asset("/images/rana-headshot.webp")} alt="" />
+        <i className="chat-mark__live" aria-hidden="true" />
+        <span className="chat-mark__tip" aria-hidden="true">Ask my AI bot</span>
       </Link>
     </>
   );
