@@ -114,7 +114,7 @@ export function CaseStudy() {
       <Nav />
       <main>
         <header className="ds-hero">
-          <p className="ds-hero__eyebrow">Case study · noon</p>
+          <p className="ds-hero__eyebrow">Case study · noon <span className="work-chip">Shipped</span></p>
           <h1 className="ds-hero__title">
             Removing
             <br />

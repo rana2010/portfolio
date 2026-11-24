@@ -627,13 +627,37 @@ export function DotField({
     };
     const onPointerUp = (event: PointerEvent) => {
       pointer.down = false;
-      if (event.pointerType !== "mouse") pointer.inside = false;
+      // touch is handled by the touch listeners below, so the dots keep following a scrolling finger
+      if (event.pointerType === "pen") pointer.inside = false;
       wake();
+    };
+    let touchTimer = 0;
+    const onTouchMove = (event: TouchEvent) => {
+      const t = event.touches[0];
+      if (!t) return;
+      const rect = container.getBoundingClientRect();
+      pointer.x = t.clientX - rect.left;
+      pointer.y = t.clientY - rect.top;
+      pointer.inside = true;
+      window.clearTimeout(touchTimer);
+      wake();
+    };
+    const onTouchEnd = () => {
+      window.clearTimeout(touchTimer);
+      touchTimer = window.setTimeout(() => {
+        pointer.inside = false;
+        pointer.down = false;
+        wake();
+      }, 350);
     };
     window.addEventListener("pointermove", onPointerMove, { passive: true });
     window.addEventListener("pointerdown", onPointerDown, { passive: true });
     window.addEventListener("pointerup", onPointerUp, { passive: true });
     window.addEventListener("pointercancel", onPointerUp, { passive: true });
+    window.addEventListener("touchstart", onTouchMove, { passive: true });
+    window.addEventListener("touchmove", onTouchMove, { passive: true });
+    window.addEventListener("touchend", onTouchEnd, { passive: true });
+    window.addEventListener("touchcancel", onTouchEnd, { passive: true });
     document.documentElement.addEventListener("pointerleave", onLeave);
 
     const onLost = (event: Event) => {
@@ -673,6 +697,11 @@ export function DotField({
       resizeObserver.disconnect();
       intersection.disconnect();
       window.removeEventListener("pointermove", onPointerMove);
+      window.removeEventListener("touchstart", onTouchMove);
+      window.removeEventListener("touchmove", onTouchMove);
+      window.removeEventListener("touchend", onTouchEnd);
+      window.removeEventListener("touchcancel", onTouchEnd);
+      window.clearTimeout(touchTimer);
       window.removeEventListener("pointerdown", onPointerDown);
       window.removeEventListener("pointerup", onPointerUp);
       window.removeEventListener("pointercancel", onPointerUp);

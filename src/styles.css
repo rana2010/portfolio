@@ -5688,3 +5688,17 @@ a, button { -webkit-tap-highlight-color: transparent; }
 @media (max-width: 760px) { .work-list__meta { align-items: flex-start; } }
 .work-chip { padding: 3px 10px; gap: 0; }
 .work-chip::before { display: none; }
+.ds-hero__eyebrow { display: flex; align-items: center; gap: 12px; }
+.work-list__meta { display: block; }
+
+/* v0.8.2: tablet fixes */
+/* portrait tablets: the hero no longer fills the whole tall screen with empty space */
+@media (min-width: 600px) and (max-width: 1100px) and (orientation: portrait) {
+  .home-hero { min-height: 0; height: auto; padding-top: 22vh; padding-bottom: var(--space-8); }
+  .home-hero__title { font-size: clamp(56px, 8.4vw, 88px); line-height: 0.98; }
+  .home-hero__sub { font-size: 22px; }
+}
+/* nav stays readable over content when scrolled */
+.site-nav.is-scrolled { -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); background: color-mix(in srgb, var(--bg) 82%, transparent); }
+/* tablet work list: description uses the full width under the name */
+@media (min-width: 641px) and (max-width: 1100px) { .work-list__meta { max-width: 560px; } }

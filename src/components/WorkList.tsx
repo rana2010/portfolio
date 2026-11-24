@@ -37,10 +37,7 @@ export function WorkList({ heading = "Selected work" }: { heading?: string }) {
             <Link to={item.to}>
               <span className="work-list__n">{String(i + 1).padStart(2, "0")}</span>
               <span className="work-list__name">{item.name}</span>
-              <span className="work-list__meta">
-                {item.description}
-                <span className={`work-chip work-chip--${item.tone}`}>{item.status}</span>
-              </span>
+<span className="work-list__meta">{item.description}</span>
               <span className="work-list__arrow" aria-hidden="true">
                 →
               </span>
