@@ -6160,3 +6160,22 @@ html.vt-theme .work-list__name, html.vt-theme .ds-hero__name, html.vt-theme .ana
   font: inherit; color: inherit; letter-spacing: inherit; line-height: inherit;
 }
 .count-up { font-variant-numeric: tabular-nums; white-space: nowrap; }
+
+/* v1.2.8 · phone sizing (iPhone 13 Pro Max is 428px wide): calmer type and tighter rhythm */
+@media (max-width: 480px) {
+  .home-hero { min-height: 78svh; }
+  .home-hero__title { font-size: 40px; line-height: 42px; }
+  .home-hero__title em { white-space: nowrap; } /* never split "research-backed" across lines */
+  .home-hero__sub { font-size: 18px; line-height: 24px; }
+  .home-about__big { font-size: 22px; line-height: 30px; }
+  .ds-hero__title { font-size: 40px; line-height: 42px; }
+  .ds-hero__lede { font-size: 17px; line-height: 26px; }
+  .ds-section { padding-top: 40px; padding-bottom: 56px; }
+  .ds-stats, .ds-case .ds-stats { margin-top: 32px; padding-top: 40px; padding-bottom: 56px; row-gap: var(--space-4); }
+  .ds-stats p, .ds-case .ds-stats > div p { font-size: 36px; line-height: 40px; }
+  .ds-statement { font-size: 28px; line-height: 34px; padding-bottom: 56px; }
+  .ds-next { padding-top: 40px; padding-bottom: 80px; }
+  .ds-next__title { font-size: 40px; line-height: 44px; }
+  .site-footer { padding-top: 48px; }
+  .hi__big { font-size: 44px; line-height: 1; }
+}
