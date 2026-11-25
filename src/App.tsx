@@ -14,6 +14,11 @@ type GoatCounter = { count: (vars?: { path?: string }) => void };
 
 // Count each page view in this single-page app (GoatCounter only counts the first load on its own).
 function countView(path: string) {
+  try {
+    if (localStorage.getItem("skipgc") === "t") return; // this browser opted out via #toggle-goatcounter
+  } catch {
+    /* storage blocked: count as usual */
+  }
   let tries = 0;
   const send = () => {
     const gc = (window as Window & { goatcounter?: GoatCounter }).goatcounter;

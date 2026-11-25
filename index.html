@@ -32,6 +32,21 @@
     </script>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
+    <script>
+      // Visit any page with #toggle-goatcounter to stop (or restart) counting this browser.
+      // Handled here because GoatCounter skips it in manual (no_onload) mode.
+      try {
+        if (location.hash === "#toggle-goatcounter") {
+          var off = localStorage.getItem("skipgc") === "t";
+          if (off) localStorage.removeItem("skipgc");
+          else localStorage.setItem("skipgc", "t");
+          history.replaceState(null, "", location.pathname + location.search);
+          setTimeout(function () {
+            alert(off ? "GoatCounter will count this browser again." : "Done. GoatCounter will no longer count this browser.");
+          }, 300);
+        }
+      } catch (e) {}
+    </script>
     <script data-goatcounter="https://ranaebrahim.goatcounter.com/count"
       data-goatcounter-settings='{"no_onload": true}'
       async src="//gc.zgo.at/count.js"></script>
