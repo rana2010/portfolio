@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from "react";
-import { Link, NavLink } from "react-router-dom";
+import { Link, NavLink, useLocation } from "react-router-dom";
 import { flushSync } from "react-dom";
 import { asset } from "../asset";
 import { DotField } from "./DotField";
@@ -635,11 +635,14 @@ export function Nav() {
       setChat("idle");
     });
   }, [chat]);
+  // the end-of-page ball routine plays on the home page only
+  const { pathname } = useLocation();
+  const onHome = pathname === "/" || pathname === "/home";
   useEffect(() => {
-    if (chat !== "idle" || !mark.current) return;
+    if (chat !== "idle" || !mark.current || !onHome) return;
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
     return playBall(mark.current);
-  }, [chat]);
+  }, [chat, onHome]);
   const [scrolled, setScrolled] = useState(false);
 
   useEffect(() => {

@@ -8,7 +8,6 @@ import { Analyst } from "./pages/Analyst";
 import { Handcrafted } from "./pages/Handcrafted";
 import { ThemeProvider, useTapRing } from "./components/Chrome";
 import { EditProvider } from "./components/EditContext";
-import { ExploreToast } from "./components/Motion";
 
 type GoatCounter = { count: (vars?: { path?: string }) => void };
 
@@ -95,7 +94,6 @@ export function App() {
           <Route path="/work/echo" element={<Echo />} />
           <Route path="/work/analyst" element={<Analyst />} />
         </Routes>
-        <ExploreToast />
       </ThemeProvider>
     </EditProvider>
   );

@@ -5942,7 +5942,7 @@ html.vt-theme .work-list__name, html.vt-theme .ds-hero__name, html.vt-theme .ana
 .site-footer__meta { display: flex; flex-wrap: wrap; gap: 6px 20px; }
 .site-footer__base .site-footer__time { order: 0; width: auto; }
 
-/* v1.0.9 · scroll-filled text, count-up numbers, case-study progress toast */
+/* v1.0.9 · scroll-filled text, count-up numbers */
 .scroll-fill { --p: 0; }
 .scroll-fill > span {
   opacity: clamp(0.16, calc(var(--p) * (var(--n) + 3) - var(--i)), 1);
@@ -5950,41 +5950,6 @@ html.vt-theme .work-list__name, html.vt-theme .ds-hero__name, html.vt-theme .ana
 }
 .count-up { font-variant-numeric: tabular-nums; }
 
-.explore-toast {
-  position: fixed; left: 22px; bottom: 22px; z-index: 30;
-  display: flex; align-items: center; gap: 12px;
-  max-width: calc(100vw - 110px);
-  padding: 10px 10px 10px 14px; border-radius: 999px;
-  background: color-mix(in srgb, var(--surface) 82%, transparent);
-  border: 1px solid var(--line);
-  backdrop-filter: blur(14px) saturate(1.2); -webkit-backdrop-filter: blur(14px) saturate(1.2);
-  box-shadow: 0 10px 30px rgba(0,0,0,0.10);
-  color: var(--ink-2); font-size: 13px; line-height: 18px;
-  animation: toast-in 600ms var(--ease-expo) both;
-}
-.explore-toast.is-out { animation: toast-out 500ms var(--ease-expo) both; pointer-events: none; }
-@keyframes toast-in { from { opacity: 0; transform: translateY(16px) scale(0.96); } to { opacity: 1; transform: none; } }
-@keyframes toast-out { to { opacity: 0; transform: translateY(10px) scale(0.98); } }
-.explore-toast__pips { display: inline-flex; gap: 4px; }
-.explore-toast__pips i { width: 6px; height: 6px; border-radius: 50%; background: var(--line-control, var(--line)); }
-.explore-toast__pips i.on { background: var(--ink); }
-.explore-toast__pips i.on:last-of-type, .explore-toast__pips i.on { animation: pip-pop 500ms var(--ease-expo) both; }
-.explore-toast__pips i:nth-child(2) { animation-delay: 80ms; }
-.explore-toast__pips i:nth-child(3) { animation-delay: 160ms; }
-@keyframes pip-pop { 0% { transform: scale(0.4); } 60% { transform: scale(1.35); } 100% { transform: scale(1); } }
-.explore-toast__text { white-space: nowrap; }
-.explore-toast__next { color: var(--ink); text-decoration: none; white-space: nowrap; font-weight: 500; }
-.explore-toast__next:hover { text-decoration: underline; text-underline-offset: 3px; }
-.explore-toast__x { border: 0; background: none; color: var(--ink-3); font-size: 16px; line-height: 1; padding: 2px 6px; cursor: pointer; }
-.explore-toast__x:hover { color: var(--ink); }
-@media (max-width: 640px) {
-  .explore-toast { left: 12px; bottom: 16px; font-size: 12px; gap: 8px; }
-  .explore-toast__text { white-space: normal; }
-}
-@media (prefers-reduced-motion: reduce) {
-  .explore-toast, .explore-toast.is-out, .explore-toast__pips i.on { animation: none; }
-  .explore-toast.is-out { opacity: 0; }
-}
 
 /* v1.1.0 · home layout: calmer work list, "How I work" flow */
 #work { scroll-margin-top: 72px; }
@@ -6087,8 +6052,7 @@ html.vt-theme .work-list__name, html.vt-theme .ds-hero__name, html.vt-theme .ana
 .u-link::after, .site-nav__links a::after, .ds-back::after, .site-footer__big::after { display: none !important; }
 @media (hover: hover) and (pointer: fine) {
   .text-link:hover::after { opacity: 0.4; }
-  .explore-toast__next:hover { text-decoration: none; }
-  .u-link:hover, .site-nav__links a:hover, .ds-back:hover { color: var(--ink); }
+    .u-link:hover, .site-nav__links a:hover, .ds-back:hover { color: var(--ink); }
 }
 
 /* Say hi */
