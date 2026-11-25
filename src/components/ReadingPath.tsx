@@ -205,7 +205,7 @@ export function ReadingPath() {
     }
     // pace: sideways runs take scroll too (not only going down), so the line never jumps across a row.
     // Each sample costs its drop plus part of its sideways travel; the total is spread over the page's height.
-    const floorLen = total - route.straight;
+    const floorLen = Math.max(0, total - route.straight); // the path's measured length can come out a hair short
     const body = samples.filter((q) => q.len <= floorLen);
     let cost = 0;
     body.forEach((q, i) => {
@@ -213,7 +213,7 @@ export function ReadingPath() {
       q.at = cost;
     });
     const y0 = body[0].y, y1 = body[body.length - 1].y;
-    body.forEach((q) => (q.at = y0 + (q.at / cost) * (y1 - y0)));
+    body.forEach((q) => (q.at = cost ? y0 + (q.at / cost) * (y1 - y0) : y0)); // phones: floor only, no cost
     samples.forEach((q) => q.len > floorLen && (q.at = y1));
     const at = (pts: Pt[]) =>
       pts.map((pt) => {
@@ -245,7 +245,7 @@ export function ReadingPath() {
     const head = svg.querySelector<SVGCircleElement>(".reading-path__head");
     // content below the hero stays faint until the line gets to it (desktop only): a project when the line
     // reaches its ring, a How I work step at its station, anything else when the line passes its first line
-    const floorLen = marks.total - route.straight;
+    const floorLen = Math.max(0, marks.total - route.straight);
     const reachY = (y: number) => marks.samples.find((q) => q.y >= y)?.len ?? floorLen;
     const reveal = document.documentElement.classList.contains("has-reading-reveal")
       ? (() => {
