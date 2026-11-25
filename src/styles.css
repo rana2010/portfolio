@@ -6174,7 +6174,9 @@ html.vt-theme .work-list__name, html.vt-theme .ds-hero__name, html.vt-theme .ana
 
 /* v1.2.2 · specks the ball breaks into before it fades into the dot grid */
 .ball-speck { position: fixed; z-index: 7; width: 2.4px; height: 2.4px; border-radius: 50%; background: var(--ink); pointer-events: none; }
-:root[data-theme="dark"] .ball-speck { background: #f4f4f2; }
 
 /* v1.2.3 · while the ball plays, every frame is set by the physics: no CSS easing on top */
 .chat-mark.is-playing { transition: none !important; }
+
+/* v1.2.4 · specks glow in the accent colour */
+.ball-speck { width: 2.6px; height: 2.6px; box-shadow: 0 0 6px color-mix(in srgb, var(--signal) 60%, transparent); }

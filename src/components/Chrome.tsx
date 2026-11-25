@@ -261,9 +261,9 @@ function playBall(el: HTMLElement) {
     );
 
   const render = () => {
-    const stretch = Math.min(0.09, Math.abs(vy) / 16000);
-    const sx = 1 + 0.2 * squash - stretch * 0.6;
-    const sy = 1 - 0.22 * squash + stretch;
+    const stretch = Math.min(0.05, Math.abs(vy) / 30000);
+    const sx = 1 + 0.1 * squash - stretch * 0.5;
+    const sy = 1 - 0.12 * squash + stretch;
     const lift = (1 - sy) * R; // keep the bottom on the surface while squashed
     el.style.transform = `translate(${(pos.x - origin.x).toFixed(1)}px, ${(pos.y - origin.y + lift).toFixed(1)}px) scale(${sx.toFixed(3)}, ${sy.toFixed(3)})`;
     if (icon) icon.style.transform = `rotate(${spin.toFixed(3)}rad)`;
@@ -297,6 +297,9 @@ function playBall(el: HTMLElement) {
       if (ai >= arcs.length) {
         vy = 0;
         render();
+        squash = 0;
+        vy = 0;
+        render(); // rest perfectly round, never squashed
         const d = done;
         d(); // may start the next plan, which schedules its own frame
         return;
@@ -318,26 +321,38 @@ function playBall(el: HTMLElement) {
     if (tip) tip.textContent = on ? "Wanna know more?" : tipText;
     el.classList.toggle("play-tip", on);
   };
-  // the ball breaks into dot-sized specks that drift onto the background grid and fade into its dots
+  // the ball warms to the accent orange, gently shrinks, and breaks into dot-sized orange specks that
+  // drift onto the background grid, cool to the dots' colour and fade into them
   const vanish = () => {
     gone = true;
     el.style.pointerEvents = "none";
+    const accent = getComputedStyle(document.documentElement).getPropertyValue("--signal").trim() || "#f97316";
     const STEP = 28.2; // background grid pitch (dotRadius 1.1 × 2 + dotSpacing 26)
     const W = window.innerWidth;
     const H = window.innerHeight;
     const snap = (v: number, c: number) => c + Math.round((v - c) / STEP) * STEP;
     const cx = pos.x;
     const cy = pos.y;
+    const base = el.style.transform || "none";
+    // 1) the ball turns orange and breathes in, then shrinks away smoothly
+    el.animate(
+      [
+        { transform: base, backgroundColor: getComputedStyle(el).backgroundColor, opacity: 1 },
+        { transform: `${base} scale(1.08)`, backgroundColor: accent, opacity: 1, offset: 0.35 },
+        { transform: `${base} scale(0.02)`, backgroundColor: accent, opacity: 0 },
+      ],
+      { duration: 1100, easing: "cubic-bezier(0.45, 0, 0.25, 1)", fill: "forwards" },
+    );
+    icon?.animate([{ opacity: 1 }, { opacity: 0, offset: 0.3 }, { opacity: 0 }], { duration: 1100, fill: "forwards" });
+    // 2) orange specks leave the ball as it shrinks and settle on grid dots
     const used = new Set<string>();
-    const specks: HTMLElement[] = [];
-    for (let k = 0; k < 18; k++) {
-      const a = (k / 18) * Math.PI * 2 + Math.random() * 0.4;
-      const d = 30 + Math.random() * 110;
+    for (let k = 0; k < 22; k++) {
+      const a = (k / 22) * Math.PI * 2 + Math.random() * 0.35;
+      const d = 34 + Math.random() * 120;
       let tx = snap(cx + Math.cos(a) * d, W / 2);
       let ty = snap(Math.min(cy + Math.sin(a) * d * 0.8, H - 6), H / 2);
-      const key = `${tx},${ty}`;
-      if (used.has(key)) {
-        tx += STEP;
+      if (used.has(`${tx},${ty}`)) {
+        tx = snap(tx + STEP, W / 2);
         ty = snap(ty - STEP, H / 2);
       }
       used.add(`${tx},${ty}`);
@@ -345,28 +360,23 @@ function playBall(el: HTMLElement) {
       sp.className = "ball-speck";
       sp.style.left = `${cx}px`;
       sp.style.top = `${cy}px`;
+      sp.style.background = accent;
       document.body.appendChild(sp);
-      specks.push(sp);
-      const delay = Math.random() * 120;
+      const move = `translate(calc(-50% + ${(tx - cx).toFixed(1)}px), calc(-50% + ${(ty - cy).toFixed(1)}px))`;
       sp.animate(
         [
-          { transform: "translate(-50%, -50%) scale(2.6)", opacity: 1 },
-          { transform: `translate(calc(-50% + ${tx - cx}px), calc(-50% + ${ty - cy}px)) scale(1)`, opacity: 0.9, offset: 0.7 },
-          { transform: `translate(calc(-50% + ${tx - cx}px), calc(-50% + ${ty - cy}px)) scale(1)`, opacity: 0 },
+          { transform: "translate(-50%, -50%) scale(3)", opacity: 0 },
+          { transform: "translate(-50%, -50%) scale(3)", opacity: 1, offset: 0.12 },
+          { transform: `${move} scale(1.2)`, opacity: 1, offset: 0.55 },
+          { transform: `${move} scale(1)`, opacity: 0.55, offset: 0.8 },
+          { transform: `${move} scale(1)`, opacity: 0 },
         ],
-        { duration: 1300, delay, easing: "cubic-bezier(0.2, 0.7, 0.2, 1)", fill: "forwards" },
+        { duration: 2200, delay: 350 + Math.random() * 250, easing: "cubic-bezier(0.22, 0.8, 0.2, 1)", fill: "forwards" },
       );
-      window.setTimeout(() => sp.remove(), 1600);
+      window.setTimeout(() => sp.remove(), 3000);
     }
-    // the ball itself shrinks away as the specks leave it, and the dots answer with one wave
-    el.animate(
-      [
-        { transform: el.style.transform, opacity: 1 },
-        { transform: `${el.style.transform} scale(0.05)`, opacity: 0 },
-      ],
-      { duration: 380, easing: "cubic-bezier(0.5, 0, 0.75, 0)", fill: "forwards" },
-    );
-    window.setTimeout(() => window.dispatchEvent(new CustomEvent("dot-ripple", { detail: { x: cx, y: cy, k: 0.9 } })), 250);
+    // 3) one soft wave through the dots as it melts into them
+    window.setTimeout(() => window.dispatchEvent(new CustomEvent("dot-ripple", { detail: { x: cx, y: cy, k: 0.8 } })), 600);
   };
   const startRound = () => {
     if (!playing) return;
@@ -415,6 +425,7 @@ function playBall(el: HTMLElement) {
       showTip(false);
       if (gone) {
         el.getAnimations().forEach((a) => a.cancel());
+        icon?.getAnimations().forEach((a) => a.cancel());
         el.style.transform = "";
         el.style.pointerEvents = "";
         el.classList.remove("is-playing");
@@ -433,6 +444,7 @@ function playBall(el: HTMLElement) {
     el.getAnimations().forEach((a) => a.cancel());
     el.style.transform = "";
     el.style.pointerEvents = "";
+    icon?.getAnimations().forEach((a) => a.cancel());
     el.classList.remove("is-playing", "play-tip", "tip-left");
     if (tip) tip.textContent = tipText;
     if (icon) icon.style.transform = "";
