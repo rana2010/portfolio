@@ -1,11 +1,12 @@
 import { DOT_PITCH, snapX, snapY } from "../grid";
 
-/* End-of-page play on the home page, like a basketball. At the bottom of the page the chat ball waits 2s,
-   makes low hops along the footer line until it is close to "Say hi!", jumps onto the words and bounces
-   on them twice, drops to the bottom-left floor, then bounces back alternating floor and footer line,
-   settles in the bottom-right corner and shows "Wanna know more?". Two rounds, then it dissolves into the
-   nearest background dots. Every flight is a true parabola under one gravity; bounce heights follow a
-   coefficient of restitution. Scroll up at any point and it hops home. Returns a cleanup function. */
+/* The home page ball, once per page load. It stays out of sight until you reach the end of the page, then
+   drops into the bottom-right corner, plays one round (low hops along the footer line, a jump onto "Say hi!",
+   a drop to the bottom-left floor, bounces back alternating floor and footer line), settles in its corner
+   and dissolves into the nearest background dots. Scroll up mid-play and it hops home and dissolves. After
+   that it lives on as Pac-Man: the reading line's tip eats the line as you scroll back up (ReadingPath,
+   via the "ball-pacman" class on <html>). Every flight is a true parabola under one gravity; bounce heights
+   follow a coefficient of restitution. Returns a cleanup function. */
 /* The footer line the ball plays on: the reading path's dotted floor when the home page has one,
    otherwise the footer hairline. Viewport coordinates. */
 function footerLine() {
@@ -16,13 +17,13 @@ function footerLine() {
   return { top, left: base.left, right: base.right };
 }
 
+let playedThisLoad = false;
+const PACMAN = "ball-pacman";
+
 export function playBall(el: HTMLElement) {
   const G = 2600; // gravity, px/s²
   const E = 0.62; // restitution: speed kept per bounce (height kept = E²)
-  const R = Math.max(18, el.offsetWidth / 2 || 24); // the real button radius
-  const icon = el.querySelector<SVGElement>(".chat-mark__icon");
-  const tip = el.querySelector<HTMLElement>(".chat-mark__tip");
-  const tipText = tip?.textContent ?? "";
+  const R = el.offsetWidth / 2 || 15; // the real ball radius
 
   type V = { x: number; y: number };
   type Hit = "floor" | "line" | "say" | null;
@@ -38,7 +39,6 @@ export function playBall(el: HTMLElement) {
   let origin: V = { x: 0, y: 0 };
   let pos: V = { x: 0, y: 0 };
   let vy = 0;
-  let spin = 0;
   let squash = 0;
   let arcs: Arc[] = [];
   let ai = 0;
@@ -49,8 +49,6 @@ export function playBall(el: HTMLElement) {
   let wait = 0;
   let playing = false;
   let gone = false;
-  let round = 0;
-  const ROUNDS = 2;
 
   // home = where CSS parks the button (fixed, right/bottom). Read from the stylesheet, never from the
   // moving element, so it is right even mid-flight.
@@ -194,7 +192,6 @@ export function playBall(el: HTMLElement) {
     const sy = 1 - 0.12 * squash + stretch;
     const lift = (1 - sy) * R; // keep the bottom on the surface while squashed
     el.style.transform = `translate(${(pos.x - origin.x).toFixed(1)}px, ${(pos.y - origin.y + lift).toFixed(1)}px) scale(${sx.toFixed(3)}, ${sy.toFixed(3)})`;
-    if (icon) icon.style.transform = `rotate(${spin.toFixed(3)}rad)`;
   };
 
   const frame = (now: number) => {
@@ -213,7 +210,6 @@ export function playBall(el: HTMLElement) {
     const x = a.a.x + (a.b.x - a.a.x) * (tt / T);
     const y = tt < a.tUp ? a.Y + 0.5 * G * (a.tUp - tt) ** 2 : a.Y + 0.5 * a.gDown * (tt - a.tUp) ** 2;
     vy = tt < a.tUp ? -G * (a.tUp - tt) : a.gDown * (tt - a.tUp);
-    spin += (x - pos.x) / R;
     pos = { x, y };
     if (t >= T) {
       const impact = a.gDown * a.tDown;
@@ -245,16 +241,11 @@ export function playBall(el: HTMLElement) {
     raf = requestAnimationFrame(frame);
   };
 
-  const showTip = (on: boolean) => {
-    if (tip) tip.textContent = on ? "Wanna know more?" : tipText;
-    el.classList.toggle("play-tip", on);
-  };
   // subtle exit into the dots: the ball quietly shrinks and blurs while it comes apart into
   // dot-sized specks. Each speck drifts a short way to the nearest background dot, warms to the accent
   // for a moment, then fades into that dot. No swell, no flash: everything eases out.
   const vanish = () => {
     gone = true;
-    el.style.pointerEvents = "none";
     const cs = getComputedStyle(document.documentElement);
     const accent = cs.getPropertyValue("--signal").trim() || "#f97316";
     const ink = getComputedStyle(el).backgroundColor;
@@ -271,7 +262,6 @@ export function playBall(el: HTMLElement) {
       ],
       { duration: 1000, easing: "cubic-bezier(0.4, 0, 0.2, 1)", fill: "forwards" },
     );
-    icon?.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 400, fill: "forwards" });
     // the nearest grid dots around the ball, closest first
     const spots: { x: number; y: number; d: number }[] = [];
     for (let gx = -3; gx <= 3; gx++)
@@ -306,76 +296,77 @@ export function playBall(el: HTMLElement) {
       window.setTimeout(() => sp.remove(), 2800);
     });
     window.setTimeout(() => window.dispatchEvent(new CustomEvent("dot-ripple", { detail: { x: cx, y: cy, k: 0.45 } })), 500);
+    // from now on the ball lives on in the reading line, as Pac-Man
+    window.setTimeout(() => {
+      el.classList.remove("is-playing");
+      document.documentElement.classList.add(PACMAN);
+    }, 1000);
   };
-  const startRound = () => {
+  // in: dropped from above the screen into the corner, dying bounces where it lands
+  const dropIn = (then: () => void) => {
+    origin = homeCentre();
+    pos = { x: origin.x, y: -R * 2 };
+    const list: Arc[] = [arc(pos, origin, 0, "floor")];
+    for (let h = (origin.y + R * 2) * E * E; h > 6; h *= E * E) list.push(arc(origin, origin, h, "floor"));
+    run(list, then);
+  };
+  // the one round: over to the left, back to the corner, gone
+  const playRound = () => {
     if (!playing) return;
     origin = homeCentre();
     pos = { ...origin };
     const over = planOver();
     const lastDrop = over.length ? over[over.length - 1].b.y - over[over.length - 1].Y : 200;
     run(over, () => {
-      // no stop: it bounces straight back, slow and relaxed
       if (!playing) return;
       run(planBack(lastDrop), () => {
-        round += 1;
-        showTip(true);
-        wait = window.setTimeout(() => {
-          showTip(false);
-          if (round >= ROUNDS) vanish();
-          else wait = window.setTimeout(startRound, 2000);
-        }, 3500);
+        wait = window.setTimeout(vanish, 600);
       });
     });
   };
+  // scrolled away mid-play: hop home, then dissolve
   const goHome = () => {
     origin = homeCentre();
     const list = Math.hypot(pos.x - origin.x, pos.y - origin.y) < 1 ? [] : [arc(pos, { ...origin }, 60, "floor")];
-    const finish = () => {
-      el.style.transform = "";
-      el.classList.remove("is-playing");
-      if (icon) icon.style.transform = "";
-    };
-    if (!list.length) return finish();
-    run(list, finish);
+    if (!list.length) return vanish();
+    run(list, vanish);
   };
 
   const atBottom = () => window.scrollY + window.innerHeight >= document.documentElement.scrollHeight - 4;
   const onScroll = () => {
+    if (gone) return;
     const bottom = atBottom();
-    if (bottom && !playing && !gone) {
+    if (bottom && !playing) {
       playing = true;
-      el.classList.add("is-playing");
-      window.clearTimeout(wait);
-      if (!arcs[ai]) pos = homeCentre();
-      wait = window.setTimeout(startRound, 2000);
+      playedThisLoad = true;
+      wait = window.setTimeout(() => {
+        el.classList.add("is-playing");
+        dropIn(() => {
+          wait = window.setTimeout(playRound, 800);
+        });
+      }, 1000); // a beat after reaching the end
     } else if (!bottom && playing) {
       playing = false;
       window.clearTimeout(wait);
-      showTip(false);
-      if (gone) {
-        el.getAnimations().forEach((a) => a.cancel());
-        icon?.getAnimations().forEach((a) => a.cancel());
-        el.style.transform = "";
-        el.style.pointerEvents = "";
-        el.classList.remove("is-playing");
-        el.animate([{ opacity: 0, transform: "scale(0.6)" }, { opacity: 1, transform: "scale(1)" }], { duration: 500, easing: "cubic-bezier(0.2, 0.8, 0.2, 1)" });
-        return;
-      }
-      goHome();
+      if (el.classList.contains("is-playing")) goHome();
+      else playedThisLoad = false; // left before it dropped: it can still come later
     }
   };
-  window.addEventListener("scroll", onScroll, { passive: true });
-  onScroll();
+  if (playedThisLoad) {
+    // already played on this page load: straight to Pac-Man
+    gone = true;
+    document.documentElement.classList.add(PACMAN);
+  } else {
+    window.addEventListener("scroll", onScroll, { passive: true });
+    onScroll();
+  }
   return () => {
     window.removeEventListener("scroll", onScroll);
     window.clearTimeout(wait);
     if (raf) cancelAnimationFrame(raf);
     el.getAnimations().forEach((a) => a.cancel());
     el.style.transform = "";
-    el.style.pointerEvents = "";
-    icon?.getAnimations().forEach((a) => a.cancel());
-    el.classList.remove("is-playing", "play-tip", "tip-left");
-    if (tip) tip.textContent = tipText;
-    if (icon) icon.style.transform = "";
+    el.classList.remove("is-playing");
+    document.documentElement.classList.remove(PACMAN);
   };
 }

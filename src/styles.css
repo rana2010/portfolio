@@ -176,27 +176,6 @@ a:focus-visible {
 .home main > section:last-child {
   margin-bottom: 0;
 }
-.chat-mark {
-  position: fixed;
-  right: 22px;
-  bottom: 22px;
-  z-index: 6;
-  display: grid;
-  place-items: center;
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  background: var(--ink);
-  color: var(--bg);
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.18);
-}
-.chat-mark svg {
-  width: 24px;
-  height: 24px;
-}
-.chat-mark:hover {
-  transform: translateY(-1px);
-}
 .chat-page {
   --bg: #070707;
   --ink: #f4f4f2;
@@ -1364,16 +1343,6 @@ figcaption {
     width: calc(100% - 28px);
     height: 100vh;
   }
-  .chat-mark {
-    right: 14px;
-    bottom: 16px;
-    width: 36px;
-    height: 36px;
-  }
-  .chat-mark svg {
-    width: 18px;
-    height: 18px;
-  }
   .chat-form {
     padding-bottom: 16px;
   }
@@ -1511,9 +1480,6 @@ body { font-family: var(--font-sans); }
   letter-spacing: 0.14em;
   text-transform: uppercase;
 }
-/* ---------- Nav (keeps Rana's notch, restyles the links) ---------- */
-.chat-mark { box-shadow: none; }
-/* ---------- Footer ---------- */
 /* ---------- Case study layout ---------- */
 .ds-case main {
   width: calc(100% - 2 * var(--page-pad));
@@ -1679,7 +1645,6 @@ body { font-family: var(--font-sans); }
   font-weight: 500;
   letter-spacing: 0.14em;
 }
-/* ---------- Status chip ---------- */
 /* ---------- Projects (work list) ---------- */
 .projects {
   width: calc(100% - 2 * var(--page-pad));
@@ -1757,7 +1722,6 @@ body { font-family: var(--font-sans); }
 @media (prefers-reduced-motion: reduce) {
   .ds-next__title span { transition: none; }
 }
-/* ===== v0.3.1: scaled-down type (23 Nov, "way too big") + Bouayaben nav, footer, home ===== */
 /* Hide the old notch nav and footer styles if any remain */
 .nav, .footer { display: none; }
 /* ---------- Site nav ---------- */
@@ -2144,7 +2108,6 @@ body { font-family: var(--font-sans); }
 @media (hover: hover) and (pointer: fine) {
   .chat-exit:hover { color: var(--ink); background: none; }
 }
-/* Opening */
 /* Conversation */
 .chat-msg p {
   padding: var(--space-1) var(--space-2);
@@ -2689,114 +2652,6 @@ body { font-family: var(--font-sans); }
   .chat-page .chat-msg { max-width: 90%; }
 }
 .chat-page .chat > .chat-form { margin-bottom: var(--space-3); }
-/* v0.3.14: home is the landing page; floating bot entry */
-.chat-mark,
-.chat-mark:hover {
-  position: fixed;
-  right: 24px;
-  bottom: 24px;
-  z-index: 20;
-  display: inline-flex;
-  align-items: center;
-  gap: 10px;
-  width: auto;
-  height: 44px;
-  padding: 4px 16px 4px 4px;
-  border: 1px solid var(--line);
-  border-radius: 999px;
-  background: color-mix(in srgb, var(--bg) 82%, transparent);
-  -webkit-backdrop-filter: blur(12px);
-  backdrop-filter: blur(12px);
-  color: var(--ink);
-  text-decoration: none;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
-  transform: none;
-  transition: border-color 200ms var(--ease-expo), transform 200ms var(--ease-expo);
-}
-@media (hover: hover) and (pointer: fine) {
-  .chat-mark:hover { border-color: var(--line-control); transform: translateY(-2px); }
-}
-.chat-mark:active { transform: scale(0.97); }
-.chat-mark:focus-visible { outline: 2px solid var(--signal); outline-offset: 3px; }
-@media (max-width: 640px) {
-  .chat-mark, .chat-mark:hover { right: 16px; bottom: 16px; padding: 4px; height: 44px; }
-}
-/* v0.3.15: chat entry is just the portrait; label appears on hover */
-.chat-mark,
-.chat-mark:hover {
-  width: 48px;
-  height: 48px;
-  padding: 0;
-  gap: 0;
-  border: 0;
-  border-radius: 50%;
-  background: none;
-  -webkit-backdrop-filter: none;
-  backdrop-filter: none;
-  box-shadow: 0 0 0 1px var(--line), 0 8px 24px rgba(0, 0, 0, 0.25);
-}
-.chat-mark__tip {
-  position: absolute;
-  right: calc(100% + 12px);
-  top: 50%;
-  padding: 6px 12px;
-  border: 1px solid var(--line);
-  border-radius: 999px;
-  background: var(--surface);
-  color: var(--ink);
-  font-family: var(--font-sans);
-  font-size: 13px;
-  line-height: 16px;
-  white-space: nowrap;
-  pointer-events: none;
-  opacity: 0;
-  transform: translate(6px, -50%);
-  transition: opacity 200ms var(--ease-expo), transform 450ms var(--ease-expo);
-}
-@media (hover: hover) and (pointer: fine) {
-  .chat-mark:hover { box-shadow: 0 0 0 1px var(--line-control), 0 8px 24px rgba(0, 0, 0, 0.25); transform: translateY(-2px); }
-  .chat-mark:hover .chat-mark__tip { opacity: 1; transform: translate(0, -50%); }
-}
-.chat-mark:focus-visible .chat-mark__tip { opacity: 1; transform: translate(0, -50%); }
-@media (max-width: 640px) {
-  .chat-mark, .chat-mark:hover { width: 44px; height: 44px; padding: 0; }
-}
-@media (prefers-reduced-motion: reduce) {
-  .chat-mark__tip { transition: none; }
-}
-/* v0.3.16: portrait in the site's tone, live dot, cleaner tooltip */
-.chat-mark__tip {
-  right: calc(100% + 14px);
-  padding: 8px 12px;
-  border: 1px solid var(--line);
-  border-radius: 8px;
-  background: color-mix(in srgb, var(--surface) 88%, transparent);
-  -webkit-backdrop-filter: blur(10px);
-  backdrop-filter: blur(10px);
-  color: var(--ink);
-  font-size: 11px;
-  line-height: 16px;
-  font-weight: 500;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
-}
-.chat-mark__tip::after {
-  content: "";
-  position: absolute;
-  top: 50%;
-  right: -5px;
-  width: 8px;
-  height: 8px;
-  border-top: 1px solid var(--line);
-  border-right: 1px solid var(--line);
-  background: inherit;
-  transform: translateY(-50%) rotate(45deg);
-}
-/* keep the hero "Scroll" clear of the floating portrait */
-@media (min-width: 641px) {
-  .home-hero__foot { padding-right: 72px; }
-}
 /* v0.3.17: Handcrafted gallery in black and white, colour on hover (always colour on touch) */
 @media (hover: hover) and (pointer: fine) {
   .gallery__frame img { filter: grayscale(1) contrast(1.05); transition: filter 450ms var(--ease-expo); }
@@ -2807,7 +2662,6 @@ body { font-family: var(--font-sans); }
 .chat-page .chat-msg img { filter: grayscale(1) contrast(1.08) brightness(0.92); }
 /* v0.3.19: toned black-and-white portrait (baked), colour on hover */
 .chat-page .chat-msg img { filter: none; }
-.chat-mark { overflow: visible; }
 /* v0.3.20: back to the plain black-and-white portrait; Apple-style empty state */
 .chat-page .chat-msg img { filter: grayscale(1) contrast(1.08) brightness(0.92); }
 .chat-page .bot-empty { padding-bottom: 16vh; }
@@ -2928,7 +2782,6 @@ body { font-family: var(--font-sans); }
   -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 48px);
   mask-image: linear-gradient(to bottom, transparent 0, #000 48px);
 }
-/* v0.4.0: Pulse visual pass */
 /* MoSCoW: stay inside the column, no boxed labels */
 .ds-case .moscow-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-2); }
 .ds-case .moscow-grid article { min-width: 0; padding: 56px var(--space-2) var(--space-3); }
@@ -2942,9 +2795,6 @@ body { font-family: var(--font-sans); }
 @media (max-width: 760px) {
   .ds-case .moscow-grid { grid-template-columns: 1fr; }
 }
-/* research numbers: readable labels, room before the source line */
-/* before / after */
-/* craft states */
 /* v0.4.1: home alignment */
 @media (min-width: 641px) {
   .home-career li { grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr) 140px; align-items: baseline; }
@@ -3042,7 +2892,6 @@ body { font-family: var(--font-sans); }
   .pv-device__base { height: 8px; }
 }
 .ds-case .ds-stats { grid-template-columns: repeat(2, minmax(0, 320px)); column-gap: var(--space-8); }
-/* v0.6: Pulse pass 3 */
 /* hero before/after full width */
 .ds-hero-compare .pv-compare { margin-top: 0; }
 .ds-hero-compare .pv-compare__stage { padding: var(--space-3); }
@@ -3103,7 +2952,6 @@ body { font-family: var(--font-sans); }
 @media (prefers-reduced-motion: reduce) {
   .pv-pulse { animation: none; }
 }
-/* v0.6.1: light theme for the Pulse visuals; portrait in colour on light */
 /* components that are translucent by design sit on the product's own dark surface */
 .pv-surface { padding: 10px; border-radius: 14px; background: #141416; box-shadow: 0 0 0 1px rgba(255,255,255,0.06), 0 18px 40px rgba(0,0,0,0.25); filter: none; }
 :root:not([data-theme="dark"]) .pv-stage__inner,
@@ -3115,7 +2963,6 @@ body { font-family: var(--font-sans); }
 :root:not([data-theme="dark"]) .pv-compare__stage img { box-shadow: 0 20px 50px rgba(10,10,10,0.18); }
 :root:not([data-theme="dark"]) .ds-finds li { background: rgba(10,10,10,0.03); }
 :root:not([data-theme="dark"]) .pv-device__lid { box-shadow: inset 0 0 0 1px #2c2c2c, 0 30px 60px -24px rgba(10,10,10,0.35); }
-/* portrait: colour in light mode; black and white with colour on hover in dark mode */
 /* v0.6.2: component stages stay dark in both themes (the components are dark UI and
    some are translucent); in light mode they become a rounded "product canvas" instead of a black block */
 :root:not([data-theme="dark"]) .pv-stage__inner {
@@ -3126,8 +2973,6 @@ body { font-family: var(--font-sans); }
 }
 :root:not([data-theme="dark"]) .pv-piece:not(.pv-surface) { filter: drop-shadow(0 18px 40px rgba(0,0,0,0.5)); }
 .pv-surface { padding: 0; border-radius: 0; background: none; box-shadow: none; filter: drop-shadow(0 18px 40px rgba(0,0,0,0.5)); }
-/* v0.7: Pulse structure pass */
-/* context problems: 2 x 2 */
 /* "Cut a Must" spans the same width as the board above */
 .ds-case .moscow-board ~ .ds-trade { max-width: none; }
 /* What I designed: two branches, each a list of components */
@@ -3151,7 +2996,6 @@ body { font-family: var(--font-sans); }
 .pv-queue__row.is-vip { position: relative; z-index: 1; }
 .pv-queue__row.is-up { background: rgba(224,167,4,0.08); box-shadow: inset 0 0 0 1px rgba(224,167,4,0.35); transition: background 600ms var(--ease-expo), box-shadow 600ms var(--ease-expo); }
 .pv-stage--vip .pv-stage__inner { align-items: flex-start; gap: var(--space-3); flex-wrap: wrap; }
-/* v0.7.2: hero, context list, VIP loop */
 /* hero: lede sits right under the title, same left edge */
 .ds-case .ds-hero__title { margin-top: var(--space-4); }
 .ds-case .ds-hero__lede { max-width: 760px; margin: var(--space-3) 0 0; color: var(--ink-2); font-size: 24px; line-height: 36px; letter-spacing: -0.005em; }
@@ -3186,9 +3030,6 @@ body { font-family: var(--font-sans); }
 @media (max-width: 640px) {
   .ds-outcome__big { font-size: 24px; line-height: 32px; }
 }
-/* v0.7.4: detour map */
-/* the line through the dots */
-/* the detour: a dashed branch that leaves the line */
 /* v0.7.5: journey map (replaces the detour map styles) */
 .jm { margin: var(--space-6) 0 0; padding: var(--space-4); box-shadow: inset 0 0 0 1px var(--line); }
 .jm-head h4 { margin: 0; color: var(--ink); font-family: var(--font-display); font-size: 24px; line-height: 32px; font-weight: 600; letter-spacing: -0.01em; }
@@ -3263,7 +3104,6 @@ body { font-family: var(--font-sans); }
 .ds-case .pv-compare__stage img { border-radius: 10px; }
 .ds-case .ds-branch__note { box-shadow: none; padding: var(--space-3); }
 .ds-case .pv-device__lid { border-radius: 20px 20px 8px 8px; }
-/* v0.8: subtle motion on every device */
 /* reveal on scroll */
 .rv { opacity: 0; transform: translateY(14px); transition: opacity 700ms var(--ease-expo), transform 700ms var(--ease-expo); transition-delay: var(--rv-delay, 0ms); }
 .rv.rv-in { opacity: 1; transform: none; }
@@ -3300,7 +3140,6 @@ a, button { -webkit-tap-highlight-color: transparent; }
 }
 .ds-hero__eyebrow { display: flex; align-items: center; gap: 12px; }
 .work-list__meta { display: block; }
-/* v0.8.2: tablet fixes */
 /* portrait tablets: the hero no longer fills the whole tall screen with empty space */
 @media (min-width: 600px) and (max-width: 1100px) and (orientation: portrait) {
   .home-hero { min-height: 0; height: auto; padding-top: 22vh; padding-bottom: var(--space-8); }
@@ -3339,7 +3178,6 @@ a, button { -webkit-tap-highlight-color: transparent; }
   .ds-flow { grid-template-columns: 1fr; gap: var(--space-3); }
   .ds-flow li:not(:last-child)::after { content: "↓"; top: auto; bottom: calc(var(--space-3) / -2 - 14px); right: auto; left: 8px; }
 }
-/* evolution strip */
 /* v0.9.2: process as a vertical timeline on one hairline */
 .ds-case .ds-flow { position: relative; display: flex; flex-direction: column; gap: var(--space-4); max-width: 640px; margin: 0 0 var(--space-8); padding: 4px 0 4px 36px; }
 .ds-case .ds-flow::before { content: ""; position: absolute; left: 7px; top: 10px; bottom: 10px; width: 1px; background: linear-gradient(to bottom, var(--ink-3), var(--line) 85%, transparent); }
@@ -3353,7 +3191,6 @@ a, button { -webkit-tap-highlight-color: transparent; }
   .ds-case .ds-flow { padding-left: 30px; }
   .ds-case .ds-flow li::before { left: -30px; }
 }
-/* v1.0: purposeful motion */
 /* page change and theme change: the new page grows in a circle from where you tapped */
 :root { --vt-x: 50vw; --vt-y: 0px; }
 ::view-transition-old(root) { animation: none; }
@@ -3373,61 +3210,17 @@ html.vt-theme .work-list__name, html.vt-theme .ds-hero__name, html.vt-theme .ana
 }
 /* hero eases away as you scroll */
 .home-hero__label, .home-hero__title, .home-hero__sub { transform-origin: left bottom; }
-/* chat photo drops in after 8 seconds, once per visit, with a hint */
-.chat-mark.is-wait { opacity: 0; transform: translateY(-120px); pointer-events: none; }
-.chat-mark.is-drop { animation: chat-drop 900ms cubic-bezier(0.34, 1.4, 0.5, 1) both; }
-@keyframes chat-drop { from { opacity: 0; transform: translateY(-140px); } 60% { opacity: 1; } to { opacity: 1; transform: none; } }
-.chat-mark.is-drop .chat-mark__tip { opacity: 1; transform: translate(0, -50%); transition-delay: 700ms; }
-@media (hover: none) {
-  .chat-mark.is-drop .chat-mark__tip { display: block; }
-}
 /* floating preview on the work list (mouse only) */
 .work-list { position: relative; }
 @media (prefers-reduced-motion: reduce) {
   ::view-transition-new(root) { animation: none; }
   .home-hero__title, .home-hero__sub, .home-hero__label { transform: none; opacity: 1; }
-  .chat-mark.is-drop { animation: none; }
   .site-nav__time i { animation: none; }
 }
 /* v1.0.1: clock in the hero label, icon chat button, stronger hero ease */
 .home-hero__label .site-nav__time { display: inline; color: inherit; font-size: inherit; line-height: inherit; letter-spacing: inherit; }
 .home-hero__label .site-nav__time b { color: var(--ink); font-weight: 500; }
-/* chat button: an icon, easy to spot */
-.chat-mark, .chat-mark:hover { width: 56px; height: 56px; display: grid; place-items: center; border-radius: 50%; background: var(--ink); color: var(--bg); box-shadow: 0 10px 30px rgba(0,0,0,0.3); }
-.chat-mark__icon { width: 26px; height: 26px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linejoin: round; transition: transform 450ms var(--ease-expo); }
-@keyframes spark { 0%, 100% { transform: scale(1) rotate(0); } 50% { transform: scale(1.25) rotate(45deg); } }
-@media (hover: hover) and (pointer: fine) {
-  .chat-mark:hover .chat-mark__icon { transform: rotate(-8deg) scale(1.06); }
-}
-.chat-mark::before { content: ""; position: absolute; inset: 0; border-radius: 50%; box-shadow: 0 0 0 0 color-mix(in srgb, var(--ink) 45%, transparent); pointer-events: none; }
-.chat-mark.is-drop::before { animation: chat-ping 1.4s ease-out 900ms 2; }
-@keyframes chat-ping { from { box-shadow: 0 0 0 0 color-mix(in srgb, var(--ink) 45%, transparent); } to { box-shadow: 0 0 0 18px color-mix(in srgb, var(--ink) 0%, transparent); } }
-.chat-mark__tip { right: calc(100% + 14px); padding: 10px 14px; border-radius: 12px; font-size: 12px; letter-spacing: 0.1em; }
-.chat-mark.is-drop .chat-mark__tip { opacity: 1; transform: translate(0, -50%); }
-@media (max-width: 640px) {
-  .chat-mark, .chat-mark:hover { width: 52px; height: 52px; }
-}
-/* hero shrinks more clearly as you scroll */
 /* v1.0.2: monochrome chat button; clock in the footer */
-.chat-mark, .chat-mark:hover {
-  width: 48px; height: 48px; border-radius: 50%;
-  background: color-mix(in srgb, var(--bg) 80%, transparent);
-  -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px);
-  color: var(--ink);
-  box-shadow: inset 0 0 0 1px var(--line-control), 0 8px 24px rgba(0,0,0,0.18);
-}
-.chat-mark__icon { width: 20px; height: 20px; stroke-width: 1.5; }
-@media (hover: hover) and (pointer: fine) {
-  .chat-mark:hover { background: var(--ink); color: var(--bg); box-shadow: inset 0 0 0 1px var(--ink), 0 8px 24px rgba(0,0,0,0.18); transform: translateY(-2px); }
-  .chat-mark:hover .chat-mark__icon { transform: none; }
-}
-.chat-mark:active { transform: scale(0.94); }
-.chat-mark.is-drop::before { animation: chat-ping 1.6s ease-out 900ms 2; }
-@keyframes chat-ping { from { box-shadow: 0 0 0 0 color-mix(in srgb, var(--ink) 30%, transparent); } to { box-shadow: 0 0 0 14px color-mix(in srgb, var(--ink) 0%, transparent); } }
-.chat-mark__tip { padding: 8px 12px; border-radius: 10px; font-size: 11px; letter-spacing: 0.14em; }
-@media (max-width: 640px) {
-  .chat-mark, .chat-mark:hover { width: 46px; height: 46px; }
-}
 .site-footer__time { color: var(--ink-3); }
 .site-footer__time .site-nav__time { display: inline; color: var(--ink-2); font-size: inherit; letter-spacing: inherit; text-transform: none; }
 .site-footer__time .site-nav__time b { color: var(--ink); }
@@ -3435,71 +3228,6 @@ html.vt-theme .work-list__name, html.vt-theme .ds-hero__name, html.vt-theme .ana
   .site-footer__time { order: 3; width: 100%; }
 }
 .site-footer__base { flex-wrap: wrap; gap: 8px var(--space-3); align-items: baseline; }
-/* v1.0.3: chat button = solid monochrome circle with an AI sparkle */
-.chat-mark, .chat-mark:hover { width: 52px; height: 52px; background: var(--ink); color: var(--bg); -webkit-backdrop-filter: none; backdrop-filter: none; box-shadow: 0 10px 28px rgba(0,0,0,0.22); }
-.chat-mark__icon { width: 24px; height: 24px; }
-.chat-mark__star { fill: currentColor; stroke: none; transform-origin: 12px 10px; transition: transform 600ms var(--ease-expo); }
-.chat-mark__star--sm { transform-origin: 18.5px 18px; animation: star-blink 3.6s ease-in-out infinite; }
-@keyframes star-blink { 0%, 70%, 100% { opacity: 1; transform: scale(1); } 80% { opacity: 0.3; transform: scale(0.6); } }
-@media (hover: hover) and (pointer: fine) {
-  .chat-mark:hover { background: var(--ink); color: var(--bg); box-shadow: 0 14px 34px rgba(0,0,0,0.28); transform: translateY(-2px); }
-  .chat-mark:hover .chat-mark__star:not(.chat-mark__star--sm) { transform: rotate(90deg) scale(1.08); }
-}
-@media (max-width: 640px) {
-  .chat-mark, .chat-mark:hover { width: 48px; height: 48px; }
-}
-@media (prefers-reduced-motion: reduce) {
-  .chat-mark__star--sm { animation: none; }
-}
-/* v1.0.4: sparkle centred and in proportion to the button */
-.chat-mark, .chat-mark:hover { width: 48px; height: 48px; }
-.chat-mark__icon { width: 22px; height: 22px; overflow: visible; }
-.chat-mark__star { transform-origin: 11px 10px; }
-.chat-mark__star--sm { transform-origin: 18.5px 18.5px; }
-@media (max-width: 640px) {
-  .chat-mark, .chat-mark:hover { width: 46px; height: 46px; }
-  .chat-mark__icon { width: 21px; height: 21px; }
-}
-/* v1.0.5: the chat button falls like a ball, bounces, settles, then the tooltip shows */
-.chat-mark { transform-origin: 50% 100%; }
-.chat-mark.is-drop { animation: chat-ball 1500ms both; }
-@keyframes chat-ball {
-  0%   { opacity: 1; transform: translateY(-85vh) scale(1, 1);        animation-timing-function: cubic-bezier(0.55, 0, 1, 0.45); }
-  38%  { transform: translateY(0) scale(1.14, 0.84);                  animation-timing-function: cubic-bezier(0, 0.55, 0.45, 1); }
-  42%  { transform: translateY(-6px) scale(0.94, 1.06); }
-  58%  { transform: translateY(-70px) scale(1, 1);                    animation-timing-function: cubic-bezier(0.55, 0, 1, 0.45); }
-  72%  { transform: translateY(0) scale(1.08, 0.92);                  animation-timing-function: cubic-bezier(0, 0.55, 0.45, 1); }
-  82%  { transform: translateY(-22px) scale(1, 1);                    animation-timing-function: cubic-bezier(0.55, 0, 1, 0.45); }
-  90%  { transform: translateY(0) scale(1.04, 0.96); }
-  95%  { transform: translateY(-4px) scale(1, 1); }
-  100% { opacity: 1; transform: translateY(0) scale(1, 1); }
-}
-.chat-mark.is-drop::before { animation: chat-ping 1.6s ease-out 1500ms 2; }
-.chat-mark.is-drop .chat-mark__tip { opacity: 0; animation: tip-in 500ms var(--ease-expo) 1450ms forwards; }
-@keyframes tip-in { from { opacity: 0; transform: translate(8px, -50%); } to { opacity: 1; transform: translate(0, -50%); } }
-/* light mode: black button with a soft ground shadow; dark mode: off-white button */
-:root:not([data-theme="dark"]) .chat-mark { background: #0a0a0a; color: #f5f0eb; box-shadow: 0 10px 24px rgba(10,10,10,0.22), 0 2px 6px rgba(10,10,10,0.12); }
-:root[data-theme="dark"] .chat-mark { background: #f5f0eb; color: #0a0a0a; box-shadow: 0 10px 28px rgba(0,0,0,0.5); }
-@media (prefers-reduced-motion: reduce) {
-  .chat-mark.is-drop { animation: none; }
-  .chat-mark.is-drop .chat-mark__tip { animation: none; opacity: 1; }
-}
-/* v1.0.6: bounce engine styles (motion lives in JS); bigger sparkle */
-.chat-mark.is-drop { animation: none; }
-.chat-mark.is-drop::before { animation: none; }
-.chat-mark.is-drop .chat-mark__tip { animation: none; opacity: 0; }
-.chat-mark.tip-on .chat-mark__tip { opacity: 1; transform: translate(0, -50%); transition: opacity 400ms var(--ease-expo), transform 500ms var(--ease-expo); }
-.chat-mark.tip-on::before { animation: chat-ping 1.6s ease-out 2; }
-.chat-mark__icon { width: 27px; height: 27px; }
-@media (max-width: 640px) {
-  .chat-mark__icon { width: 25px; height: 25px; }
-}
-.chat-shadow { position: fixed; z-index: 19; width: 44px; height: 10px; margin-top: 2px; border-radius: 50%; background: radial-gradient(closest-side, rgba(0,0,0,0.35), transparent); pointer-events: none; }
-:root[data-theme="dark"] .chat-shadow { background: radial-gradient(closest-side, rgba(245,240,235,0.25), transparent); }
-.floor-ripple { position: fixed; z-index: 18; width: 30px; height: 8px; margin: -2px 0 0 -15px; border-radius: 50%; box-shadow: 0 0 0 1.5px color-mix(in srgb, var(--ink) 45%, transparent); pointer-events: none; animation: floor-ripple 800ms cubic-bezier(0.16, 1, 0.3, 1) forwards; }
-@keyframes floor-ripple { from { opacity: 0.9; transform: scale(0.6, 0.6); } to { opacity: 0; transform: scale(6, 1.6); } }
-/* v1.0.7 · no ring around the ball itself; floor ripples only */
-.chat-mark::before, .chat-mark.is-drop::before, .chat-mark.tip-on::before { animation: none !important; box-shadow: none !important; }
 /* v1.0.8 · clock sits with the copyright, not centered */
 .site-footer__base .site-footer__time { order: 0; width: auto; }
 /* v1.0.9 · count-up numbers */
@@ -3518,7 +3246,6 @@ html.vt-theme .work-list__name, html.vt-theme .ds-hero__name, html.vt-theme .ana
   .work-list__meta { font-size: 13px; line-height: 20px; }
 }
 .home-pair { grid-template-columns: 1fr; }
-
 /* ---------- Home reading thread (ReadingPath.tsx): a dotted orange line that eats the dots in its way as you read and lands on the footer as a straight floor ---------- */
 .reading-path { position: absolute; inset: 0; z-index: 0; overflow: visible; pointer-events: none; }
 .reading-path__guide { fill: none; stroke: none; }
@@ -3532,17 +3259,25 @@ html.vt-theme .work-list__name, html.vt-theme .ds-hero__name, html.vt-theme .ana
 .reading-path__station { fill: var(--signal); opacity: 0; transform-box: fill-box; transform-origin: center; transform: scale(0.3); transition: opacity 400ms var(--ease-expo), transform 500ms var(--ease-expo); }
 .reading-path__station.is-on { opacity: 0.7; transform: none; }
 /* desktop: sections fade up as the line reaches them */
-.has-reading-reveal .reading-reveal { opacity: 0.12; transition: opacity 600ms var(--ease-expo); } /* fade only: layout never moves under the line */
+.has-reading-reveal .reading-reveal { opacity: 0; transition: opacity 500ms ease; } /* wiped in with the line (clip-path set in ReadingPath); layout never moves */
 .has-reading-reveal .reading-reveal.is-reached { opacity: 1; }
 /* the thread is the only line on the home page */
 .has-reading-path .work-list__head, .has-reading-path .work-list li, .has-reading-path .work-list li:last-child,
 .has-reading-path .home-about, .has-reading-path .home-career li, .has-reading-path .home-edu li,
 .has-reading-path .site-footer__base { border-top-color: transparent; border-bottom-color: transparent; }
 .has-reading-path .work-list__arrow { visibility: hidden; } /* the thread's rings point at the projects instead */
+/* ---------- The ball (playBall.ts): hidden until the end of the home page, plays one round, then becomes Pac-Man ---------- */
+.ball { position: fixed; right: 24px; bottom: 24px; z-index: 20; width: 30px; height: 30px; border-radius: 50%; background: var(--ink); box-shadow: 0 10px 24px rgba(10, 10, 10, 0.22), 0 2px 6px rgba(10, 10, 10, 0.12); pointer-events: none; opacity: 0; }
+:root[data-theme="dark"] .ball { box-shadow: 0 10px 28px rgba(0, 0, 0, 0.5); }
+.ball.is-playing { opacity: 1; }
+@media (max-width: 640px) {
+  .ball { right: 16px; bottom: 16px; }
+}
+.reading-path__pacman { fill: var(--ink); opacity: 0; transition: opacity 200ms; }
+.reading-path__pacman.is-on { opacity: 1; }
 @media (min-width: 641px) {
   .has-reading-path { --hi-links-gap: var(--space-8); } /* room for the circles round "Say hi!" (desktop only) */
 }
-
 /* ---------- Home · How I work: four steps; the reading thread runs through them (space above for it) ---------- */
 .home-flow-wrap { position: relative; padding-top: var(--space-2); }
 .home-flow { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--space-3); }
@@ -3556,7 +3291,6 @@ html.vt-theme .work-list__name, html.vt-theme .ds-hero__name, html.vt-theme .ana
 @media (max-width: 520px) {
   .home-flow { grid-template-columns: 1fr; row-gap: var(--space-2); }
 }
-/* a thin arrow joining each step to the next */
 /* v1.1.1 · type-only home: flow, career and education share one quiet list style */
 .site-nav.is-scrolled { box-shadow: inset 0 -1px 0 var(--line); }
 .work-list li:last-child { border-bottom: 0; }
@@ -3612,28 +3346,18 @@ html.vt-theme .work-list__name, html.vt-theme .ds-hero__name, html.vt-theme .ana
 @media (prefers-reduced-motion: reduce) {
   .hi__big > span, .hi__big em { transition: none; }
 }
-/* v1.1.5 · tools in the accent colour so they read apart from the description */
-/* v1.1.6 · Cairo status footer */
-/* v1.1.7 · the ball parks after "Say hi!" */
-/* v1.1.8 · contact rows arrive with the ball */
 /* v1.1.9 · simple footer again; the ball plays at the end of the page */
 .hi__big { cursor: default; margin: var(--space-2) 0 0; }
 .hi__big em, .hi__big:hover em { color: inherit; transform: none; transition: none; }
-.chat-mark.is-playing .chat-mark__tip { display: none; }
 .site-footer--hi .site-footer__links { margin-top: var(--hi-links-gap, var(--space-3)); }
 /* v1.2.0 · "Say hi!" on one line; Email copies */
 .hi__big { display: block; white-space: nowrap; font-size: clamp(48px, 9vw, 120px); line-height: 1; }
 .hi__big em { display: inline; }
 .copy-email.is-copied { color: var(--signal); }
 /* v1.2.1 · end-of-page rounds: tooltip on each rest, tooltip flips when the ball is in the left corner */
-.chat-mark.is-playing.play-tip .chat-mark__tip { display: block; opacity: 1; transform: translate(0, -50%); transition: opacity 400ms var(--ease-expo), transform 500ms var(--ease-expo); }
-.chat-mark.tip-left .chat-mark__tip { right: auto; left: calc(100% + 14px); }
-.chat-mark.tip-left .chat-mark__tip::after { right: auto; left: -5px; transform: translateY(-50%) rotate(-135deg); }
 .hi__big { transform-origin: 50% 100%; }
 /* v1.2.2 · specks the ball breaks into before it fades into the dot grid */
 .ball-speck { position: fixed; z-index: 7; width: 2.4px; height: 2.4px; border-radius: 50%; background: var(--ink); pointer-events: none; }
-/* v1.2.3 · while the ball plays, every frame is set by the physics: no CSS easing on top */
-.chat-mark.is-playing { transition: none !important; }
 /* v1.2.5 · brighter, more playful orange on the big display words in light mode */
 .home-hero__title em, .bot-empty__title em { color: var(--signal-big, var(--signal)); }
 :root[data-theme="dark"] { --signal-big: var(--signal-display); }

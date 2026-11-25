@@ -1,6 +1,5 @@
 import { useEffect, useLayoutEffect } from "react";
 import { Navigate, Route, Routes, useLocation } from "react-router-dom";
-import { Chat } from "./pages/Chat";
 import { Home } from "./pages/Home";
 import { CaseStudy } from "./pages/CaseStudy";
 import { Echo } from "./pages/Echo";
@@ -87,7 +86,7 @@ export function App() {
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/home" element={<Home />} />
-          <Route path="/chat" element={<Chat />} />
+          <Route path="/chat" element={<Navigate to="/" replace />} /> {/* chatbot parked for now (pages/Chat.tsx) */}
           <Route path="/projects" element={<Navigate to={{ pathname: "/", hash: "work" }} replace />} />
           <Route path="/handcrafted" element={<Handcrafted />} />
           <Route path="/work/pulse" element={<CaseStudy />} />

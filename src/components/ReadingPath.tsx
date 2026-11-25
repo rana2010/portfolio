@@ -6,14 +6,17 @@ import { DOT_PITCH } from "./grid";
    It comes in from the very top, turns under the nav, rounds the headline on the left, drops straight through
    the project rings, rounds About and Career, runs along How I work through each step, comes back over
    "Let's connect", circles "Let's connect / Say hi!" twice and lands on the footer, where it runs straight: the floor the chat ball
-   plays on. It eats the background dots it passes over. On desktop, content stays faint until the line gets
+   plays on. It eats the background dots it passes over. Once the ball has played (playBall.ts), scrolling
+   back up brings Pac-Man to the tip, eating the line as it goes. On desktop, content stays faint until the line gets
    to it. Phones (≤ 640px): only the straight floor, nothing hidden. Reduced motion: drawn in full. */
 
 type Pt = { x: number; y: number };
 type Route = { d: string; floorY: number; straight: number; ox: number; oy: number; rings: Pt[]; stations: Pt[] };
 const PHONE = 640;
 const EAT_RADIUS = 10;
-const SIDEWAYS = 0.4; // how much scroll a sideways pixel of line costs, relative to a downward one
+const PAC_R = 13;
+const TOP_SPEED = 800; // px of line per second: the calm pace the line (and Pac-Man) never goes past
+const EASE = 1.4; // how quickly it closes the distance to where the scroll is (per second) // Pac-Man's radius, px
 // the blocks that appear as the line reaches them: everything after the hero, and the footer
 const REVEAL = "main > :not(.home-hero) :is(h2, h3, p, li), .site-footer--hi > *";
 
@@ -21,6 +24,7 @@ export function ReadingPath() {
   const [route, setRoute] = useState<Route | null>(null);
   const pathRef = useRef<SVGPathElement>(null);
   const svgRef = useRef<SVGSVGElement>(null);
+  const drawnRef = useRef<number | null>(null); // how much of the line is drawn, kept across relayouts
   // everything that lights up along the line, measured once per layout: dots of the line itself, grid dots
   // it eats, rings and stations. Each has the length along the line at which it appears.
   const [marks, setMarks] = useState<{
@@ -65,15 +69,12 @@ export function ReadingPath() {
       }
 
       const L = mainR.left, Wm = mainR.width;
-      const navH = document.querySelector<HTMLElement>(".site-nav")?.offsetHeight ?? 64;
       const all = (sel: string) => Array.from(document.querySelectorAll(sel)).map(box).filter(Boolean) as NonNullable<ReturnType<typeof box>>[];
       const sub = $(".home-hero__sub");
-      const head = $(".work-list__head");
-      const rows = all(".work-list li");
       const arrows = all(".work-list__arrow");
+      const label = $(".home-hero__label");
       const aboutLabel = $(".home-about__label");
       const para = box(document.querySelector(".home-about__big")?.nextElementSibling ?? null);
-      const [career, eduLabel] = all(".home-about__sub");
       const careerList = $(".home-career");
       const flowLabel = box(document.querySelector(".home-flow-wrap")?.previousElementSibling ?? null);
       const steps = all(".home-flow li");
@@ -82,11 +83,12 @@ export function ReadingPath() {
       const hiWords = document.createRange(); // the words "Say hi!", not their full-width block
       if (hiEl) hiWords.selectNodeContents(hiEl);
       const hi = hiEl ? box({ getBoundingClientRect: () => hiWords.getBoundingClientRect() } as Element) : null;
-      if (!sub || !head || !rows.length || !arrows.length || !aboutLabel || !para || !career || !eduLabel) return;
+      if (!label || !sub || !arrows.length || !aboutLabel || !para) return;
       if (!careerList || !flowLabel || !steps.length || !connect || !hi) return;
 
       const mid = (a: number, b: number) => (a + b) / 2;
-      const edgeL = gx(Math.max(P * 0.5, L - P * 2)); // just past the content, near the screen's left edge
+      const edgeL = gx(Math.max(P * 0.5, L - P)); // hugging the content's left edge
+      const hugR = gx(Math.min(W - P * 0.5, L + Wm + P)); // hugging the content's right edge
       const edgeR = gx(W + P * 3); // turns on the right swing out past the edge of the screen
       const ringX = arrows[0].cx;
       const rings: Pt[] = arrows.map((a) => ({ x: a.cx, y: a.cy }));
@@ -115,17 +117,17 @@ export function ReadingPath() {
       type V = Pt & { through?: boolean };
       const route: V[] = [
         { x: gx(L + Wm * 0.85), y: -P * 2 }, // from the very top of the page
-        { x: gx(L + Wm * 0.85), y: gy(navH + P * 2) }, // turning left under the nav
-        { x: edgeL, y: gy(navH + P * 2) }, // round the left of the headline
-        { x: edgeL, y: gy(mid(sub.b, head.t)) },
-        { x: ringX, y: gy(mid(sub.b, head.t)) }, // across to the work
+        { x: gx(L + Wm * 0.85), y: gy(label.t - P * 1.5) }, // turning left just above the hero text
+        { x: edgeL, y: gy(label.t - P * 1.5) }, // hugging the headline round its left
+        { x: edgeL, y: gy(sub.b + P * 1.2) },
+        { x: ringX, y: gy(sub.b + P * 1.2) }, // just under it, across to the work
         ...rings.map((r) => ({ ...r, through: true })), // straight down through every ring
-        { x: ringX, y: gy(mid(rows[rows.length - 1].b, aboutLabel.t)) }, // back across to About
-        { x: edgeL, y: gy(mid(rows[rows.length - 1].b, aboutLabel.t)) },
-        { x: edgeL, y: gy(mid(para.b, career.t)) }, // under the statement, round Career
-        { x: gx(L + Wm * 0.58), y: gy(mid(para.b, career.t)) },
-        { x: gx(L + Wm * 0.58), y: gy(mid(careerList.b, eduLabel.t)) },
-        { x: edgeL, y: gy(mid(careerList.b, eduLabel.t)) },
+        { x: ringX, y: gy(aboutLabel.t - P) }, // just above About, back across
+        { x: edgeL, y: gy(aboutLabel.t - P) },
+        { x: edgeL, y: gy(para.b + P * 0.8) }, // round the statement, just under it
+        { x: hugR, y: gy(para.b + P * 0.8) },
+        { x: hugR, y: gy(careerList.b + P * 0.6) }, // round Career on the right, just under it
+        { x: edgeL, y: gy(careerList.b + P * 0.6) },
         { x: edgeL, y: laneY }, // down beside Education, along How I work
         { x: edgeR, y: laneY },
         ...sayHi, // two circles round "Let's connect / Say hi!", then off the left edge onto the floor
@@ -203,17 +205,14 @@ export function ReadingPath() {
       const p = path.getPointAtLength(l);
       dots.push({ x: p.x, y: p.y, len: l });
     }
-    // pace: sideways runs take scroll too (not only going down), so the line never jumps across a row.
-    // Each sample costs its drop plus part of its sideways travel; the total is spread over the page's height.
+    // pace: close to an even speed along the whole line, so the tip (and Pac-Man) moves with the scroll at a
+    // steady rate and never races across a row. The line from its start to the floor spans the page's height.
     const floorLen = Math.max(0, total - route.straight); // the path's measured length can come out a hair short
     const body = samples.filter((q) => q.len <= floorLen);
-    let cost = 0;
-    body.forEach((q, i) => {
-      if (i) cost += Math.abs(q.y - body[i - 1].y) + Math.abs(q.x - body[i - 1].x) * SIDEWAYS;
-      q.at = cost;
-    });
-    const y0 = body[0].y, y1 = body[body.length - 1].y;
-    body.forEach((q) => (q.at = cost ? y0 + (q.at / cost) * (y1 - y0) : y0)); // phones: floor only, no cost
+    const y0 = body[0].y, yEnd = body[body.length - 1].y;
+    // half even speed, half the line's own height: steady, and the tip stays on screen
+    body.forEach((q) => (q.at = floorLen ? 0.5 * q.y + 0.5 * (y0 + (q.len / floorLen) * (yEnd - y0)) : y0));
+    const y1 = body[body.length - 1].at;
     samples.forEach((q) => q.len > floorLen && (q.at = y1));
     const at = (pts: Pt[]) =>
       pts.map((pt) => {
@@ -243,31 +242,77 @@ export function ReadingPath() {
       stations: Array.from(svg.querySelectorAll<SVGCircleElement>(".reading-path__station")),
     };
     const head = svg.querySelector<SVGCircleElement>(".reading-path__head");
+    // after the ball has played (playBall adds "ball-pacman" to <html>), scrolling back up shows Pac-Man
+    // at the tip, facing back along the line and chomping it as it shrinks
+    const pacman = svg.querySelector<SVGPathElement>(".reading-path__pacman");
+    let lastDrawn = -1;
+    let chomping = false;
     // content below the hero stays faint until the line gets to it (desktop only): a project when the line
-    // reaches its ring, a How I work step at its station, anything else when the line passes its first line
+    // Content appears with the line: each block is wiped into view along the stretch of line that passes it
+    // (left to right or right to left along a run, top to bottom along a drop), and wiped out again the same
+    // way when the line goes back (scrolling up, or Pac-Man). Desktop only.
     const floorLen = Math.max(0, marks.total - route.straight);
-    const reachY = (y: number) => marks.samples.find((q) => q.y >= y)?.len ?? floorLen;
+    type Pass = { start: number; end: number; across: boolean; pts: { len: number; x: number; y: number }[] };
+    const passOf = (r: DOMRect, top: number): Pass => {
+      const bottom = top + r.height;
+      const dist = (q: { x: number; y: number }) => Math.hypot(Math.max(r.left - q.x, 0, q.x - r.right), Math.max(top - q.y, 0, q.y - bottom));
+      const NEAR = DOT_PITCH * 1.5;
+      const body = marks.samples.filter((q) => q.len <= floorLen);
+      let i = body.findIndex((q) => dist(q) <= NEAR);
+      if (i < 0) {
+        // never close: it appears whole where the line comes nearest
+        const best = body.reduce((a, q) => (dist(q) < dist(a) ? q : a), body[0]);
+        return { start: best.len, end: best.len, across: true, pts: [] };
+      }
+      let j = i;
+      while (j + 1 < body.length && dist(body[j + 1]) <= NEAR * 2) j++;
+      const pts = body.slice(i, j + 1);
+      const xs = pts.map((q) => q.x), ys = pts.map((q) => q.y);
+      const across = Math.max(...xs) - Math.min(...xs) >= Math.max(...ys) - Math.min(...ys);
+      return { start: pts[0].len, end: pts[pts.length - 1].len, across, pts };
+    };
     const reveal = document.documentElement.classList.contains("has-reading-reveal")
       ? (() => {
           const els = Array.from(document.querySelectorAll<HTMLElement>(REVEAL));
-          const projects = Array.from(document.querySelectorAll(".work-list li"));
-          const steps = Array.from(document.querySelectorAll(".home-flow li"));
           return els
             .filter((el) => !els.some((o) => o !== el && o.contains(el))) // outermost blocks only
             .map((el) => {
               el.classList.add("reading-reveal");
               const r = el.getBoundingClientRect();
-              const len =
-                marks.rings[projects.indexOf(el)]?.len ??
-                marks.stations[steps.indexOf(el)]?.len ??
-                reachY(r.top + window.scrollY + Math.min(r.height / 2, DOT_PITCH));
-              return { el, len: Math.min(len, floorLen) };
+              const top = r.top + window.scrollY;
+              return { el, r, top, pass: passOf(r, top), clip: "hidden" };
             });
         })()
       : [];
-    // on load the line slides in from the left edge, up to where the reading point is
-    const introStart = performance.now();
-    const INTRO_MS = 1400;
+    // In: wiped in along the line as it grows. Out: when the line goes back (scrolling up, or Pac-Man) past
+    // the middle of a block's stretch, the whole block softly fades away.
+    const wipe = (b: (typeof reveal)[number], drawn: number, growing: boolean) => {
+      const { pass, r, top } = b;
+      let clip = b.clip;
+      if (drawn >= pass.end) clip = "";
+      else if (!growing) {
+        if (drawn < (pass.start + pass.end) / 2) clip = "hidden";
+      } else if (drawn >= pass.start) {
+        if (b.clip !== "") {
+          const done = pass.pts.filter((q) => q.len <= drawn);
+          const lo = (k: "x" | "y") => Math.min(...done.map((q) => q[k]));
+          const hi = (k: "x" | "y") => Math.max(...done.map((q) => q[k]));
+          const px = (n: number) => `${Math.max(0, n).toFixed(0)}px`;
+          clip = pass.across
+            ? `inset(0 ${px(r.right - hi("x"))} 0 ${px(lo("x") - r.left)})`
+            : `inset(${px(lo("y") - top)} 0 ${px(top + r.height - hi("y"))} 0)`;
+        }
+      } else clip = "hidden";
+      if (clip === b.clip) return;
+      b.clip = clip;
+      b.el.classList.toggle("is-reached", clip !== "hidden");
+      if (clip !== "hidden") b.el.style.clipPath = clip; // hidden keeps its last shape and fades out whole
+    };
+    // the line trails the scroll: it heads for where the scroll says it should be, easing in and never faster
+    // than a calm top speed, both on the way down and (as Pac-Man) on the way back up. On load it draws in
+    // from the top the same way.
+    let drawnSoFar = 0;
+    let lastTime = performance.now();
     const shown = { dots: 0, eaten: 0, rings: 0, stations: 0 };
     const sync = (key: keyof typeof shown, list: { len: number }[], drawn: number) => {
       let n = 0;
@@ -284,10 +329,10 @@ export function ReadingPath() {
       const max = document.documentElement.scrollHeight - H;
       const near = Math.max(0, Math.min(1, 1 - (max - window.scrollY) / (H * 0.6)));
       if (near >= 0.999) return total;
-      // the reading point: a third of the way down at the top of the page, settling a little ahead of the
-      // reader (two thirds down) after half a screen of scroll, and reaching the bottom as the page ends
+      // the reading point: a third of the way down the screen, a little lower once you start scrolling (the line
+      // draws a little ahead of it), and reaching the bottom as the page ends
       const settle = Math.min(1, window.scrollY / (H * 0.5));
-      const readY = window.scrollY + H * (0.3 + 0.38 * settle + 0.32 * near);
+      const readY = window.scrollY + H * (0.3 + 0.12 * settle + 0.58 * near);
       // the curve follows the reading point; the straight floor then draws out with the last bit of scroll
       let k = 0;
       while (k < samples.length && samples[k].len <= floorLen && samples[k].at <= readY) k++;
@@ -295,37 +340,73 @@ export function ReadingPath() {
       if (upTo < floorLen - 4) return upTo;
       return floorLen + route.straight * Math.min(1, Math.max(0, (near - 0.5) / 0.45));
     };
+    // after a relayout (fonts, resize) carry on from where it was; arriving part-way down the page (a link to
+    // #work, a restored scroll) starts there instead of drawing in from the top
+    drawnSoFar = reduced ? marks.total : drawnRef.current ?? (window.scrollY > 50 ? drawnNow() : 0);
     let raf = 0;
     const frame = () => {
       raf = 0;
-      const t = Math.min(1, (performance.now() - introStart) / INTRO_MS);
-      const intro = reduced ? 1 : 1 - Math.pow(1 - t, 3);
-      const drawn = drawnNow() * intro;
-      if (t < 1) raf = requestAnimationFrame(frame);
+      const now = performance.now();
+      const dt = Math.min(0.05, (now - lastTime) / 1000);
+      lastTime = now;
+      const target = drawnNow();
+      const gap = target - drawnSoFar;
+      const step = Math.sign(gap) * Math.min(Math.abs(gap) * (1 - Math.exp(-dt * EASE)), TOP_SPEED * dt);
+      drawnSoFar = Math.abs(gap) < 1 ? target : drawnSoFar + step;
+      const drawn = drawnSoFar;
+      drawnRef.current = drawn;
+      const moving = drawn !== target;
+      if (moving) raf = requestAnimationFrame(frame);
       sync("dots", marks.dots, drawn);
       sync("eaten", marks.eaten, drawn);
       sync("rings", marks.rings, drawn);
       sync("stations", marks.stations, drawn);
-      reveal.forEach((r) => r.el.classList.toggle("is-reached", drawn >= r.len));
+      const growing = lastDrawn < 0 || drawn >= lastDrawn;
+      reveal.forEach((b) => wipe(b, drawn, growing));
+      const tip = marks.dots[Math.max(0, shown.dots - 1)];
+      const live = drawn > 0 && drawn < marks.total && !!tip;
+      // Pac-Man: shows up when the line goes back and stays (resting, mouth half open) until it grows again
+      if (lastDrawn >= 0 && drawn < lastDrawn - 0.5) chomping = document.documentElement.classList.contains("ball-pacman");
+      else if (lastDrawn >= 0 && drawn > lastDrawn + 0.5) chomping = false;
+      lastDrawn = drawn;
+      const pac = chomping && live;
       if (head) {
-        const tip = marks.dots[Math.max(0, shown.dots - 1)];
-        const live = drawn > 0 && drawn < marks.total && tip;
-        head.style.opacity = live ? "1" : "0";
+        head.style.opacity = live && !pac ? "1" : "0";
         if (tip) {
           head.setAttribute("cx", String(tip.x));
           head.setAttribute("cy", String(tip.y));
         }
       }
+      if (pacman) {
+        pacman.classList.toggle("is-on", pac);
+        if (pac && tip) {
+          const back = marks.dots[Math.max(0, shown.dots - 5)];
+          const angle = Math.atan2(back.y - tip.y, back.x - tip.x); // faces the line it is eating
+          const m = moving ? 0.12 + 0.55 * Math.abs(Math.sin(now / 110)) : 0.4; // mouth half-angle: chomping while it eats
+          const r = PAC_R;
+          pacman.setAttribute(
+            "d",
+            `M 0 0 L ${(r * Math.cos(m)).toFixed(2)} ${(r * Math.sin(m)).toFixed(2)} A ${r} ${r} 0 1 1 ${(r * Math.cos(m)).toFixed(2)} ${(-r * Math.sin(m)).toFixed(2)} Z`,
+          );
+          pacman.setAttribute("transform", `translate(${tip.x.toFixed(1)} ${tip.y.toFixed(1)}) rotate(${((angle * 180) / Math.PI).toFixed(1)})`);
+        }
+      }
     };
     const onScroll = () => {
-      if (!raf) raf = requestAnimationFrame(frame);
+      if (!raf) {
+        lastTime = performance.now();
+        raf = requestAnimationFrame(frame);
+      }
     };
     frame();
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => {
       window.removeEventListener("scroll", onScroll);
       if (raf) cancelAnimationFrame(raf);
-      reveal.forEach((r) => r.el.classList.remove("reading-reveal", "is-reached"));
+      reveal.forEach((b) => {
+        b.el.classList.remove("reading-reveal", "is-reached");
+        b.el.style.clipPath = "";
+      });
     };
   }, [marks, route]);
 
@@ -337,6 +418,7 @@ export function ReadingPath() {
       {marks?.rings.map((r, i) => <circle key={`r${i}`} className="reading-path__ring" cx={r.x} cy={r.y} r={14} />)}
       {marks?.stations.map((st, i) => <circle key={`s${i}`} className="reading-path__station" cx={st.x} cy={st.y} r={4} />)}
       <circle className="reading-path__head" r={3.5} style={{ opacity: 0 }} />
+      <path className="reading-path__pacman" />
     </svg>
   );
 }
