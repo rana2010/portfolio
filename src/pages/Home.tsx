@@ -1,6 +1,7 @@
 import { useEffect, useRef } from "react";
 import { Dots, Footer, Nav } from "../components/Chrome";
 import { WorkList } from "../components/WorkList";
+import { ScrollFill } from "../components/Motion";
 
 const career = [
   { company: "noon", role: "Product Designer II", years: "Jan 2025 – Present" },
@@ -8,11 +9,11 @@ const career = [
   { company: "Promolinks International", role: "User Experience Designer", years: "May – Nov 2023" },
 ];
 
-const stack = [
-  { label: "Design", items: ["Figma", "Dovetail"] },
-  { label: "Development", items: ["React", "Tailwind CSS", "shadcn/ui"] },
-  { label: "AI tools", items: ["Cursor", "Claude"] },
-  { label: "Version control & deployment", items: ["GitHub"] },
+const flow = [
+  { step: "Research", line: "Interviews, focus groups, synthesis", tools: ["Dovetail"] },
+  { step: "Design", line: "Flows, systems, high fidelity", tools: ["Figma"] },
+  { step: "Build", line: "Coded prototypes with AI", tools: ["Claude", "Cursor"] },
+  { step: "Ship", line: "Versioned and deployed", tools: ["GitHub"] },
 ];
 
 export function Home() {
@@ -65,20 +66,17 @@ export function Home() {
         <section className="home-about" id="about">
           <h2 className="home-about__label">About</h2>
           <div className="home-about__body">
-            <p className="home-about__big">
-              Product Designer with 3+ years of experience across e-commerce and fintech.
-            </p>
-            <p>
-              I work end to end, across user research, product discovery, UX/UI design and coded
-              prototypes, with a focus on behavioral design and AI-assisted products.
-            </p>
+            <ScrollFill
+              className="home-about__big"
+              text="Product Designer with 3+ years of experience across e-commerce and fintech."
+            />
+            <ScrollFill text="I work end to end, across user research, product discovery, UX/UI design and coded prototypes, with a focus on behavioral design and AI-assisted products." />
 
             <h3 className="home-about__sub">Career</h3>
             <ol className="home-career">
               {career.map((job) => (
                 <li key={job.company}>
                   <span className="home-career__co">{job.company}</span>
-                  <span className="home-career__role">{job.role}</span>
                   <span className="home-career__yr">{job.years}</span>
                 </li>
               ))}
@@ -90,39 +88,30 @@ export function Home() {
                 <ol className="home-edu">
                   <li>
                     <span>The American University in Cairo</span>
-                    <span>BA, Communication and Interactive Design · 2018 – 2023</span>
+                    <span>BA, Communication and Interactive Design</span>
+                    <span className="home-edu__yr">2018 – 2023</span>
                   </li>
                   <li>
-                    <span>
-                      <a
-                        className="text-link"
-                        href="https://coursera.org/verify/8FBV6NL2KGCC"
-                        target="_blank"
-                        rel="noreferrer"
-                      >
-                        Gamification
-                      </a>
-                    </span>
-                    <span>University of Pennsylvania (Coursera) · 2024</span>
-                  </li>
-                  <li>
-                    <span>Google UX Design</span>
-                    <span>Professional Certificate</span>
+                    <span>Gamification</span>
+                    <span>University of Pennsylvania · Online certificate</span>
+                    <span className="home-edu__yr">2024</span>
                   </li>
                 </ol>
               </div>
-              <div>
-                <h3 className="home-about__sub">Tech stack</h3>
-                <dl className="home-stack">
-                  {stack.map((group) => (
-                    <div key={group.label}>
-                      <dt>{group.label}</dt>
-                      <dd>{group.items.join(", ")}</dd>
-                    </div>
-                  ))}
-                </dl>
-              </div>
             </div>
+
+            <h3 className="home-about__sub">How I work</h3>
+            <ol className="home-flow">
+              {flow.map((f) => (
+                <li key={f.step}>
+                  <span className="home-flow__step">
+                    {f.step}
+                  </span>
+                  <span className="home-flow__line">{f.line}</span>
+                  <span className="home-flow__tools">{f.tools.join(", ")}</span>
+                </li>
+              ))}
+            </ol>
           </div>
         </section>
       </main>

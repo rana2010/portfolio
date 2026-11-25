@@ -1,14 +1,14 @@
 import { useEffect, useLayoutEffect } from "react";
-import { Route, Routes, useLocation } from "react-router-dom";
+import { Navigate, Route, Routes, useLocation } from "react-router-dom";
 import { Chat } from "./pages/Chat";
 import { Home } from "./pages/Home";
-import { Projects } from "./pages/Projects";
 import { CaseStudy } from "./pages/CaseStudy";
 import { Echo } from "./pages/Echo";
 import { Analyst } from "./pages/Analyst";
 import { Handcrafted } from "./pages/Handcrafted";
 import { ThemeProvider, useTapRing } from "./components/Chrome";
 import { EditProvider } from "./components/EditContext";
+import { ExploreToast } from "./components/Motion";
 
 type GoatCounter = { count: (vars?: { path?: string }) => void };
 
@@ -61,13 +61,15 @@ function useReveal(key: string) {
 }
 
 export function App() {
-  const { pathname, search } = useLocation();
+  const { pathname, search, hash } = useLocation();
 
   useTapRing();
 
   useLayoutEffect(() => {
-    window.scrollTo(0, 0);
-  }, [pathname]);
+    const target = hash ? document.getElementById(hash.slice(1)) : null;
+    if (target) target.scrollIntoView({ block: "start" });
+    else window.scrollTo(0, 0);
+  }, [pathname, hash]);
 
   useReveal(pathname);
 
@@ -82,12 +84,13 @@ export function App() {
           <Route path="/" element={<Home />} />
           <Route path="/home" element={<Home />} />
           <Route path="/chat" element={<Chat />} />
-          <Route path="/projects" element={<Projects />} />
+          <Route path="/projects" element={<Navigate to={{ pathname: "/", hash: "work" }} replace />} />
           <Route path="/handcrafted" element={<Handcrafted />} />
           <Route path="/work/pulse" element={<CaseStudy />} />
           <Route path="/work/echo" element={<Echo />} />
           <Route path="/work/analyst" element={<Analyst />} />
         </Routes>
+        <ExploreToast />
       </ThemeProvider>
     </EditProvider>
   );

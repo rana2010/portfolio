@@ -1,6 +1,7 @@
 import { useEffect, type ReactNode } from "react";
 import { Compare, DetourMap, Piece, PulsePrototype, Stage, VipQueue } from "../components/PulseVisuals";
 import { Dots, Footer, Nav, ReadProgress } from "../components/Chrome";
+import { CountUp } from "../components/Motion";
 
 const problems = [
   { title: "Data without hierarchy", body: "The side panel listed 20+ fields at the same weight. “Is VIP: No” looked like everything else." },
@@ -171,7 +172,9 @@ export function CaseStudy() {
             <span>lower average handling time in the first 6 months</span>
           </div>
           <div>
-            <p>200+</p>
+            <p>
+              <CountUp value="200+" />
+            </p>
             <span>agents across noon marketplaces use it daily</span>
           </div>
         </div>

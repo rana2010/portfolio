@@ -102,82 +102,285 @@ export function CairoTime() {
   );
 }
 
+/* At the very end of the page the chat ball plays on the floor: it bounces from one bottom corner to
+   the other, using "Say hi!" as a step on the way (lands on it, springs a little higher, drops back to
+   the floor), settles in the corner for 2 seconds, then heads back. Scroll up and it rolls home. */
+function playBall(el: HTMLElement) {
+  const G = 2600;
+  const R = 24;
+  const icon = el.querySelector<SVGElement>(".chat-mark__icon");
+  type P = { x: number; y: number };
+  type Arc = { from: P; to: P; apexY: number; tUp: number; t: number };
+  let arcs: Arc[] = [];
+  let arcI = 0;
+  let arcT0 = 0;
+  let cur: P = { x: 0, y: 0 }; // offset from home
+  let spin = 0;
+  let raf = 0;
+  let rest = 0;
+  let playing = false;
+  let side: "left" | "right" = "right";
+  let after: () => void = () => {};
+
+  const home = () => {
+    const prev = el.style.transform;
+    el.style.transform = "none";
+    const r = el.getBoundingClientRect();
+    el.style.transform = prev;
+    return { x: r.left + r.width / 2, y: r.top + r.height / 2 };
+  };
+  const arc = (from: P, to: P, h: number): Arc => {
+    const apexY = Math.min(from.y, to.y) - h; // screen y grows downward
+    const tUp = Math.sqrt((2 * (from.y - apexY)) / G);
+    const tDown = Math.sqrt((2 * (to.y - apexY)) / G);
+    return { from, to, apexY, tUp, t: tUp + tDown };
+  };
+  // build the hops for one trip along the floor (all points are ball centres, in viewport px)
+  const plan = (toSide: "left" | "right") => {
+    const h0 = home();
+    const W = window.innerWidth;
+    const floor = h0.y;
+    const leftX = W - h0.x; // mirror of the home corner
+    const start = { x: h0.x + cur.x, y: h0.y + cur.y };
+    const endX = toSide === "left" ? leftX : h0.x;
+    const pts: { p: P; h: number }[] = [];
+    const stepEl = document.querySelector<HTMLElement>(".hi__big");
+    const sr = stepEl?.getBoundingClientRect();
+    const onScreen = sr && sr.top > 70 && sr.bottom < floor && sr.width > 0;
+    const dir = Math.sign(endX - start.x) || 1;
+    if (onScreen && sr) {
+      const top = sr.top + sr.height * 0.16 - R; // ball resting on top of the letters
+      const stepX = toSide === "left" ? sr.left + sr.width * 0.62 : sr.left + sr.width * 0.38;
+      const between = (stepX - start.x) * dir > 0 && (endX - stepX) * dir > 0;
+      if (between) {
+        const runUp = start.x + (stepX - start.x) * 0.45;
+        pts.push({ p: { x: runUp, y: floor }, h: 110 }); // a hop along the floor
+        pts.push({ p: { x: stepX, y: top }, h: 70 }); // up onto "Say hi!"
+        const off = toSide === "left" ? sr.left - 40 : sr.right + 40; // spring off, a little higher
+        pts.push({ p: { x: Math.max(R + 8, Math.min(W - R - 8, off)), y: floor }, h: 130 });
+      }
+    }
+    if (!pts.length) {
+      pts.push({ p: { x: start.x + (endX - start.x) * 0.4, y: floor }, h: 130 });
+      pts.push({ p: { x: start.x + (endX - start.x) * 0.75, y: floor }, h: 80 });
+    }
+    pts.push({ p: { x: endX, y: floor }, h: 60 }); // into the corner
+    pts.push({ p: { x: endX, y: floor }, h: 22 }); // settle
+    pts.push({ p: { x: endX, y: floor }, h: 8 });
+    const list: Arc[] = [];
+    let from = start;
+    pts.forEach(({ p, h }) => {
+      list.push(arc(from, p, h));
+      from = p;
+    });
+    return { list, origin: h0 };
+  };
+  let origin = { x: 0, y: 0 };
+  const ripple = (k: number) => {
+    const r = el.getBoundingClientRect();
+    window.dispatchEvent(new CustomEvent("dot-ripple", { detail: { x: r.left + r.width / 2, y: r.bottom, k } }));
+  };
+  const frame = (now: number) => {
+    raf = 0;
+    const a = arcs[arcI];
+    if (!a) return;
+    const t = Math.min(a.t, (now - arcT0) / 1000);
+    const x = a.from.x + (a.to.x - a.from.x) * (t / a.t);
+    const y = a.apexY + 0.5 * G * (t - a.tUp) * (t - a.tUp);
+    const next = { x: x - origin.x, y: y - origin.y };
+    spin += (next.x - cur.x) / R;
+    cur = next;
+    el.style.transform = `translate(${cur.x.toFixed(1)}px, ${cur.y.toFixed(1)}px)`;
+    if (icon) icon.style.transform = `rotate(${spin.toFixed(3)}rad)`;
+    if (t >= a.t) {
+      ripple(Math.min(0.8, 0.25 + (a.to.y - a.apexY) / 300));
+      arcI += 1;
+      arcT0 = now;
+      if (arcI >= arcs.length) {
+        after();
+        return;
+      }
+    }
+    raf = requestAnimationFrame(frame);
+  };
+  const trip = (toSide: "left" | "right", then: () => void) => {
+    const p = plan(toSide);
+    arcs = p.list;
+    origin = p.origin;
+    arcI = 0;
+    arcT0 = performance.now();
+    after = () => {
+      side = toSide;
+      then();
+    };
+    if (raf) cancelAnimationFrame(raf);
+    raf = requestAnimationFrame(frame);
+  };
+  const loop = () => {
+    if (!playing) return;
+    trip(side === "right" ? "left" : "right", () => {
+      rest = window.setTimeout(loop, 2000);
+    });
+  };
+  const atBottom = () => window.scrollY + window.innerHeight >= document.documentElement.scrollHeight - 4;
+  const onScroll = () => {
+    const bottom = atBottom();
+    if (bottom && !playing) {
+      playing = true;
+      el.classList.add("is-playing");
+      window.clearTimeout(rest);
+      loop();
+    } else if (!bottom && playing) {
+      playing = false;
+      window.clearTimeout(rest);
+      if (side === "right" && !arcs[arcI]) {
+        el.classList.remove("is-playing");
+        return;
+      }
+      trip("right", () => {
+        el.classList.remove("is-playing");
+        el.style.transform = "";
+        cur = { x: 0, y: 0 };
+      });
+    }
+  };
+  window.addEventListener("scroll", onScroll, { passive: true });
+  onScroll();
+  return () => {
+    window.removeEventListener("scroll", onScroll);
+    window.clearTimeout(rest);
+    if (raf) cancelAnimationFrame(raf);
+    el.style.transform = "";
+    el.classList.remove("is-playing");
+    if (icon) icon.style.transform = "";
+  };
+}
+
 let droppedThisLoad = false;
 
-type Frame = { t: number; x: number; y: number; sx?: number; sy?: number };
-const UP = "cubic-bezier(0, 0.55, 0.45, 1)";
-const DOWN = "cubic-bezier(0.55, 0, 1, 0.45)";
-
-/* The chat button falls, bounces, hops along the bottom of the screen, comes back and settles.
-   Each landing sends a ripple along the "floor". Returns a cleanup function. */
+/* The chat button behaves like a basketball: it drops in from above and to the left, bounces a few
+   times (each bounce lower, set by real gravity and restitution), rolls into its corner and stops.
+   Each landing ripples along the floor and a shadow follows it. Returns a cleanup function. */
 function bounceIn(el: HTMLElement, onSettled: () => void, onDone: () => void) {
-  const H = Math.round(window.innerHeight * 0.85);
-  const W = Math.min(300, Math.round(window.innerWidth * 0.5));
-  const f: Frame[] = [
-    { t: 0, x: 0, y: -H },
-    { t: 560, x: 0, y: 0, sx: 1.16, sy: 0.82 },
-    { t: 620, x: 0, y: -6, sx: 0.94, sy: 1.06 },
-    { t: 860, x: 0, y: -80 },
-    { t: 1080, x: 0, y: 0, sx: 1.1, sy: 0.9 },
-    // hop left along the floor
-    { t: 1290, x: -W * 0.17, y: -58, sx: 0.96, sy: 1.05 },
-    { t: 1480, x: -W * 0.34, y: 0, sx: 1.1, sy: 0.9 },
-    { t: 1670, x: -W * 0.52, y: -48, sx: 0.96, sy: 1.05 },
-    { t: 1850, x: -W * 0.7, y: 0, sx: 1.08, sy: 0.92 },
-    { t: 2020, x: -W * 0.85, y: -34, sx: 0.97, sy: 1.04 },
-    { t: 2180, x: -W, y: 0, sx: 1.08, sy: 0.92 },
-    // and back home
-    { t: 2400, x: -W * 0.66, y: -52, sx: 0.96, sy: 1.05 },
-    { t: 2620, x: -W * 0.33, y: 0, sx: 1.08, sy: 0.92 },
-    { t: 2820, x: -W * 0.15, y: -36, sx: 0.97, sy: 1.04 },
-    { t: 3000, x: 0, y: 0, sx: 1.06, sy: 0.94 },
-    { t: 3120, x: 0, y: -10 },
-    { t: 3240, x: 0, y: 0, sx: 1.02, sy: 0.98 },
-    { t: 3340, x: 0, y: 0 },
-  ];
-  const total = f[f.length - 1].t;
-  const kf = f.map((p, i) => {
-    const next = f[i + 1];
-    const easing = next ? (next.y < p.y ? UP : DOWN) : "linear";
-    return { offset: p.t / total, transform: `translate(${p.x}px, ${p.y}px) scale(${p.sx ?? 1}, ${p.sy ?? 1})`, easing };
-  });
-  el.style.opacity = "1";
-  const ball = el.animate(kf, { duration: total, fill: "both" });
+  const G = 2600; // px/s²
+  const E = 0.64; // restitution: how much speed survives each bounce
+  const SLOW = 0.86; // horizontal speed kept on each bounce
+  const R = 24; // ball radius, for the spin
+  const H = Math.round(window.innerHeight * 0.8);
+  const W = Math.min(440, Math.round(window.innerWidth * 0.55));
+  const ROLL = 36;
 
-  // a soft shadow on the floor that follows the ball and shrinks as it rises
+  // vertical motion: fall from H, then bounces until they get small
+  const segs: number[] = []; // airborne durations
+  let v = Math.sqrt(2 * G * H);
+  segs.push(v / G); // first fall
+  v *= E;
+  while (v > 380) {
+    segs.push((2 * v) / G);
+    v *= E;
+  }
+  // horizontal: travel W - ROLL in the air, then roll the last bit
+  let k = 0;
+  segs.forEach((t, i) => (k += t * Math.pow(SLOW, i)));
+  const vx0 = (W - ROLL) / k;
+  const vRoll = vx0 * Math.pow(SLOW, segs.length);
+  const rollT = (2 * ROLL) / vRoll;
+
+  const impacts: { t: number; x: number }[] = [];
+  const pos = (ms: number) => {
+    let t = ms / 1000;
+    let x = -W;
+    const y0 = -H;
+    let up = Math.sqrt(2 * G * H) * E;
+    for (let i = 0; i < segs.length; i++) {
+      const vx = vx0 * Math.pow(SLOW, i);
+      if (t <= segs[i]) {
+        const y = i === 0 ? y0 + 0.5 * G * t * t : -(up * t - 0.5 * G * t * t);
+        return { x: x + vx * t, y: Math.min(0, y), sinceHit: i === 0 ? 9 : 0 };
+      }
+      t -= segs[i];
+      x += vx * segs[i];
+      if (i > 0) up *= E;
+    }
+    // rolling
+    const tt = Math.min(t, rollT);
+    const a = vRoll / rollT;
+    return { x: x + vRoll * tt - 0.5 * a * tt * tt, y: 0, sinceHit: 9 };
+  };
+  let acc = 0;
+  segs.forEach((t) => {
+    acc += t;
+    impacts.push({ t: acc * 1000, x: pos(acc * 1000 - 1).x });
+  });
+  const total = (acc + rollT) * 1000 + 120;
+
+  const STEP = 1000 / 60;
+  const ball: Keyframe[] = [];
+  const spins: number[] = [];
+  const shade: Keyframe[] = [];
+  for (let ms = 0; ms <= total; ms += STEP) {
+    const p = pos(ms);
+    const hit = impacts.find((h) => ms >= h.t && ms - h.t < 90);
+    const sq = hit ? 1 - (ms - hit.t) / 90 : 0;
+    const str = hit ? Math.min(1, 1 - impacts.indexOf(hit) * 0.25) : 0;
+    const sx = 1 + 0.16 * sq * str;
+    const sy = 1 - 0.18 * sq * str;
+    const spin = (p.x + W) / R; // radians rolled
+    ball.push({ offset: ms / total, transform: `translate(${p.x.toFixed(1)}px, ${p.y.toFixed(1)}px) scale(${sx.toFixed(3)}, ${sy.toFixed(3)})` });
+    const kk = Math.max(0, 1 - Math.min(1, -p.y / 220));
+    shade.push({ offset: ms / total, transform: `translate(calc(-50% + ${p.x.toFixed(1)}px), -50%) scale(${(0.45 + kk * 0.55).toFixed(3)})`, opacity: (kk * 0.9).toFixed(3) });
+    spins.push(spin);
+  }
+  // land upright: scale the spin so it finishes on a whole number of turns
+  const end = spins[spins.length - 1] || 1;
+  const turns = Math.max(1, Math.round(end / (2 * Math.PI)));
+  const fit = (turns * 2 * Math.PI) / end;
+  for (let i = 0; i < spins.length; i++) spins[i] *= fit;
+  spins[spins.length - 1] = turns * 2 * Math.PI;
+  ball[ball.length - 1].offset = 1;
+  shade[shade.length - 1].offset = 1;
+
+  const r = el.getBoundingClientRect(); // resting spot, measured before any transform
+  const floor = window.innerHeight - 3; // the very bottom edge of the screen
+  el.style.opacity = "1";
+  const icon = el.querySelector<SVGElement>(".chat-mark__icon");
+  const a1 = el.animate(ball, { duration: total, fill: "both" });
+  const a3 = icon
+    ? icon.animate(
+        ball.map((b, i) => ({ offset: b.offset, transform: `rotate(${spins[i].toFixed(3)}rad)` })),
+        { duration: total, fill: "both" },
+      )
+    : null;
+
   const shadow = document.createElement("span");
   shadow.className = "chat-shadow";
-  document.body.appendChild(shadow);
-  const r = el.getBoundingClientRect();
   shadow.style.left = `${r.left + r.width / 2}px`;
-  shadow.style.top = `${r.bottom}px`;
-  const skf = f.map((p) => {
-    const k = Math.max(0, 1 - Math.min(1, -p.y / 160));
-    return { offset: p.t / total, transform: `translate(calc(-50% + ${p.x}px), -50%) scale(${0.5 + k * 0.5})`, opacity: k * 0.9 };
-  });
-  const shade = shadow.animate(skf, { duration: total, fill: "both" });
+  shadow.style.top = `${floor}px`;
+  document.body.appendChild(shadow);
+  const a2 = shadow.animate(shade, { duration: total, fill: "both" });
 
-  // ripples along the bottom of the screen at each landing
   const timers: number[] = [];
-  f.forEach((p) => {
-    if (p.y !== 0 || !p.sx || p.sx < 1.05) return;
+  impacts.forEach((h, i) => {
     timers.push(
       window.setTimeout(() => {
         const ring = document.createElement("span");
         ring.className = "floor-ripple";
-        ring.style.left = `${r.left + r.width / 2 + p.x}px`;
-        ring.style.top = `${r.bottom}px`;
+        ring.style.left = `${r.left + r.width / 2 + h.x}px`;
+        ring.style.top = `${floor}px`;
+        ring.style.setProperty("--k", String(Math.max(0.35, 1 - i * 0.25)));
+        window.dispatchEvent(new CustomEvent("dot-ripple", { detail: { x: r.left + r.width / 2 + h.x, y: floor, k: Math.max(0.35, 1 - i * 0.25) } }));
         document.body.appendChild(ring);
         window.setTimeout(() => ring.remove(), 900);
-      }, p.t),
+      }, h.t),
     );
   });
-  timers.push(window.setTimeout(onSettled, total + 80));
+  timers.push(window.setTimeout(onSettled, total + 60));
   timers.push(window.setTimeout(onDone, total + 5200));
   return () => {
     timers.forEach((t) => window.clearTimeout(t));
-    ball.cancel();
-    shade.cancel();
+    a1.cancel();
+    a2.cancel();
+    a3?.cancel();
     shadow.remove();
     el.style.opacity = "";
   };
@@ -192,7 +395,7 @@ export function Nav() {
     const t = window.setTimeout(() => {
       droppedThisLoad = true;
       setChat("drop");
-    }, 6000);
+    }, 4000);
     return () => window.clearTimeout(t);
   }, [chat]);
   const mark = useRef<HTMLAnchorElement>(null);
@@ -214,6 +417,11 @@ export function Nav() {
       setChat("idle");
     });
   }, [chat]);
+  useEffect(() => {
+    if (chat !== "idle" || !mark.current) return;
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    return playBall(mark.current);
+  }, [chat]);
   const [scrolled, setScrolled] = useState(false);
 
   useEffect(() => {
@@ -232,7 +440,21 @@ export function Nav() {
           Rana Ebrahim
         </Link>
         <nav className="site-nav__links" aria-label="Main">
-          <NavLink to="/projects" viewTransition>Selected work</NavLink>
+          <Link
+            to={{ pathname: "/", hash: "work" }}
+            viewTransition
+            onClick={(e) => {
+              const onHome = window.location.pathname.replace(/\/+$/, "").match(/\/(portfolio)?(\/home)?$/);
+              const list = document.getElementById("work");
+              if (onHome && list) {
+                e.preventDefault();
+                list.scrollIntoView({ behavior: "smooth", block: "start" });
+                history.replaceState(null, "", "#work");
+              }
+            }}
+          >
+            Work
+          </Link>
           <NavLink to="/handcrafted" viewTransition>Handcrafted</NavLink>
           <button
             className="site-nav__theme"
@@ -255,6 +477,36 @@ export function Nav() {
   );
 }
 
+const EMAIL = "ranaebrahim@aucegypt.edu";
+
+/* "Email" copies the address; falls back to opening the mail app. */
+function CopyEmail() {
+  const [copied, setCopied] = useState(false);
+  useEffect(() => {
+    if (!copied) return;
+    const t = window.setTimeout(() => setCopied(false), 2200);
+    return () => window.clearTimeout(t);
+  }, [copied]);
+  return (
+    <a
+      className={`u-link copy-email${copied ? " is-copied" : ""}`}
+      href={`mailto:${EMAIL}`}
+      onClick={(e) => {
+        if (!navigator.clipboard) return;
+        e.preventDefault();
+        navigator.clipboard.writeText(EMAIL).then(
+          () => setCopied(true),
+          () => (window.location.href = `mailto:${EMAIL}`),
+        );
+      }}
+      title={EMAIL}
+      aria-label={`Copy my email, ${EMAIL}`}
+    >
+      {copied ? "Email copied ✓" : "Email"}
+    </a>
+  );
+}
+
 export function Footer({
   next,
 }: {
@@ -267,16 +519,6 @@ export function Footer({
       <p className="site-footer__time">
         Local time in <CairoTime />
       </p>
-      <a
-        className="u-link"
-        href="#top"
-        onClick={(event) => {
-          event.preventDefault();
-          window.scrollTo({ top: 0, behavior: "smooth" });
-        }}
-      >
-        Back to top ↑
-      </a>
     </div>
   );
 
@@ -293,15 +535,15 @@ export function Footer({
   }
 
   return (
-    <footer className="site-footer" id="contact">
+    <footer className="site-footer site-footer--hi" id="contact">
       <p className="site-footer__label">Let’s connect</p>
-      <a className="site-footer__big" href="mailto:ranaebrahim@aucegypt.edu">
+      <p className="hi__big">
         Say <em>hi!</em>
-      </a>
+      </p>
       <div className="site-footer__links">
-        <a className="u-link" href="mailto:ranaebrahim@aucegypt.edu">ranaebrahim@aucegypt.edu</a>
+        <CopyEmail />
         <a className="u-link" href="https://www.linkedin.com/in/rana-ebrahimm/" target="_blank" rel="noreferrer">
-          LinkedIn
+          LinkedIn ↗
         </a>
       </div>
       {base}
@@ -405,15 +647,23 @@ export function useTapRing() {
       document.documentElement.style.setProperty("--vt-y", `${e.clientY}px`);
       const target = (e.target as Element | null)?.closest("a, button, [role='tab']");
       if (!target || e.button > 0) return;
-      const ring = document.createElement("span");
-      ring.className = "tap-ring";
-      ring.style.left = `${e.clientX}px`;
-      ring.style.top = `${e.clientY}px`;
-      document.body.appendChild(ring);
-      ring.addEventListener("animationend", () => ring.remove(), { once: true });
-      window.setTimeout(() => ring.remove(), 900);
+      // the tap travels through the dotted background instead of drawing its own ring
+      window.dispatchEvent(new CustomEvent("dot-ripple", { detail: { x: e.clientX, y: e.clientY, k: 0.55 } }));
+    };
+    // hovering a link or button sends a soft pulse through the dots
+    let last: Element | null = null;
+    const onOver = (e: PointerEvent) => {
+      if (e.pointerType !== "mouse") return;
+      const t = (e.target as Element | null)?.closest("a, button, [role='tab']") ?? null;
+      if (t === last) return;
+      last = t;
+      if (t) window.dispatchEvent(new CustomEvent("dot-ripple", { detail: { x: e.clientX, y: e.clientY, k: 0.28 } }));
     };
     window.addEventListener("pointerdown", onDown, { passive: true });
-    return () => window.removeEventListener("pointerdown", onDown);
+    window.addEventListener("pointerover", onOver, { passive: true });
+    return () => {
+      window.removeEventListener("pointerdown", onDown);
+      window.removeEventListener("pointerover", onOver);
+    };
   }, []);
 }

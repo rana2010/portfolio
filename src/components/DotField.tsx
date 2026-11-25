@@ -25,6 +25,7 @@ uniform float uSparkle;
 uniform float uFocus;
 uniform float uBase;
 uniform float uLight;
+uniform vec4 uRip[4];
 out vec2 vLocal;
 out float vRadius;
 out float vBlur;
@@ -78,6 +79,20 @@ void main() {
   vec2 display = uLens.xy + vec2(turn.x * rel.x - turn.y * rel.y, turn.y * rel.x + turn.x * rel.y) * grow;
   float scale = sqrt(max(grow * spread, 0.02));
 
+  // shockwaves: a ring that travels out through the dots, pushing them and lighting them up
+  float lift = 0.0;
+  for (int i = 0; i < 4; i++) {
+    vec4 r = uRip[i];
+    if (r.w <= 0.0) continue;
+    vec2 d = display - r.xy;
+    float dist = length(d);
+    float front = r.z * 520.0;
+    float band = exp(-pow((dist - front) / 34.0, 2.0));
+    float amp = r.w * band * exp(-r.z * 1.9);
+    display += (dist > 0.001 ? d / dist : vec2(0.0)) * amp * 12.0;
+    lift = max(lift, amp);
+  }
+
   float spark = 0.0;
   if (uSparkle > 0.0) {
     float phase = 0.5 + 0.5 * sin(uTime * (0.55 + aDot.w * 0.9) + aDot.z * 6.2831853);
@@ -91,7 +106,7 @@ void main() {
     pool = q * q * uGlow.y * uLens.w;
   }
 
-  float radius = uRadius * (1.0 + 0.7 * spark);
+  float radius = uRadius * (1.0 + 0.7 * spark + 0.9 * lift);
   float device = radius * scale * uPixel;
   float fade = 1.0;
   if (device < 0.75) {
@@ -117,9 +132,10 @@ void main() {
   vBlur = blur * 0.7;
   vHalo = halo;
   vHaloWidth = haloWidth;
-  vColor = color;
+  vColor = mix(color, uLight > 0.5 ? color * 0.45 : vec3(1.0), lift * 0.6);
   float shade = clamp(1.0 - swell.z * 2.5, 0.4, 1.6);
   vAlpha = mix(min(uBase * shade, 1.0), 1.0, clamp(max(pool, spark), 0.0, 1.0)) * fade * energy * smoothstep(0.0, 0.25, uFocus + 0.08);
+  vAlpha = mix(vAlpha, 1.0, clamp(lift, 0.0, 1.0) * 0.85);
   vec2 point = display + corner * pad * scale;
   gl_Position = vec4(point.x / uSize.x * 2.0 - 1.0, 1.0 - point.y / uSize.y * 2.0, 0.0, 1.0);
 }`;
@@ -460,6 +476,8 @@ export function DotField({
     let visible = true;
     let pageVisible = document.visibilityState !== "hidden";
     let lost = false;
+    const ripples: { x: number; y: number; t0: number; k: number }[] = [];
+    const ripData = new Float32Array(16);
 
     const strengthOf = (s: DotSettings, zoom: number) => {
       const base = s.strength >= 0 ? s.strength * 1.2 : s.strength * 0.7;
@@ -574,6 +592,10 @@ export function DotField({
       gl.uniform1f(u.uBase, s.light ? Math.min(1, s.base * 1.3) : s.base);
       gl.uniform1f(u.uLight, s.light ? 1 : 0);
       gl.uniform1f(u.uOpacity, s.opacity);
+      ripData.fill(0);
+      for (let i = ripples.length - 1; i >= 0; i--) if ((now - ripples[i].t0) / 1000 > 1.6) ripples.splice(i, 1);
+      ripples.slice(-4).forEach((r, i) => ripData.set([r.x, r.y, Math.max(0, (now - r.t0) / 1000), r.k], i * 4));
+      gl.uniform4fv(u["uRip[0]"] ?? u.uRip ?? null, ripData);
       if (count) gl.drawArraysInstanced(gl.TRIANGLE_STRIP, 0, 4, count);
 
       const moving = Math.abs(pointer.x - lens.x) + Math.abs(pointer.y - lens.y) > 0.05 || Math.hypot(lens.vx, lens.vy) > 0.5;
@@ -582,7 +604,7 @@ export function DotField({
         Math.abs(zoomTarget - lens.zoom) > 0.002 ||
         (lens.presence > 0.002 && moving);
       const animated = !reduced && s.speed > 0 && (s.wave > 0 || s.sparkle > 0);
-      const busy = focus < 1 || settling || animated;
+      const busy = focus < 1 || settling || animated || ripples.length > 0;
       if (busy && visible && pageVisible) raf = requestAnimationFrame(frame);
     };
 
@@ -650,6 +672,14 @@ export function DotField({
         wake();
       }, 350);
     };
+    const onRipple = (event: Event) => {
+      if (reduced) return;
+      const d = (event as CustomEvent<{ x: number; y: number; k?: number }>).detail;
+      const rect = container.getBoundingClientRect();
+      ripples.push({ x: d.x - rect.left, y: d.y - rect.top, t0: performance.now(), k: d.k ?? 1 });
+      wake();
+    };
+    window.addEventListener("dot-ripple", onRipple);
     window.addEventListener("pointermove", onPointerMove, { passive: true });
     window.addEventListener("pointerdown", onPointerDown, { passive: true });
     window.addEventListener("pointerup", onPointerUp, { passive: true });
@@ -696,6 +726,7 @@ export function DotField({
       wakeRef.current = null;
       resizeObserver.disconnect();
       intersection.disconnect();
+      window.removeEventListener("dot-ripple", onRipple);
       window.removeEventListener("pointermove", onPointerMove);
       window.removeEventListener("touchstart", onTouchMove);
       window.removeEventListener("touchmove", onTouchMove);
