@@ -110,7 +110,7 @@ function playBall(el: HTMLElement) {
   const R = 24;
   const icon = el.querySelector<SVGElement>(".chat-mark__icon");
   type P = { x: number; y: number };
-  type Arc = { from: P; to: P; apexY: number; tUp: number; t: number };
+  type Arc = { from: P; to: P; apexY: number; tUp: number; t: number; step?: boolean };
   let arcs: Arc[] = [];
   let arcI = 0;
   let arcT0 = 0;
@@ -143,21 +143,24 @@ function playBall(el: HTMLElement) {
     const leftX = W - h0.x; // mirror of the home corner
     const start = { x: h0.x + cur.x, y: h0.y + cur.y };
     const endX = toSide === "left" ? leftX : h0.x;
-    const pts: { p: P; h: number }[] = [];
+    const pts: { p: P; h: number; step?: boolean }[] = [];
     const stepEl = document.querySelector<HTMLElement>(".hi__big");
     const sr = stepEl?.getBoundingClientRect();
     const onScreen = sr && sr.top > 70 && sr.bottom < floor && sr.width > 0;
     const dir = Math.sign(endX - start.x) || 1;
     if (onScreen && sr) {
-      const top = sr.top + sr.height * 0.16 - R; // ball resting on top of the letters
-      const stepX = toSide === "left" ? sr.left + sr.width * 0.62 : sr.left + sr.width * 0.38;
-      const between = (stepX - start.x) * dir > 0 && (endX - stepX) * dir > 0;
+      const top = sr.top + sr.height * 0.14 - R; // ball resting on top of the letters
+      // two steps across the words: first the near word, then the far one
+      const near = toSide === "left" ? sr.left + sr.width * 0.8 : sr.left + sr.width * 0.2;
+      const far = toSide === "left" ? sr.left + sr.width * 0.25 : sr.left + sr.width * 0.75;
+      const between = (near - start.x) * dir > 0 && (endX - far) * dir > 0;
       if (between) {
-        const runUp = start.x + (stepX - start.x) * 0.45;
+        const runUp = start.x + (near - start.x) * 0.45;
         pts.push({ p: { x: runUp, y: floor }, h: 110 }); // a hop along the floor
-        pts.push({ p: { x: stepX, y: top }, h: 70 }); // up onto "Say hi!"
+        pts.push({ p: { x: near, y: top }, h: 70, step: true }); // up onto "Say hi!"
+        pts.push({ p: { x: far, y: top }, h: 55, step: true }); // a step across the words
         const off = toSide === "left" ? sr.left - 40 : sr.right + 40; // spring off, a little higher
-        pts.push({ p: { x: Math.max(R + 8, Math.min(W - R - 8, off)), y: floor }, h: 130 });
+        pts.push({ p: { x: Math.max(R + 8, Math.min(W - R - 8, off)), y: floor }, h: 140 });
       }
     }
     if (!pts.length) {
@@ -169,8 +172,8 @@ function playBall(el: HTMLElement) {
     pts.push({ p: { x: endX, y: floor }, h: 8 });
     const list: Arc[] = [];
     let from = start;
-    pts.forEach(({ p, h }) => {
-      list.push(arc(from, p, h));
+    pts.forEach(({ p, h, step }) => {
+      list.push({ ...arc(from, p, h), step });
       from = p;
     });
     return { list, origin: h0 };
@@ -194,6 +197,13 @@ function playBall(el: HTMLElement) {
     if (icon) icon.style.transform = `rotate(${spin.toFixed(3)}rad)`;
     if (t >= a.t) {
       ripple(Math.min(0.8, 0.25 + (a.to.y - a.apexY) / 300));
+      if (a.step) {
+        // the words give under the ball, like a step
+        document.querySelector(".hi__big")?.animate(
+          [{ transform: "translateY(0) scaleY(1)" }, { transform: "translateY(5px) scaleY(0.975)" }, { transform: "translateY(0) scaleY(1)" }],
+          { duration: 320, easing: "cubic-bezier(0.2, 0.8, 0.2, 1)" },
+        );
+      }
       arcI += 1;
       arcT0 = now;
       if (arcI >= arcs.length) {
@@ -216,16 +226,45 @@ function playBall(el: HTMLElement) {
     if (raf) cancelAnimationFrame(raf);
     raf = requestAnimationFrame(frame);
   };
+  const ROUNDS = 3;
+  let rounds = 0;
+  let gone = false;
+  const tip = el.querySelector<HTMLElement>(".chat-mark__tip");
+  const tipText = tip?.textContent ?? "";
+  const showTip = (on: boolean) => {
+    if (tip) tip.textContent = on ? "Wanna know more?" : tipText;
+    el.classList.toggle("play-tip", on);
+    el.classList.toggle("tip-left", on && side === "left");
+  };
+  const vanish = () => {
+    gone = true;
+    el.style.pointerEvents = "none";
+    const r = el.getBoundingClientRect();
+    window.dispatchEvent(new CustomEvent("dot-ripple", { detail: { x: r.left + r.width / 2, y: r.top + r.height / 2, k: 1 } }));
+    el.animate(
+      [
+        { transform: el.style.transform, opacity: 1, filter: "blur(0)" },
+        { transform: `${el.style.transform} scale(0.15)`, opacity: 0, filter: "blur(6px)" },
+      ],
+      { duration: 700, easing: "cubic-bezier(0.4, 0, 0.2, 1)", fill: "forwards" },
+    );
+  };
   const loop = () => {
     if (!playing) return;
     trip(side === "right" ? "left" : "right", () => {
-      rest = window.setTimeout(loop, 2000);
+      rounds += 1;
+      showTip(true);
+      rest = window.setTimeout(() => {
+        showTip(false);
+        if (rounds >= ROUNDS) vanish();
+        else loop();
+      }, 3500);
     });
   };
   const atBottom = () => window.scrollY + window.innerHeight >= document.documentElement.scrollHeight - 4;
   const onScroll = () => {
     const bottom = atBottom();
-    if (bottom && !playing) {
+    if (bottom && !playing && !gone) {
       playing = true;
       el.classList.add("is-playing");
       window.clearTimeout(rest);
@@ -233,6 +272,16 @@ function playBall(el: HTMLElement) {
     } else if (!bottom && playing) {
       playing = false;
       window.clearTimeout(rest);
+      showTip(false);
+      if (gone) {
+        el.getAnimations().forEach((a) => a.cancel());
+        el.style.transform = "";
+        el.style.pointerEvents = "";
+        cur = { x: 0, y: 0 };
+        el.classList.remove("is-playing");
+        el.animate([{ opacity: 0, transform: "scale(0.6)" }, { opacity: 1, transform: "scale(1)" }], { duration: 500, easing: "cubic-bezier(0.2, 0.8, 0.2, 1)" });
+        return;
+      }
       if (side === "right" && !arcs[arcI]) {
         el.classList.remove("is-playing");
         return;
@@ -251,7 +300,10 @@ function playBall(el: HTMLElement) {
     window.clearTimeout(rest);
     if (raf) cancelAnimationFrame(raf);
     el.style.transform = "";
-    el.classList.remove("is-playing");
+    el.classList.remove("is-playing", "play-tip", "tip-left");
+    el.style.pointerEvents = "";
+    el.getAnimations().forEach((a) => a.cancel());
+    if (tip) tip.textContent = tipText;
     if (icon) icon.style.transform = "";
   };
 }
@@ -543,7 +595,7 @@ export function Footer({
       <div className="site-footer__links">
         <CopyEmail />
         <a className="u-link" href="https://www.linkedin.com/in/rana-ebrahimm/" target="_blank" rel="noreferrer">
-          LinkedIn ↗
+          LinkedIn
         </a>
       </div>
       {base}

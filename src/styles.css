@@ -6165,3 +6165,9 @@ html.vt-theme .work-list__name, html.vt-theme .ds-hero__name, html.vt-theme .ana
 .hi__big { display: block; white-space: nowrap; font-size: clamp(48px, 9vw, 120px); line-height: 1; }
 .hi__big em { display: inline; }
 .copy-email.is-copied { color: var(--signal); }
+
+/* v1.2.1 · end-of-page rounds: tooltip on each rest, tooltip flips when the ball is in the left corner */
+.chat-mark.is-playing.play-tip .chat-mark__tip { display: block; opacity: 1; transform: translate(0, -50%); transition: opacity 400ms var(--ease-expo), transform 500ms var(--ease-expo); }
+.chat-mark.tip-left .chat-mark__tip { right: auto; left: calc(100% + 14px); }
+.chat-mark.tip-left .chat-mark__tip::after { right: auto; left: -5px; transform: translateY(-50%) rotate(-135deg); }
+.hi__big { transform-origin: 50% 100%; }
