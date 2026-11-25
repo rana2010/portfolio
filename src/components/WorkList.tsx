@@ -23,7 +23,6 @@ export function WorkList({ heading = "Selected work" }: { heading?: string }) {
     <section className="work-list" id="work">
       <div className="work-list__head">
         <h2>{heading}</h2>
-        <p>({String(work.length).padStart(2, "0")})</p>
       </div>
       <ol>
         {work.map((item, i) => (

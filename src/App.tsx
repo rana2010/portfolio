@@ -29,7 +29,7 @@ function countView(path: string) {
 
 // Gentle reveal as things scroll into view (desktop and touch). Skipped for reduced motion.
 const REVEAL =
-  ".ds-section, .ds-stats > div, .ds-hero-compare, .work-list li, .home-about__body > *, .gallery__item, " +
+  ".ds-section, .ds-stats > div, .ds-hero-compare, .gallery__item, " +
   ".ds-problems li, .ds-finds li, .ds-persona, .ds-dgrid article, .ds-comp, .moscow-grid li, .site-footer__big";
 
 function useReveal(key: string) {

@@ -1,9 +1,21 @@
+import { DOT_PITCH, snapX, snapY } from "../grid";
+
 /* End-of-page play on the home page, like a basketball. At the bottom of the page the chat ball waits 2s,
    makes low hops along the footer line until it is close to "Say hi!", jumps onto the words and bounces
    on them twice, drops to the bottom-left floor, then bounces back alternating floor and footer line,
    settles in the bottom-right corner and shows "Wanna know more?". Two rounds, then it dissolves into the
    nearest background dots. Every flight is a true parabola under one gravity; bounce heights follow a
    coefficient of restitution. Scroll up at any point and it hops home. Returns a cleanup function. */
+/* The footer line the ball plays on: the reading path's dotted floor when the home page has one,
+   otherwise the footer hairline. Viewport coordinates. */
+function footerLine() {
+  const base = document.querySelector<HTMLElement>(".site-footer__base")?.getBoundingClientRect();
+  if (!base) return undefined;
+  const floorY = Number(document.querySelector<SVGElement>(".reading-path")?.dataset.floorY);
+  const top = floorY && Math.abs(floorY - window.scrollY - base.top) < 30 ? floorY - window.scrollY : base.top;
+  return { top, left: base.left, right: base.right };
+}
+
 export function playBall(el: HTMLElement) {
   const G = 2600; // gravity, px/s²
   const E = 0.62; // restitution: speed kept per bounce (height kept = E²)
@@ -70,7 +82,7 @@ export function playBall(el: HTMLElement) {
     const list: Arc[] = [];
     let p: V = { ...pos };
     const say = sayBox();
-    const lineR = document.querySelector<HTMLElement>(".site-footer__base")?.getBoundingClientRect();
+    const lineR = footerLine();
     const hasLine = lineR && lineR.top < floor - 10 && lineR.top > 80;
 
     if (hasLine && lineR) {
@@ -121,7 +133,7 @@ export function playBall(el: HTMLElement) {
     const floor = origin.y;
     const list: Arc[] = [];
     let p: V = { ...pos };
-    const lineR = document.querySelector<HTMLElement>(".site-footer__base")?.getBoundingClientRect();
+    const lineR = footerLine();
     const ly = lineR && lineR.top < floor - 10 && lineR.top > 80 ? lineR.top - R : null;
     const lineLeft = lineR ? lineR.left + R : 0;
     const lineRight = lineR ? lineR.right - R : 0;
@@ -246,10 +258,9 @@ export function playBall(el: HTMLElement) {
     const cs = getComputedStyle(document.documentElement);
     const accent = cs.getPropertyValue("--signal").trim() || "#f97316";
     const ink = getComputedStyle(el).backgroundColor;
-    const STEP = 28.2; // background grid pitch (dotRadius 1.1 × 2 + dotSpacing 26)
+    const STEP = DOT_PITCH;
     const W = window.innerWidth;
     const H = window.innerHeight;
-    const snap = (v: number, c: number) => c + Math.round((v - c) / STEP) * STEP;
     const cx = pos.x;
     const cy = pos.y;
     const base = el.style.transform || "none";
@@ -265,8 +276,8 @@ export function playBall(el: HTMLElement) {
     const spots: { x: number; y: number; d: number }[] = [];
     for (let gx = -3; gx <= 3; gx++)
       for (let gy = -3; gy <= 2; gy++) {
-        const x = snap(cx, W / 2) + gx * STEP;
-        const y = snap(cy, H / 2) + gy * STEP;
+        const x = snapX(cx) + gx * STEP;
+        const y = snapY(cy) + gy * STEP;
         if (y > H - 4 || x < 4 || x > W - 4) continue;
         spots.push({ x, y, d: Math.hypot(x - cx, y - cy) });
       }

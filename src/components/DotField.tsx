@@ -26,6 +26,7 @@ uniform float uFocus;
 uniform float uBase;
 uniform float uLight;
 uniform vec4 uRip[4];
+uniform vec2 uShift;
 out vec2 vLocal;
 out float vRadius;
 out float vBlur;
@@ -65,7 +66,7 @@ void main() {
   vec2 corner = vec2(float(gl_VertexID & 1), float(gl_VertexID >> 1)) * 2.0 - 1.0;
   vec2 center = uSize * 0.5;
   vec3 swell = wave(aDot.xy, uTime);
-  vec2 source = center + (aDot.xy - center) * mix(1.12, 1.0, uFocus) + swell.xy;
+  vec2 source = center + (aDot.xy + uShift - center) * mix(1.12, 1.0, uFocus) + swell.xy;
 
   vec2 rel = source - uLens.xy;
   float x = length(rel) / uLens.z;
@@ -186,6 +187,7 @@ type DotSettings = {
   sparkle: number;
   speed: number;
   interactive: boolean;
+  canvasGrid: boolean;
   holdToZoom: boolean;
   intro: boolean;
   light: boolean;
@@ -355,6 +357,8 @@ type DotFieldProps = {
   sparkle?: boolean;
   speed?: number;
   interactive?: boolean;
+  /** the grid scrolls with the page and a dot column sits on the left edge of <main> */
+  canvasGrid?: boolean;
   holdToZoom?: boolean;
   intro?: boolean;
   lightMode?: boolean;
@@ -382,6 +386,7 @@ export function DotField({
   sparkle = false,
   speed = 1,
   interactive = true,
+  canvasGrid = false,
   holdToZoom = true,
   intro = true,
   lightMode = false,
@@ -418,6 +423,7 @@ export function DotField({
     sparkle: sparkle ? 1 : 0,
     speed: Math.max(0, speed),
     interactive,
+    canvasGrid,
     holdToZoom,
     intro,
     light: lightMode,
@@ -468,6 +474,7 @@ export function DotField({
     const pointer = { x: 0, y: 0, inside: false, down: false };
     const lens = { x: 0, y: 0, vx: 0, vy: 0, presence: 0, zoom: 0, ready: false };
     let layoutKey = "";
+    let gridStep = settingsRef.current.step;
     let count = 0;
     let time = Math.random() * 100;
     let focus = settingsRef.current.intro && !reduced && generation === 0 ? 0 : 1;
@@ -493,6 +500,7 @@ export function DotField({
       const key = `${size.width}|${size.height}|${nextStep}|${s.pattern}|${margin}`;
       if (key === layoutKey) return;
       layoutKey = key;
+      gridStep = nextStep;
       const data = buildDots(size.width, size.height, nextStep, s.pattern, margin);
       count = data.length / 4;
       gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
@@ -596,6 +604,11 @@ export function DotField({
       for (let i = ripples.length - 1; i >= 0; i--) if ((now - ripples[i].t0) / 1000 > 1.6) ripples.splice(i, 1);
       ripples.slice(-4).forEach((r, i) => ripData.set([r.x, r.y, Math.max(0, (now - r.t0) / 1000), r.k], i * 4));
       gl.uniform4fv(u["uRip[0]"] ?? u.uRip ?? null, ripData);
+      if (s.canvasGrid) {
+        const anchor = document.querySelector("main")?.getBoundingClientRect().left ?? 0;
+        const mod = (v: number) => ((v % gridStep) + gridStep) % gridStep;
+        gl.uniform2f(u.uShift, mod(anchor - size.width / 2), -mod(window.scrollY));
+      } else gl.uniform2f(u.uShift, 0, 0);
       if (count) gl.drawArraysInstanced(gl.TRIANGLE_STRIP, 0, 4, count);
 
       const moving = Math.abs(pointer.x - lens.x) + Math.abs(pointer.y - lens.y) > 0.05 || Math.hypot(lens.vx, lens.vy) > 0.5;
@@ -680,6 +693,10 @@ export function DotField({
       wake();
     };
     window.addEventListener("dot-ripple", onRipple);
+    const onScroll = () => {
+      if (settingsRef.current.canvasGrid) wake();
+    };
+    window.addEventListener("scroll", onScroll, { passive: true });
     window.addEventListener("pointermove", onPointerMove, { passive: true });
     window.addEventListener("pointerdown", onPointerDown, { passive: true });
     window.addEventListener("pointerup", onPointerUp, { passive: true });
@@ -727,6 +744,7 @@ export function DotField({
       resizeObserver.disconnect();
       intersection.disconnect();
       window.removeEventListener("dot-ripple", onRipple);
+      window.removeEventListener("scroll", onScroll);
       window.removeEventListener("pointermove", onPointerMove);
       window.removeEventListener("touchstart", onTouchMove);
       window.removeEventListener("touchmove", onTouchMove);

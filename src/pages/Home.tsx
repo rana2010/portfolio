@@ -1,7 +1,7 @@
-import { useEffect, useRef } from "react";
+import { useEffect } from "react";
 import { Dots, Footer, Nav } from "../components/Chrome";
 import { WorkList } from "../components/WorkList";
-import { ScrollFill } from "../components/Motion";
+import { ReadingPath } from "../components/ReadingPath";
 
 const career = [
   { company: "noon", years: "Jan 2025 – Present" },
@@ -17,28 +17,6 @@ const flow = [
 ];
 
 export function Home() {
-  const hero = useRef<HTMLElement>(null);
-  useEffect(() => {
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-    let raf = 0;
-    const update = () => {
-      raf = 0;
-      const el = hero.current;
-      if (!el) return;
-      const p = Math.min(1, Math.max(0, window.scrollY / (el.offsetHeight * 0.9)));
-      el.style.setProperty("--hero-p", p.toFixed(3));
-    };
-    const onScroll = () => {
-      if (!raf) raf = requestAnimationFrame(update);
-    };
-    update();
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => {
-      window.removeEventListener("scroll", onScroll);
-      if (raf) cancelAnimationFrame(raf);
-    };
-  }, []);
-
   useEffect(() => {
     document.title = "Rana Ebrahim";
   }, []);
@@ -46,9 +24,10 @@ export function Home() {
   return (
     <div className="page" id="top">
       <Dots />
+      <ReadingPath />
       <Nav />
       <main className="home-ds">
-        <section className="home-hero" ref={hero}>
+        <section className="home-hero">
           <p className="home-hero__label">Product designer · Cairo, Egypt</p>
           <h1 className="home-hero__title">
             I make <em>research-backed</em>
@@ -66,11 +45,11 @@ export function Home() {
         <section className="home-about" id="about">
           <h2 className="home-about__label">About</h2>
           <div className="home-about__body">
-            <ScrollFill
-              className="home-about__big"
-              text="Product Designer with 3+ years of experience across e-commerce and fintech."
-            />
-            <ScrollFill text="I work end to end, across user research, product discovery, UX/UI design and coded prototypes, with a focus on behavioral design and AI-assisted products." />
+            <p className="home-about__big">Product Designer with 3+ years of experience across e-commerce and fintech.</p>
+            <p>
+              I work end to end, across user research, product discovery, UX/UI design and coded prototypes, with a focus on
+              behavioral design and AI-assisted products.
+            </p>
 
             <h3 className="home-about__sub">Career</h3>
             <ol className="home-career">
@@ -101,6 +80,7 @@ export function Home() {
             </div>
 
             <h3 className="home-about__sub">How I work</h3>
+            <div className="home-flow-wrap">
             <ol className="home-flow">
               {flow.map((f) => (
                 <li key={f.step}>
@@ -112,6 +92,7 @@ export function Home() {
                 </li>
               ))}
             </ol>
+            </div>
           </div>
         </section>
       </main>

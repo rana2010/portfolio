@@ -42,7 +42,7 @@ export function Footer({
     <div className="site-footer__base">
       <p>© 2026 Rana Ebrahim</p>
       <p className="site-footer__time">
-        Local time in <CairoTime />
+        <CairoTime />
       </p>
     </div>
   );

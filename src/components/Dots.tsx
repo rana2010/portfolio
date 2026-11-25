@@ -25,6 +25,7 @@ export function Dots() {
       sparkle={false}
       speed={0}
       interactive
+      canvasGrid
       holdToZoom={false}
       intro={false}
       lightMode={light}
