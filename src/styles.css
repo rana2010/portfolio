@@ -1741,9 +1741,6 @@ body { font-family: var(--font-sans); }
 .site-nav.is-scrolled { background: color-mix(in srgb, var(--bg) 92%, transparent); }
 .site-nav__name {
   color: var(--ink);
-  font-size: 16px;
-  line-height: 24px;
-  font-weight: 600;
   text-decoration: none;
 }
 .site-nav__links { display: flex; align-items: center; gap: var(--space-4); }
@@ -2080,7 +2077,8 @@ body { font-family: var(--font-sans); }
 .ds-next__title { transition: none; }
 }
 /* v0.3.4: name in Inter like his; case-study footer = Next + base row */
-.site-nav__name { font-family: var(--font-sans); font-size: 17px; line-height: 24px; font-weight: 600; letter-spacing: 0.01em; }
+.site-nav__name { display: inline-flex; align-items: center; }
+.site-nav__sig { display: block; width: 58px; height: 52px; background: currentColor; -webkit-mask: var(--sig) center / contain no-repeat; mask: var(--sig) center / contain no-repeat; }
 .site-footer--case { padding-top: var(--space-8); }
 .site-footer--case .ds-next { padding: var(--space-6) 0 var(--space-16); border-top: 1px solid var(--line); }
 .site-footer--case .ds-next__title { font-size: 120px; line-height: 120px; }
