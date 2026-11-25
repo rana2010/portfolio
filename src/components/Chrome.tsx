@@ -218,23 +218,25 @@ function playBall(el: HTMLElement) {
     return list;
   };
 
-  // part 2: no stop. From the drop it dribbles back to its corner in the same time the trip out took.
-  // Steady bounces of equal height (a hand keeps feeding it: pushed down a little faster than it rises),
-  // one constant walking speed the whole way, then the last bounces die out (height × E²) into the corner.
-  const planBack = (dropH: number, duration: number): Arc[] => {
+  // part 2: no stop. From the drop it dribbles slowly along the floor all the way back to its corner:
+  // steady bounces of equal height (a hand keeps feeding it: pushed down a little faster than it rises),
+  // one slow walking speed the whole way, then the last bounces die out (height × E²) in the corner.
+  const planBack = (dropH: number): Arc[] => {
     origin = homeCentre();
     const floor = origin.y;
     const list: Arc[] = [];
     let p: V = { ...pos };
     const PUSH = 1.3;
-    const H = Math.min(150, Math.max(100, dropH * E * E)); // steady dribble height
+    const H = Math.min(120, Math.max(90, dropH * E * E)); // steady dribble height
+    const VX = 170; // px/s: a slow walk
     const period = (h: number, push = 1) => Math.sqrt((2 * h) / G) + Math.sqrt((2 * h) / (G * push));
     const tail: number[] = [];
     for (let h = H * E * E; h > 6; h *= E * E) tail.push(h);
     const tailT = tail.reduce((a, h) => a + period(h), 0);
-    const n = Math.max(2, Math.round((duration - tailT) / period(H, PUSH)));
+    const dist = origin.x - p.x;
+    const n = Math.max(2, Math.round((dist / VX - tailT) / period(H, PUSH)));
     const totalT = n * period(H, PUSH) + tailT;
-    const vx = (origin.x - p.x) / totalT; // one speed for the whole return
+    const vx = dist / totalT; // ≈ VX, adjusted so the last bounce lands exactly in the corner
     for (let i = 0; i < n; i++) {
       const q = { x: p.x + vx * period(H, PUSH), y: floor };
       list.push(arc(p, q, H, "floor", G * PUSH));
@@ -372,11 +374,10 @@ function playBall(el: HTMLElement) {
     pos = { ...origin };
     const over = planOver();
     const lastDrop = over.length ? over[over.length - 1].b.y - over[over.length - 1].Y : 200;
-    const goTime = over.reduce((t, a) => t + a.tUp + a.tDown, 0);
     run(over, () => {
       // no stop: it bounces straight back, slow and relaxed
       if (!playing) return;
-      run(planBack(lastDrop, goTime), () => {
+      run(planBack(lastDrop), () => {
         round += 1;
         showTip(true);
         wait = window.setTimeout(() => {
