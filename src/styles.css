@@ -6171,3 +6171,7 @@ html.vt-theme .work-list__name, html.vt-theme .ds-hero__name, html.vt-theme .ana
 .chat-mark.tip-left .chat-mark__tip { right: auto; left: calc(100% + 14px); }
 .chat-mark.tip-left .chat-mark__tip::after { right: auto; left: -5px; transform: translateY(-50%) rotate(-135deg); }
 .hi__big { transform-origin: 50% 100%; }
+
+/* v1.2.2 · specks the ball breaks into before it fades into the dot grid */
+.ball-speck { position: fixed; z-index: 7; width: 2.4px; height: 2.4px; border-radius: 50%; background: var(--ink); pointer-events: none; }
+:root[data-theme="dark"] .ball-speck { background: #f4f4f2; }

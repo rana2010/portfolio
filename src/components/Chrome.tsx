@@ -218,37 +218,31 @@ function playBall(el: HTMLElement) {
     return list;
   };
 
-  // part 2: no stop. From the drop it keeps bouncing, slow and relaxed, all the way back to its corner.
-  // Each bounce keeps most of its height (a lively ball), the pace is an easy walk, and the last few
-  // bounces die out naturally into the corner.
-  const planBack = (dropH: number): Arc[] => {
+  // part 2: no stop. From the drop it dribbles back to its corner in the same time the trip out took.
+  // Steady bounces of equal height (a hand keeps feeding it: pushed down a little faster than it rises),
+  // one constant walking speed the whole way, then the last bounces die out (height × E²) into the corner.
+  const planBack = (dropH: number, duration: number): Arc[] => {
     origin = homeCentre();
     const floor = origin.y;
     const list: Arc[] = [];
     let p: V = { ...pos };
-    const VX = 190; // px/s, relaxed
-    let h = Math.min(170, Math.max(90, dropH * E * E));
-    const flight = (hh: number) => 2 * Math.sqrt((2 * hh) / G);
-    let guard = 0;
-    while (guard++ < 40) {
-      const left = origin.x - p.x;
-      // how far the remaining, dying bounces will carry it
-      let tail = 0;
-      for (let hh = h; hh > 6; hh *= E * E) tail += VX * flight(hh);
-      if (left <= tail || left < 2) break;
-      const q = { x: p.x + Math.min(left, VX * flight(h)), y: floor };
-      list.push(arc(p, q, h, "floor"));
+    const PUSH = 1.3;
+    const H = Math.min(150, Math.max(100, dropH * E * E)); // steady dribble height
+    const period = (h: number, push = 1) => Math.sqrt((2 * h) / G) + Math.sqrt((2 * h) / (G * push));
+    const tail: number[] = [];
+    for (let h = H * E * E; h > 6; h *= E * E) tail.push(h);
+    const tailT = tail.reduce((a, h) => a + period(h), 0);
+    const n = Math.max(2, Math.round((duration - tailT) / period(H, PUSH)));
+    const totalT = n * period(H, PUSH) + tailT;
+    const vx = (origin.x - p.x) / totalT; // one speed for the whole return
+    for (let i = 0; i < n; i++) {
+      const q = { x: p.x + vx * period(H, PUSH), y: floor };
+      list.push(arc(p, q, H, "floor", G * PUSH));
       p = q;
-      h = Math.max(70, h * 0.9);
     }
-    // let the bounces die out, landing exactly in the corner
-    const rest: number[] = [];
-    for (let hh = h; hh > 6; hh *= E * E) rest.push(hh);
-    const total = rest.reduce((a, hh) => a + flight(hh), 0) || 1;
-    const left = origin.x - p.x;
-    rest.forEach((hh, k) => {
-      const q = { x: k === rest.length - 1 ? origin.x : p.x + (left * flight(hh)) / total, y: floor };
-      list.push(arc(p, q, hh, "floor"));
+    tail.forEach((h, k) => {
+      const q = { x: k === tail.length - 1 ? origin.x : p.x + vx * period(h), y: floor };
+      list.push(arc(p, q, h, "floor"));
       p = q;
     });
     if (Math.abs(p.x - origin.x) > 0.5) list.push(arc(p, { x: origin.x, y: floor }, 3, "floor"));
@@ -322,17 +316,55 @@ function playBall(el: HTMLElement) {
     if (tip) tip.textContent = on ? "Wanna know more?" : tipText;
     el.classList.toggle("play-tip", on);
   };
+  // the ball breaks into dot-sized specks that drift onto the background grid and fade into its dots
   const vanish = () => {
     gone = true;
     el.style.pointerEvents = "none";
-    window.dispatchEvent(new CustomEvent("dot-ripple", { detail: { x: pos.x, y: pos.y, k: 1 } }));
+    const STEP = 28.2; // background grid pitch (dotRadius 1.1 × 2 + dotSpacing 26)
+    const W = window.innerWidth;
+    const H = window.innerHeight;
+    const snap = (v: number, c: number) => c + Math.round((v - c) / STEP) * STEP;
+    const cx = pos.x;
+    const cy = pos.y;
+    const used = new Set<string>();
+    const specks: HTMLElement[] = [];
+    for (let k = 0; k < 18; k++) {
+      const a = (k / 18) * Math.PI * 2 + Math.random() * 0.4;
+      const d = 30 + Math.random() * 110;
+      let tx = snap(cx + Math.cos(a) * d, W / 2);
+      let ty = snap(Math.min(cy + Math.sin(a) * d * 0.8, H - 6), H / 2);
+      const key = `${tx},${ty}`;
+      if (used.has(key)) {
+        tx += STEP;
+        ty = snap(ty - STEP, H / 2);
+      }
+      used.add(`${tx},${ty}`);
+      const sp = document.createElement("span");
+      sp.className = "ball-speck";
+      sp.style.left = `${cx}px`;
+      sp.style.top = `${cy}px`;
+      document.body.appendChild(sp);
+      specks.push(sp);
+      const delay = Math.random() * 120;
+      sp.animate(
+        [
+          { transform: "translate(-50%, -50%) scale(2.6)", opacity: 1 },
+          { transform: `translate(calc(-50% + ${tx - cx}px), calc(-50% + ${ty - cy}px)) scale(1)`, opacity: 0.9, offset: 0.7 },
+          { transform: `translate(calc(-50% + ${tx - cx}px), calc(-50% + ${ty - cy}px)) scale(1)`, opacity: 0 },
+        ],
+        { duration: 1300, delay, easing: "cubic-bezier(0.2, 0.7, 0.2, 1)", fill: "forwards" },
+      );
+      window.setTimeout(() => sp.remove(), 1600);
+    }
+    // the ball itself shrinks away as the specks leave it, and the dots answer with one wave
     el.animate(
       [
-        { transform: el.style.transform, opacity: 1, filter: "blur(0)" },
-        { transform: `${el.style.transform} scale(0.15)`, opacity: 0, filter: "blur(6px)" },
+        { transform: el.style.transform, opacity: 1 },
+        { transform: `${el.style.transform} scale(0.05)`, opacity: 0 },
       ],
-      { duration: 700, easing: "cubic-bezier(0.4, 0, 0.2, 1)", fill: "forwards" },
+      { duration: 380, easing: "cubic-bezier(0.5, 0, 0.75, 0)", fill: "forwards" },
     );
+    window.setTimeout(() => window.dispatchEvent(new CustomEvent("dot-ripple", { detail: { x: cx, y: cy, k: 0.9 } })), 250);
   };
   const startRound = () => {
     if (!playing) return;
@@ -340,10 +372,11 @@ function playBall(el: HTMLElement) {
     pos = { ...origin };
     const over = planOver();
     const lastDrop = over.length ? over[over.length - 1].b.y - over[over.length - 1].Y : 200;
+    const goTime = over.reduce((t, a) => t + a.tUp + a.tDown, 0);
     run(over, () => {
       // no stop: it bounces straight back, slow and relaxed
       if (!playing) return;
-      run(planBack(lastDrop), () => {
+      run(planBack(lastDrop, goTime), () => {
         round += 1;
         showTip(true);
         wait = window.setTimeout(() => {
