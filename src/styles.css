@@ -6150,3 +6150,13 @@ html.vt-theme .work-list__name, html.vt-theme .ds-hero__name, html.vt-theme .ana
 
 /* v1.2.6 · specks are exactly background-dot sized */
 .ball-speck { width: 2.2px; height: 2.2px; box-shadow: none; }
+
+/* v1.2.7 · the counter is part of the big number, never the small caption under it */
+.ds-case .ds-stats > div p .count-up,
+.ds-case .ds-stats > div p .count-up span,
+.ds-stats p .count-up,
+.ds-stats p .count-up span {
+  display: inline; max-width: none; margin: 0;
+  font: inherit; color: inherit; letter-spacing: inherit; line-height: inherit;
+}
+.count-up { font-variant-numeric: tabular-nums; white-space: nowrap; }
