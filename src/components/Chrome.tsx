@@ -215,41 +215,43 @@ function playBall(el: HTMLElement) {
       p = down;
     }
 
-    // settle into the bottom-left corner: bounces die out
-    let h = (list[list.length - 1].b.y - list[list.length - 1].Y) * E * E;
-    while (h > 6) {
-      const q = { x: p.x + (leftX - p.x) * 0.6, y: floor };
-      list.push(arc(p, q, h, "floor"));
-      p = q;
-      h *= E * E;
-    }
-    if (Math.abs(p.x - leftX) > 0.5) list.push(arc(p, { x: leftX, y: floor }, 3, "floor"));
     return list;
   };
 
-  // part 2: dribble back to the bottom-right corner (steady height, pushed down faster), then let go
-  const planBack = (): Arc[] => {
+  // part 2: no stop. From the drop it keeps bouncing, slow and relaxed, all the way back to its corner.
+  // Each bounce keeps most of its height (a lively ball), the pace is an easy walk, and the last few
+  // bounces die out naturally into the corner.
+  const planBack = (dropH: number): Arc[] => {
     origin = homeCentre();
     const floor = origin.y;
     const list: Arc[] = [];
     let p: V = { ...pos };
-    const dist = origin.x - p.x;
-    const DH = 95;
-    const n = Math.max(4, Math.round(dist / 170));
-    const stepX = dist / (n + 2);
-    for (let i = 0; i < n; i++) {
-      const q = { x: p.x + stepX, y: floor };
-      list.push(arc(p, q, DH, "floor", G * 1.7));
+    const VX = 190; // px/s, relaxed
+    let h = Math.min(170, Math.max(90, dropH * E * E));
+    const flight = (hh: number) => 2 * Math.sqrt((2 * hh) / G);
+    let guard = 0;
+    while (guard++ < 40) {
+      const left = origin.x - p.x;
+      // how far the remaining, dying bounces will carry it
+      let tail = 0;
+      for (let hh = h; hh > 6; hh *= E * E) tail += VX * flight(hh);
+      if (left <= tail || left < 2) break;
+      const q = { x: p.x + Math.min(left, VX * flight(h)), y: floor };
+      list.push(arc(p, q, h, "floor"));
       p = q;
+      h = Math.max(70, h * 0.9);
     }
-    let fh = DH * 0.75;
-    while (p.x < origin.x - 1 && fh > 6) {
-      const q = { x: Math.min(origin.x, p.x + Math.max(stepX * 0.45, (origin.x - p.x) * 0.55)), y: floor };
-      list.push(arc(p, q, fh, "floor"));
+    // let the bounces die out, landing exactly in the corner
+    const rest: number[] = [];
+    for (let hh = h; hh > 6; hh *= E * E) rest.push(hh);
+    const total = rest.reduce((a, hh) => a + flight(hh), 0) || 1;
+    const left = origin.x - p.x;
+    rest.forEach((hh, k) => {
+      const q = { x: k === rest.length - 1 ? origin.x : p.x + (left * flight(hh)) / total, y: floor };
+      list.push(arc(p, q, hh, "floor"));
       p = q;
-      fh *= E * E;
-    }
-    if (p.x < origin.x) list.push(arc(p, { x: origin.x, y: floor }, 3, "floor"));
+    });
+    if (Math.abs(p.x - origin.x) > 0.5) list.push(arc(p, { x: origin.x, y: floor }, 3, "floor"));
     return list;
   };
 
@@ -336,20 +338,20 @@ function playBall(el: HTMLElement) {
     if (!playing) return;
     origin = homeCentre();
     pos = { ...origin };
-    run(planOver(), () => {
-      // rest in the bottom-left corner for 2 seconds, then dribble back
-      wait = window.setTimeout(() => {
-        if (!playing) return;
-        run(planBack(), () => {
-          round += 1;
-          showTip(true);
-          wait = window.setTimeout(() => {
-            showTip(false);
-            if (round >= ROUNDS) vanish();
-            else wait = window.setTimeout(startRound, 2000);
-          }, 3500);
-        });
-      }, 2000);
+    const over = planOver();
+    const lastDrop = over.length ? over[over.length - 1].b.y - over[over.length - 1].Y : 200;
+    run(over, () => {
+      // no stop: it bounces straight back, slow and relaxed
+      if (!playing) return;
+      run(planBack(lastDrop), () => {
+        round += 1;
+        showTip(true);
+        wait = window.setTimeout(() => {
+          showTip(false);
+          if (round >= ROUNDS) vanish();
+          else wait = window.setTimeout(startRound, 2000);
+        }, 3500);
+      });
     });
   };
   const goHome = () => {
