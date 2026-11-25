@@ -102,145 +102,232 @@ export function CairoTime() {
   );
 }
 
-/* At the very end of the page the chat ball plays on the floor: it bounces from one bottom corner to
-   the other, using "Say hi!" as a step on the way (lands on it, springs a little higher, drops back to
-   the floor), settles in the corner for 2 seconds, then heads back. Scroll up and it rolls home. */
+/* At the very end of the page the chat ball plays on the floor. It is a small physics simulation:
+   gravity, a bouncy floor, the screen edges as walls, and "Say hi!" as a step it can land on.
+   It kicks off from one bottom corner, hops up onto the words, bounces off them, drops to the floor,
+   loses energy with every bounce, then rolls to a stop in the other corner. It shows the tooltip only
+   when it rests in the bottom-right corner; after three rounds it rests there and dissolves into the dots.
+   Scroll up and it goes home. */
 function playBall(el: HTMLElement) {
-  const G = 2600;
-  const R = 24;
+  const G = 2400; // gravity, px/s²
+  const E = 0.6; // bounce: share of vertical speed kept
+  const FLOOR_GRIP = 0.88; // share of horizontal speed kept on a floor bounce
+  const R = 26;
+  const DT = 1 / 240;
   const icon = el.querySelector<SVGElement>(".chat-mark__icon");
-  type P = { x: number; y: number };
-  type Arc = { from: P; to: P; apexY: number; tUp: number; t: number; step?: boolean };
-  let arcs: Arc[] = [];
-  let arcI = 0;
-  let arcT0 = 0;
-  let cur: P = { x: 0, y: 0 }; // offset from home
+  const tip = el.querySelector<HTMLElement>(".chat-mark__tip");
+  const tipText = tip?.textContent ?? "";
+
+  type V = { x: number; y: number };
+  let pos: V = { x: 0, y: 0 }; // ball centre, viewport px
+  let vel: V = { x: 0, y: 0 };
+  let origin: V = { x: 0, y: 0 }; // home centre
+  let floor = 0;
+  let endX = 0;
+  let rolling = false;
+  let stepHits = 0;
+  let decel = 0;
+  let squash = 0; // 0..1, decays after each impact
   let spin = 0;
   let raf = 0;
+  let last = 0;
+  let acc = 0;
+  let onArrive: () => void = () => {};
+  let running = false;
+  let side: "left" | "right" = "right";
   let rest = 0;
   let playing = false;
-  let side: "left" | "right" = "right";
-  let after: () => void = () => {};
+  let gone = false;
+  let rounds = 0;
+  const ROUNDS = 3;
 
-  const home = () => {
+  const homeCentre = () => {
     const prev = el.style.transform;
     el.style.transform = "none";
     const r = el.getBoundingClientRect();
     el.style.transform = prev;
     return { x: r.left + r.width / 2, y: r.top + r.height / 2 };
   };
-  const arc = (from: P, to: P, h: number): Arc => {
-    const apexY = Math.min(from.y, to.y) - h; // screen y grows downward
-    const tUp = Math.sqrt((2 * (from.y - apexY)) / G);
-    const tDown = Math.sqrt((2 * (to.y - apexY)) / G);
-    return { from, to, apexY, tUp, t: tUp + tDown };
+  const step = () => {
+    const sr = document.querySelector<HTMLElement>(".hi__big")?.getBoundingClientRect();
+    if (!sr || sr.width === 0 || sr.top < 70 || sr.bottom > floor) return null;
+    return { left: sr.left + 6, right: sr.right - 6, top: sr.top + sr.height * 0.14 - R };
   };
-  // build the hops for one trip along the floor (all points are ball centres, in viewport px)
-  const plan = (toSide: "left" | "right") => {
-    const h0 = home();
+  const ripple = (k: number) => {
+    window.dispatchEvent(new CustomEvent("dot-ripple", { detail: { x: pos.x, y: pos.y + R, k } }));
+  };
+  const dip = () => {
+    document.querySelector(".hi__big")?.animate(
+      [{ transform: "translateY(0) scaleY(1)" }, { transform: "translateY(5px) scaleY(0.975)" }, { transform: "translateY(0) scaleY(1)" }],
+      { duration: 340, easing: "cubic-bezier(0.2, 0.8, 0.2, 1)" },
+    );
+  };
+
+  // one physics step
+  const tick = () => {
+    if (rolling) {
+      const dir = Math.sign(endX - pos.x);
+      const speed = Math.max(0, Math.abs(vel.x) - decel * DT);
+      vel.x = dir * speed;
+      pos.x += vel.x * DT;
+      if (speed === 0 || Math.sign(endX - pos.x) !== dir) {
+        pos.x = endX;
+        vel = { x: 0, y: 0 };
+        return true; // arrived
+      }
+      return false;
+    }
+    const prevY = pos.y;
+    vel.y += G * DT;
+    pos.x += vel.x * DT;
+    pos.y += vel.y * DT;
+    // walls: the screen edges
     const W = window.innerWidth;
-    const floor = h0.y;
-    const leftX = W - h0.x; // mirror of the home corner
-    const start = { x: h0.x + cur.x, y: h0.y + cur.y };
-    const endX = toSide === "left" ? leftX : h0.x;
-    const pts: { p: P; h: number; step?: boolean }[] = [];
-    const stepEl = document.querySelector<HTMLElement>(".hi__big");
-    const sr = stepEl?.getBoundingClientRect();
-    const onScreen = sr && sr.top > 70 && sr.bottom < floor && sr.width > 0;
-    const dir = Math.sign(endX - start.x) || 1;
-    if (onScreen && sr) {
-      const top = sr.top + sr.height * 0.14 - R; // ball resting on top of the letters
-      // two steps across the words: first the near word, then the far one
-      const near = toSide === "left" ? sr.left + sr.width * 0.8 : sr.left + sr.width * 0.2;
-      const far = toSide === "left" ? sr.left + sr.width * 0.25 : sr.left + sr.width * 0.75;
-      const between = (near - start.x) * dir > 0 && (endX - far) * dir > 0;
-      if (between) {
-        const runUp = start.x + (near - start.x) * 0.45;
-        pts.push({ p: { x: runUp, y: floor }, h: 110 }); // a hop along the floor
-        pts.push({ p: { x: near, y: top }, h: 70, step: true }); // up onto "Say hi!"
-        pts.push({ p: { x: far, y: top }, h: 55, step: true }); // a step across the words
-        const off = toSide === "left" ? sr.left - 40 : sr.right + 40; // spring off, a little higher
-        pts.push({ p: { x: Math.max(R + 8, Math.min(W - R - 8, off)), y: floor }, h: 140 });
+    if (pos.x < R + 8 && vel.x < 0) {
+      pos.x = R + 8;
+      vel.x = -vel.x * 0.5;
+    } else if (pos.x > W - R - 8 && vel.x > 0) {
+      pos.x = W - R - 8;
+      vel.x = -vel.x * 0.5;
+    }
+    // the step ("Say hi!"): only from above
+    const s = step();
+    if (s && stepHits < 2 && vel.y > 0 && prevY <= s.top && pos.y >= s.top && pos.x > s.left && pos.x < s.right) {
+      pos.y = s.top;
+      const hit = vel.y;
+      stepHits += 1;
+      // the words act like a step: a small hop across them, then a higher spring off and down to the floor
+      const dir = Math.sign(endX - pos.x) || 1;
+      const up = stepHits === 1 ? 70 : 140;
+      vel.y = -Math.max(hit * E, Math.sqrt(2 * G * up));
+      const flight = (2 * -vel.y) / G;
+      const toEdge = dir > 0 ? s.right - pos.x : pos.x - s.left;
+      vel.x = (dir * (stepHits === 1 ? toEdge * 0.5 : toEdge + 60)) / flight; // the words "catch" the ball, then it steps on
+      squash = Math.min(1, hit / 1400);
+      ripple(Math.min(0.9, 0.3 + hit / 2500));
+      dip();
+    }
+    // the floor
+    if (pos.y >= floor && vel.y > 0) {
+      pos.y = floor;
+      const hit = vel.y;
+      squash = Math.min(1, hit / 1400);
+      if (hit > 4) ripple(Math.min(0.9, 0.2 + hit / 2500));
+      if (hit < 220) {
+        // too little bounce left: roll the rest of the way and stop exactly in the corner
+        rolling = true;
+        const dist = Math.abs(endX - pos.x);
+        const sp = Math.max(Math.abs(vel.x), Math.min(420, 120 + dist * 0.6));
+        vel.x = Math.sign(endX - pos.x || 1) * sp;
+        vel.y = 0;
+        decel = dist > 1 ? (sp * sp) / (2 * dist) : 1e6;
+      } else {
+        vel.y = -hit * E;
+        vel.x *= FLOOR_GRIP;
+        // keep heading for the corner if a wall bounce turned it around
+        if (Math.sign(vel.x) !== Math.sign(endX - pos.x)) vel.x = -vel.x * 0.6;
       }
     }
-    if (!pts.length) {
-      pts.push({ p: { x: start.x + (endX - start.x) * 0.4, y: floor }, h: 130 });
-      pts.push({ p: { x: start.x + (endX - start.x) * 0.75, y: floor }, h: 80 });
-    }
-    pts.push({ p: { x: endX, y: floor }, h: 60 }); // into the corner
-    pts.push({ p: { x: endX, y: floor }, h: 22 }); // settle
-    pts.push({ p: { x: endX, y: floor }, h: 8 });
-    const list: Arc[] = [];
-    let from = start;
-    pts.forEach(({ p, h, step }) => {
-      list.push({ ...arc(from, p, h), step });
-      from = p;
-    });
-    return { list, origin: h0 };
+    return false;
   };
-  let origin = { x: 0, y: 0 };
-  const ripple = (k: number) => {
-    const r = el.getBoundingClientRect();
-    window.dispatchEvent(new CustomEvent("dot-ripple", { detail: { x: r.left + r.width / 2, y: r.bottom, k } }));
+
+  const render = () => {
+    const dx = pos.x - origin.x;
+    const dy = pos.y - origin.y;
+    // squash on impact, a little stretch when falling fast
+    const stretch = rolling ? 0 : Math.min(0.1, Math.abs(vel.y) / 12000);
+    const sx = 1 + 0.18 * squash - stretch * 0.6;
+    const sy = 1 - 0.2 * squash + stretch;
+    const lift = (1 - sy) * R; // keep the bottom on the ground while squashed
+    el.style.transform = `translate(${dx.toFixed(1)}px, ${(dy + lift).toFixed(1)}px) scale(${sx.toFixed(3)}, ${sy.toFixed(3)})`;
+    if (icon) icon.style.transform = `rotate(${spin.toFixed(3)}rad)`;
   };
+
   const frame = (now: number) => {
     raf = 0;
-    const a = arcs[arcI];
-    if (!a) return;
-    const t = Math.min(a.t, (now - arcT0) / 1000);
-    const x = a.from.x + (a.to.x - a.from.x) * (t / a.t);
-    const y = a.apexY + 0.5 * G * (t - a.tUp) * (t - a.tUp);
-    const next = { x: x - origin.x, y: y - origin.y };
-    spin += (next.x - cur.x) / R;
-    cur = next;
-    el.style.transform = `translate(${cur.x.toFixed(1)}px, ${cur.y.toFixed(1)}px)`;
-    if (icon) icon.style.transform = `rotate(${spin.toFixed(3)}rad)`;
-    if (t >= a.t) {
-      ripple(Math.min(0.8, 0.25 + (a.to.y - a.apexY) / 300));
-      if (a.step) {
-        // the words give under the ball, like a step
-        document.querySelector(".hi__big")?.animate(
-          [{ transform: "translateY(0) scaleY(1)" }, { transform: "translateY(5px) scaleY(0.975)" }, { transform: "translateY(0) scaleY(1)" }],
-          { duration: 320, easing: "cubic-bezier(0.2, 0.8, 0.2, 1)" },
-        );
-      }
-      arcI += 1;
-      arcT0 = now;
-      if (arcI >= arcs.length) {
-        after();
-        return;
-      }
+    if (!running) return;
+    const dt = Math.min(0.05, (now - last) / 1000);
+    last = now;
+    acc += dt;
+    let arrived = false;
+    while (acc >= DT && !arrived) {
+      const x0 = pos.x;
+      arrived = tick();
+      spin += (pos.x - x0) / R;
+      squash = Math.max(0, squash - DT * 9);
+      acc -= DT;
+    }
+    render();
+    if (arrived) {
+      running = false;
+      squash = 0;
+      render();
+      onArrive();
+      return;
     }
     raf = requestAnimationFrame(frame);
   };
-  const trip = (toSide: "left" | "right", then: () => void) => {
-    const p = plan(toSide);
-    arcs = p.list;
-    origin = p.origin;
-    arcI = 0;
-    arcT0 = performance.now();
-    after = () => {
-      side = toSide;
+
+  // kick off from wherever the ball is towards a bottom corner
+  const trip = (to: "left" | "right", then: () => void) => {
+    origin = homeCentre();
+    floor = origin.y;
+    const W = window.innerWidth;
+    endX = to === "right" ? origin.x : W - origin.x;
+    if (running) {
+      // already moving: just change where it's heading
+      onArrive = () => {
+        side = to;
+        then();
+      };
+      if (rolling) {
+        const dist = Math.abs(endX - pos.x);
+        const sp = Math.max(Math.abs(vel.x), 160);
+        vel.x = Math.sign(endX - pos.x || 1) * sp;
+        decel = dist > 1 ? (sp * sp) / (2 * dist) : 1e6;
+      } else if (Math.sign(vel.x) !== Math.sign(endX - pos.x)) vel.x = -vel.x * 0.6;
+      return;
+    }
+    {
+      const r = el.getBoundingClientRect();
+      pos = el.style.transform ? { x: r.left + r.width / 2, y: Math.min(floor, r.top + r.height / 2) } : { ...origin };
+    }
+    rolling = false;
+    stepHits = 0;
+    const s = step();
+    const dir = Math.sign(endX - pos.x) || 1;
+    // aim the first hop at the near half of "Say hi!" if it's on the way, otherwise a long hop
+    const target = s && (s.left - pos.x) * dir < (s.right - pos.x) * dir
+      ? { x: dir > 0 ? s.left + (s.right - s.left) * 0.25 : s.right - (s.right - s.left) * 0.25, y: s.top }
+      : null;
+    const onTheWay = target && (target.x - pos.x) * dir > 0 && (endX - target.x) * dir > 0;
+    if (onTheWay && target) {
+      const apex = Math.min(target.y, pos.y) - 70;
+      const vy = Math.sqrt(2 * G * (pos.y - apex));
+      const tUp = vy / G;
+      const tDown = Math.sqrt((2 * (target.y - apex)) / G);
+      vel = { x: (target.x - pos.x) / (tUp + tDown), y: -vy };
+    } else {
+      vel = { x: dir * Math.min(900, Math.abs(endX - pos.x) * 0.55 + 120), y: -Math.sqrt(2 * G * 160) };
+    }
+    onArrive = () => {
+      side = to;
       then();
     };
-    if (raf) cancelAnimationFrame(raf);
-    raf = requestAnimationFrame(frame);
+    running = true;
+    last = performance.now();
+    acc = 0;
+    if (!raf) raf = requestAnimationFrame(frame);
   };
-  const ROUNDS = 3;
-  let rounds = 0;
-  let gone = false;
-  const tip = el.querySelector<HTMLElement>(".chat-mark__tip");
-  const tipText = tip?.textContent ?? "";
+
   const showTip = (on: boolean) => {
     if (tip) tip.textContent = on ? "Wanna know more?" : tipText;
     el.classList.toggle("play-tip", on);
-    el.classList.toggle("tip-left", on && side === "left");
   };
   const vanish = () => {
     gone = true;
     el.style.pointerEvents = "none";
-    const r = el.getBoundingClientRect();
-    window.dispatchEvent(new CustomEvent("dot-ripple", { detail: { x: r.left + r.width / 2, y: r.top + r.height / 2, k: 1 } }));
+    window.dispatchEvent(new CustomEvent("dot-ripple", { detail: { x: pos.x, y: pos.y, k: 1 } }));
     el.animate(
       [
         { transform: el.style.transform, opacity: 1, filter: "blur(0)" },
@@ -249,9 +336,15 @@ function playBall(el: HTMLElement) {
       { duration: 700, easing: "cubic-bezier(0.4, 0, 0.2, 1)", fill: "forwards" },
     );
   };
+  // a round = over to the left corner (short rest), back to the right corner (tooltip, longer rest)
   const loop = () => {
     if (!playing) return;
-    trip(side === "right" ? "left" : "right", () => {
+    const to = side === "right" ? "left" : "right";
+    trip(to, () => {
+      if (to === "left") {
+        rest = window.setTimeout(loop, 1600);
+        return;
+      }
       rounds += 1;
       showTip(true);
       rest = window.setTimeout(() => {
@@ -261,6 +354,7 @@ function playBall(el: HTMLElement) {
       }, 3500);
     });
   };
+
   const atBottom = () => window.scrollY + window.innerHeight >= document.documentElement.scrollHeight - 4;
   const onScroll = () => {
     const bottom = atBottom();
@@ -268,7 +362,8 @@ function playBall(el: HTMLElement) {
       playing = true;
       el.classList.add("is-playing");
       window.clearTimeout(rest);
-      loop();
+      if (running || side === "left") trip("right", loop);
+      else loop();
     } else if (!bottom && playing) {
       playing = false;
       window.clearTimeout(rest);
@@ -277,19 +372,18 @@ function playBall(el: HTMLElement) {
         el.getAnimations().forEach((a) => a.cancel());
         el.style.transform = "";
         el.style.pointerEvents = "";
-        cur = { x: 0, y: 0 };
         el.classList.remove("is-playing");
         el.animate([{ opacity: 0, transform: "scale(0.6)" }, { opacity: 1, transform: "scale(1)" }], { duration: 500, easing: "cubic-bezier(0.2, 0.8, 0.2, 1)" });
         return;
       }
-      if (side === "right" && !arcs[arcI]) {
+      if (side === "right" && !running) {
+        el.style.transform = "";
         el.classList.remove("is-playing");
         return;
       }
       trip("right", () => {
-        el.classList.remove("is-playing");
         el.style.transform = "";
-        cur = { x: 0, y: 0 };
+        el.classList.remove("is-playing");
       });
     }
   };
@@ -298,11 +392,12 @@ function playBall(el: HTMLElement) {
   return () => {
     window.removeEventListener("scroll", onScroll);
     window.clearTimeout(rest);
+    running = false;
     if (raf) cancelAnimationFrame(raf);
-    el.style.transform = "";
-    el.classList.remove("is-playing", "play-tip", "tip-left");
-    el.style.pointerEvents = "";
     el.getAnimations().forEach((a) => a.cancel());
+    el.style.transform = "";
+    el.style.pointerEvents = "";
+    el.classList.remove("is-playing", "play-tip", "tip-left");
     if (tip) tip.textContent = tipText;
     if (icon) icon.style.transform = "";
   };
