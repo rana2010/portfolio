@@ -6182,4 +6182,4 @@ html.vt-theme .work-list__name, html.vt-theme .ds-hero__name, html.vt-theme .ana
 
 /* v1.2.5 · brighter, more playful orange on the big display words in light mode */
 .home-hero__title em, .bot-open__title em, .bot-empty__title em { color: var(--signal-big, var(--signal)); }
-:root[data-theme="dark"] { --signal-big: var(--signal); }
+:root[data-theme="dark"] { --signal-big: var(--signal-display); }
