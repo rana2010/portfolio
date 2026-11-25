@@ -170,6 +170,15 @@ function playBall(el: HTMLElement) {
       const q = { x: lx, y: ly };
       list.push(arc(p, q, 70, "line"));
       p = q;
+      // it falls back onto the line and bounces along it, each bounce lower, drifting left
+      let lh = 70 * E * E + 18;
+      for (let i = 0; i < 2; i++) {
+        const tFlight = Math.sqrt((2 * lh) / G) * 2;
+        const nq = { x: Math.max(lineR.left + R, p.x - 260 * tFlight), y: ly };
+        list.push(arc(p, nq, lh, "line"));
+        p = nq;
+        lh *= E * E;
+      }
     }
 
     // 2) spring off the line in a big arc, over "Say hi!", landing on its right side
