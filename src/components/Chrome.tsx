@@ -112,7 +112,7 @@ export function CairoTime() {
 function playBall(el: HTMLElement) {
   const G = 2600; // gravity, px/s²
   const E = 0.62; // restitution: speed kept per bounce (height kept = E²)
-  const R = 26;
+  const R = Math.max(18, el.offsetWidth / 2 || 24); // the real button radius
   const icon = el.querySelector<SVGElement>(".chat-mark__icon");
   const tip = el.querySelector<HTMLElement>(".chat-mark__tip");
   const tipText = tip?.textContent ?? "";
@@ -145,12 +145,13 @@ function playBall(el: HTMLElement) {
   let round = 0;
   const ROUNDS = 2;
 
+  // home = where CSS parks the button (fixed, right/bottom). Read from the stylesheet, never from the
+  // moving element, so it is right even mid-flight.
   const homeCentre = () => {
-    const prev = el.style.transform;
-    el.style.transform = "none";
-    const r = el.getBoundingClientRect();
-    el.style.transform = prev;
-    return { x: r.left + r.width / 2, y: r.top + r.height / 2 };
+    const cs = getComputedStyle(el);
+    const w = el.offsetWidth;
+    const h = el.offsetHeight;
+    return { x: window.innerWidth - parseFloat(cs.right) - w / 2, y: window.innerHeight - parseFloat(cs.bottom) - h / 2 };
   };
 
   // the words of "Say hi!" (not the whole line box): where the ball can actually land
@@ -297,8 +298,7 @@ function playBall(el: HTMLElement) {
         vy = 0;
         render();
         const d = done;
-        d();
-        if (squash > 0) raf = requestAnimationFrame(frame); // let the last squash relax
+        d(); // may start the next plan, which schedules its own frame
         return;
       }
     }
