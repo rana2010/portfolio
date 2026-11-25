@@ -6,53 +6,20 @@ const SNIPPET_PATH = "src/components/Step1Discovery.jsx";
 const SNIPPET_URL =
   "https://github.com/rana2010/AI-Analyst/blob/main/src/components/Step1Discovery.jsx";
 
-const SNIPPET = `export default function Step1Discovery({ prompt, onPromptChange, onStart, suggestions = [] }) {
-  const [showSuggestions, setShowSuggestions] = useState(true);
-
+const SNIPPET = `export default function Step1Discovery({ prompt, onPromptChange, onStart }) {
   return (
-    <div className="mx-auto flex min-h-[62vh] w-full max-w-xl flex-col items-center justify-center px-2 text-center">
+    <div className="mx-auto flex min-h-[62vh] max-w-xl flex-col items-center justify-center">
       <NoonEmblem size="hero" className="mb-5" />
-
-      <h1 className="text-[26px] font-semibold tracking-tight text-ink sm:text-[28px]">
+      <h1 className="text-[28px] font-semibold tracking-tight">
         How can I help you today?
       </h1>
-
-      <div className="mt-6 w-full">
-        <Composer
-          mode="hero"
-          value={prompt}
-          onChange={onPromptChange}
-          onSubmit={onStart}
-          placeholder="Ask the analyst anything…"
-          buttonLabel="Start"
-        />
-      </div>
-
-      {showSuggestions && suggestions.length > 0 && (
-        <div className="mt-6 w-full text-left">
-          <div className="mb-2.5 flex items-center justify-between px-0.5">
-            <span className="text-[13px] text-ink-muted">Get started</span>
-            <button
-              type="button"
-              onClick={() => setShowSuggestions(false)}
-              aria-label="Dismiss suggestions"
-              className="grid h-6 w-6 place-items-center rounded-md text-ink-faint"
-            >
-              <svg viewBox="0 0 16 16" className="h-3.5 w-3.5" aria-hidden>
-                <path d="M4.5 4.5l7 7M11.5 4.5l-7 7" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
-              </svg>
-            </button>
-          </div>
-          <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-            {suggestions.map((s) => (
-              <button key={s.label} type="button" onClick={() => onPromptChange(s.prompt)}>
-                <SuggestionIcon type={s.icon} />
-                <span className="mt-3 text-[13px] leading-[1.35] text-ink">{s.label}</span>
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
+      <Composer
+        mode="hero"
+        value={prompt}
+        onChange={onPromptChange}
+        onSubmit={onStart}
+        placeholder="Ask the analyst anything…"
+      />
     </div>
   );
 }`;
@@ -97,13 +64,20 @@ export function Analyst() {
         <header className="analyst-head">
           <h1>AI Analyst</h1>
           <p>
-            A chatbot for customer support analytics. Ask a question, approve the agents, and read
-            the brief.
+            Why do customers contact support again after they have already filed a complaint? To help
+            noon raise customer satisfaction, I vibe-coded an analytics chatbot in a week with Cursor and
+            Claude: ask a question in plain words, approve the agents, read the brief. Used by leadership
+            and the customer support team. Try it below, or flip to the code.
           </p>
         </header>
 
         <section className="stage" aria-label="AI Analyst prototype">
           <div className="stage-bar">
+            <span className="mac-lights" aria-hidden="true">
+              <i />
+              <i />
+              <i />
+            </span>
             <div className="seg" role="tablist" aria-label="View">
               <button
                 type="button"

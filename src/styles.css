@@ -924,14 +924,24 @@ figcaption {
 }
 .stage {
   margin-top: 36px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  overflow: hidden;
+  background: var(--surface);
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.22);
 }
 .stage-bar {
   display: flex;
   justify-content: space-between;
   align-items: center;
   gap: 16px;
-  margin-bottom: 12px;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--line);
 }
+.mac-lights { display: flex; gap: 8px; }
+.mac-lights i { width: 12px; height: 12px; border-radius: 50%; background: #ff5f57; }
+.mac-lights i:nth-child(2) { background: #febc2e; }
+.mac-lights i:nth-child(3) { background: #28c840; }
 .seg {
   display: flex;
   gap: 4px;
@@ -2078,7 +2088,7 @@ body { font-family: var(--font-sans); }
 }
 /* v0.3.4: name in Inter like his; case-study footer = Next + base row */
 .site-nav__name { display: inline-flex; align-items: center; }
-.site-nav__sig { display: block; width: 84px; height: 36px; background: currentColor; -webkit-mask: var(--sig) center / contain no-repeat; mask: var(--sig) center / contain no-repeat; }
+.site-nav__sig { display: block; width: 140px; height: 35px; background: currentColor; -webkit-mask: var(--sig) center / contain no-repeat; mask: var(--sig) center / contain no-repeat; }
 .site-footer--case { padding-top: var(--space-8); }
 .site-footer--case .ds-next { padding: var(--space-6) 0 var(--space-16); border-top: 1px solid var(--line); }
 .site-footer--case .ds-next__title { font-size: 120px; line-height: 120px; }
@@ -3391,3 +3401,31 @@ html.vt-theme .work-list__name, html.vt-theme .ds-hero__name, html.vt-theme .ana
 }
 /* v1.2.9 · reading progress runs along the nav's bottom hairline, thin and quiet */
 .read-progress { top: 63px; height: 1px; background: var(--ink-2); opacity: 0.7; z-index: 6; }
+
+/* ---------- Echo case study: the working ticket form (EchoPrototype.tsx) ---------- */
+.echo-proto { display: grid; grid-template-columns: 180px minmax(0, 1fr); gap: var(--space-3); margin-top: var(--space-3); padding: var(--space-3); border: 1px solid var(--line); border-radius: 14px; background: var(--surface); font-size: 14px; }
+.echo-proto__sections { display: grid; align-content: start; gap: 6px; padding-right: var(--space-2); border-right: 1px solid var(--line); }
+.echo-proto__sections span { color: var(--ink-3); font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; }
+.echo-proto__sections b { padding: 6px 10px; border-radius: 8px; color: var(--ink-3); font-weight: 500; transition: background 300ms, color 300ms; }
+.echo-proto__sections b.is-on { background: color-mix(in srgb, var(--ink) 7%, transparent); color: var(--ink); }
+.echo-proto__subject { margin: 0 0 var(--space-2); color: var(--ink-2); font-size: 18px; }
+.echo-proto__grid { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-2); }
+.echo-proto label { display: grid; gap: 6px; color: var(--ink); font-weight: 500; }
+.echo-proto label em { color: var(--ink-3); font-style: normal; font-weight: 400; }
+.echo-proto select, .echo-proto input { height: 38px; padding: 0 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--bg); color: var(--ink); font: inherit; }
+.echo-proto .is-missing select, .echo-proto .is-missing input { border-color: #e5484d; }
+.echo-proto__in { animation: echo-in 400ms var(--ease-expo) both; }
+@keyframes echo-in { from { opacity: 0; transform: translateY(6px); } }
+.echo-proto__toast { margin: var(--space-2) 0 0; padding: 8px 12px; border: 1px solid #e5484d; border-radius: 8px; background: color-mix(in srgb, #e5484d 10%, transparent); color: var(--ink); }
+.echo-proto__actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: var(--space-3); }
+.echo-proto button { height: 38px; padding: 0 16px; border: 1px solid var(--line); border-radius: 8px; background: transparent; color: var(--ink); font: inherit; cursor: pointer; }
+.echo-proto button.is-primary { border-color: var(--ink); background: var(--ink); color: var(--bg); }
+.echo-proto__done { display: grid; justify-items: start; gap: var(--space-2); padding: var(--space-4) 0; font-size: 18px; }
+@media (max-width: 640px) {
+  .echo-proto { grid-template-columns: 1fr; }
+  .echo-proto__sections { display: none; }
+  .echo-proto__grid { grid-template-columns: 1fr; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .echo-proto__in { animation: none; }
+}

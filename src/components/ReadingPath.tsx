@@ -332,7 +332,7 @@ export function ReadingPath() {
       // the reading point: a third of the way down the screen, a little lower once you start scrolling (the line
       // draws a little ahead of it), and reaching the bottom as the page ends
       const settle = Math.min(1, window.scrollY / (H * 0.5));
-      const readY = window.scrollY + H * (0.3 + 0.12 * settle + 0.58 * near);
+      const readY = window.scrollY + H * (0.3 + 0.25 * settle + 0.45 * near);
       // the curve follows the reading point; the straight floor then draws out with the last bit of scroll
       let k = 0;
       while (k < samples.length && samples[k].len <= floorLen && samples[k].at <= readY) k++;
@@ -352,7 +352,7 @@ export function ReadingPath() {
       const target = drawnNow();
       const gap = target - drawnSoFar;
       // relaxed when you scroll gently; the further behind it falls (a fast scroll), the faster it catches up
-      const far = Math.abs(gap) / 1000;
+      const far = Math.abs(gap) / 500;
       const step = Math.sign(gap) * Math.min(Math.abs(gap) * (1 - Math.exp(-dt * EASE * (1 + far))), TOP_SPEED * (1 + far * 2) * dt);
       drawnSoFar = Math.abs(gap) < 1 ? target : drawnSoFar + step;
       const drawn = drawnSoFar;
