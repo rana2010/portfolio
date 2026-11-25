@@ -219,32 +219,53 @@ function playBall(el: HTMLElement) {
     return list;
   };
 
-  // part 2: no stop. From the drop it dribbles slowly along the floor all the way back to its corner:
-  // steady bounces of equal height (a hand keeps feeding it: pushed down a little faster than it rises),
-  // one slow walking speed the whole way, then the last bounces die out (height × E²) in the corner.
+  // part 2: no stop. From the drop it bounces back to its corner, alternating one bounce on the floor
+  // and one on the footer line, at an easy pace; near the corner the bounces die out (height × E²).
   const planBack = (dropH: number): Arc[] => {
     origin = homeCentre();
     const floor = origin.y;
     const list: Arc[] = [];
     let p: V = { ...pos };
-    const PUSH = 1.3;
-    const H = Math.min(120, Math.max(90, dropH * E * E)); // steady dribble height
-    const VX = 170; // px/s: a slow walk
-    const period = (h: number, push = 1) => Math.sqrt((2 * h) / G) + Math.sqrt((2 * h) / (G * push));
+    const lineR = document.querySelector<HTMLElement>(".site-footer__base")?.getBoundingClientRect();
+    const ly = lineR && lineR.top < floor - 10 && lineR.top > 80 ? lineR.top - R : null;
+    const lineLeft = lineR ? lineR.left + R : 0;
+    const lineRight = lineR ? lineR.right - R : 0;
+    const VX = 190; // px/s: relaxed
+    const H = Math.min(120, Math.max(90, dropH * E * E)); // apex above the higher end of each hop
+    const flight = (a: V, b: V, h: number) => {
+      const Y = Math.min(a.y, b.y) - h;
+      return Math.sqrt((2 * (a.y - Y)) / G) + Math.sqrt((2 * (b.y - Y)) / G);
+    };
+    // the dying bounces at the end, on the floor
     const tail: number[] = [];
     for (let h = H * E * E; h > 6; h *= E * E) tail.push(h);
-    const tailT = tail.reduce((a, h) => a + period(h), 0);
-    const dist = origin.x - p.x;
-    const n = Math.max(2, Math.round((dist / VX - tailT) / period(H, PUSH)));
-    const totalT = n * period(H, PUSH) + tailT;
-    const vx = dist / totalT; // ≈ VX, adjusted so the last bounce lands exactly in the corner
-    for (let i = 0; i < n; i++) {
-      const q = { x: p.x + vx * period(H, PUSH), y: floor };
-      list.push(arc(p, q, H, "floor", G * PUSH));
+    const tailDist = tail.reduce((d, h) => d + VX * 2 * Math.sqrt((2 * h) / G), 0);
+    let onLine: boolean = false;
+    let guard = 0;
+    while (guard++ < 40) {
+      const left = origin.x - p.x;
+      if (left <= tailDist + 40) break;
+      // next surface: alternate line / floor (the line only where it exists under the ball)
+      const wantLine: boolean = !onLine && ly !== null;
+      const y = wantLine ? (ly as number) : floor;
+      const est = VX * flight(p, { x: p.x + 100, y }, H);
+      let qx = p.x + Math.min(est, left - tailDist);
+      if (wantLine) qx = Math.max(lineLeft, Math.min(lineRight, qx));
+      const q = { x: qx, y };
+      list.push(arc(p, q, H, wantLine ? "line" : "floor"));
+      p = q;
+      onLine = wantLine;
+    }
+    // finish on the floor and let it settle into the corner
+    if (onLine) {
+      const q = { x: p.x + Math.min(VX * flight(p, { x: p.x, y: floor }, H * 0.8), (origin.x - p.x) * 0.5), y: floor };
+      list.push(arc(p, q, H * 0.8, "floor"));
       p = q;
     }
+    const totalTail = tail.reduce((a, h) => a + 2 * Math.sqrt((2 * h) / G), 0) || 1;
+    const rest = origin.x - p.x;
     tail.forEach((h, k) => {
-      const q = { x: k === tail.length - 1 ? origin.x : p.x + vx * period(h), y: floor };
+      const q = { x: k === tail.length - 1 ? origin.x : p.x + (rest * 2 * Math.sqrt((2 * h) / G)) / totalTail, y: floor };
       list.push(arc(p, q, h, "floor"));
       p = q;
     });
@@ -321,62 +342,21 @@ function playBall(el: HTMLElement) {
     if (tip) tip.textContent = on ? "Wanna know more?" : tipText;
     el.classList.toggle("play-tip", on);
   };
-  // the ball warms to the accent orange, gently shrinks, and breaks into dot-sized orange specks that
-  // drift onto the background grid, cool to the dots' colour and fade into them
+  // subtle exit: the ball softly shrinks, blurs and fades into the dots, warming to the accent colour
   const vanish = () => {
     gone = true;
     el.style.pointerEvents = "none";
     const accent = getComputedStyle(document.documentElement).getPropertyValue("--signal").trim() || "#f97316";
-    const STEP = 28.2; // background grid pitch (dotRadius 1.1 × 2 + dotSpacing 26)
-    const W = window.innerWidth;
-    const H = window.innerHeight;
-    const snap = (v: number, c: number) => c + Math.round((v - c) / STEP) * STEP;
-    const cx = pos.x;
-    const cy = pos.y;
     const base = el.style.transform || "none";
-    // 1) the ball turns orange and breathes in, then shrinks away smoothly
     el.animate(
       [
-        { transform: base, backgroundColor: getComputedStyle(el).backgroundColor, opacity: 1 },
-        { transform: `${base} scale(1.08)`, backgroundColor: accent, opacity: 1, offset: 0.35 },
-        { transform: `${base} scale(0.02)`, backgroundColor: accent, opacity: 0 },
+        { transform: base, backgroundColor: getComputedStyle(el).backgroundColor, opacity: 1, filter: "blur(0px)" },
+        { transform: `${base} scale(0.15)`, backgroundColor: accent, opacity: 0, filter: "blur(6px)" },
       ],
-      { duration: 1100, easing: "cubic-bezier(0.45, 0, 0.25, 1)", fill: "forwards" },
+      { duration: 900, easing: "cubic-bezier(0.4, 0, 0.2, 1)", fill: "forwards" },
     );
-    icon?.animate([{ opacity: 1 }, { opacity: 0, offset: 0.3 }, { opacity: 0 }], { duration: 1100, fill: "forwards" });
-    // 2) orange specks leave the ball as it shrinks and settle on grid dots
-    const used = new Set<string>();
-    for (let k = 0; k < 22; k++) {
-      const a = (k / 22) * Math.PI * 2 + Math.random() * 0.35;
-      const d = 34 + Math.random() * 120;
-      let tx = snap(cx + Math.cos(a) * d, W / 2);
-      let ty = snap(Math.min(cy + Math.sin(a) * d * 0.8, H - 6), H / 2);
-      if (used.has(`${tx},${ty}`)) {
-        tx = snap(tx + STEP, W / 2);
-        ty = snap(ty - STEP, H / 2);
-      }
-      used.add(`${tx},${ty}`);
-      const sp = document.createElement("span");
-      sp.className = "ball-speck";
-      sp.style.left = `${cx}px`;
-      sp.style.top = `${cy}px`;
-      sp.style.background = accent;
-      document.body.appendChild(sp);
-      const move = `translate(calc(-50% + ${(tx - cx).toFixed(1)}px), calc(-50% + ${(ty - cy).toFixed(1)}px))`;
-      sp.animate(
-        [
-          { transform: "translate(-50%, -50%) scale(3)", opacity: 0 },
-          { transform: "translate(-50%, -50%) scale(3)", opacity: 1, offset: 0.12 },
-          { transform: `${move} scale(1.2)`, opacity: 1, offset: 0.55 },
-          { transform: `${move} scale(1)`, opacity: 0.55, offset: 0.8 },
-          { transform: `${move} scale(1)`, opacity: 0 },
-        ],
-        { duration: 2200, delay: 350 + Math.random() * 250, easing: "cubic-bezier(0.22, 0.8, 0.2, 1)", fill: "forwards" },
-      );
-      window.setTimeout(() => sp.remove(), 3000);
-    }
-    // 3) one soft wave through the dots as it melts into them
-    window.setTimeout(() => window.dispatchEvent(new CustomEvent("dot-ripple", { detail: { x: cx, y: cy, k: 0.8 } })), 600);
+    icon?.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 500, fill: "forwards" });
+    window.dispatchEvent(new CustomEvent("dot-ripple", { detail: { x: pos.x, y: pos.y, k: 0.6 } }));
   };
   const startRound = () => {
     if (!playing) return;
