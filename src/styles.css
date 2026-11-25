@@ -1957,6 +1957,13 @@ body { font-family: var(--font-sans); }
   line-height: 40px;
   letter-spacing: -0.01em;
 }
+.home-about__body > p:not(.home-about__big):not(.home-about__tools) {
+  max-width: var(--reading-width);
+  margin: 0;
+  color: var(--ink-2);
+  font-size: 16px;
+  line-height: 24px;
+}
 .home-about__sub { margin: var(--space-6) 0 var(--space-2); }
 /* Work page */
 .projects { padding-bottom: 0; }
