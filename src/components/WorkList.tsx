@@ -5,28 +5,16 @@ export const work = [
     name: "Pulse",
     to: "/work/pulse",
     description: "An AI-first chat workspace and live dashboard for noon’s support team, used by 200+ agents.",
-    status: "Shipped",
-    preview: "/pulse/workspace.webp",
-    result: "20% lower handling time",
-    tone: "shipped",
   },
   {
     name: "Echo",
     to: "/work/echo",
     description: "noon’s internal CRM.",
-    status: "In development",
-    preview: "/images/echo/echo-hero.webp",
-    result: "Ticket flow rebuilt after two failed versions",
-    tone: "progress",
   },
   {
     name: "AI Analyst",
     to: "/work/analyst",
     description: "Designed and built through Cursor: a customer support analytics chatbot.",
-    status: "Built in code",
-    preview: "",
-    result: "Used by leadership and the support team",
-    tone: "code",
   },
 ];
 

@@ -4,9 +4,9 @@ import { WorkList } from "../components/WorkList";
 import { ScrollFill } from "../components/Motion";
 
 const career = [
-  { company: "noon", role: "Product Designer II", years: "Jan 2025 – Present" },
-  { company: "Fawry", role: "Product Designer", years: "Jan – Sep 2024" },
-  { company: "Promolinks International", role: "User Experience Designer", years: "May – Nov 2023" },
+  { company: "noon", years: "Jan 2025 – Present" },
+  { company: "Fawry", years: "Jan – Sep 2024" },
+  { company: "Promolinks International", years: "May – Nov 2023" },
 ];
 
 const flow = [
