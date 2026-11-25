@@ -342,21 +342,64 @@ function playBall(el: HTMLElement) {
     if (tip) tip.textContent = on ? "Wanna know more?" : tipText;
     el.classList.toggle("play-tip", on);
   };
-  // subtle exit: the ball softly shrinks, blurs and fades into the dots, warming to the accent colour
+  // subtle exit into the dots: the ball quietly shrinks and blurs while it comes apart into
+  // dot-sized specks. Each speck drifts a short way to the nearest background dot, warms to the accent
+  // for a moment, then fades into that dot. No swell, no flash: everything eases out.
   const vanish = () => {
     gone = true;
     el.style.pointerEvents = "none";
-    const accent = getComputedStyle(document.documentElement).getPropertyValue("--signal").trim() || "#f97316";
+    const cs = getComputedStyle(document.documentElement);
+    const accent = cs.getPropertyValue("--signal").trim() || "#f97316";
+    const ink = getComputedStyle(el).backgroundColor;
+    const STEP = 28.2; // background grid pitch (dotRadius 1.1 × 2 + dotSpacing 26)
+    const W = window.innerWidth;
+    const H = window.innerHeight;
+    const snap = (v: number, c: number) => c + Math.round((v - c) / STEP) * STEP;
+    const cx = pos.x;
+    const cy = pos.y;
     const base = el.style.transform || "none";
     el.animate(
       [
-        { transform: base, backgroundColor: getComputedStyle(el).backgroundColor, opacity: 1, filter: "blur(0px)" },
-        { transform: `${base} scale(0.15)`, backgroundColor: accent, opacity: 0, filter: "blur(6px)" },
+        { transform: base, opacity: 1, filter: "blur(0px)" },
+        { transform: `${base} scale(0.2)`, opacity: 0, filter: "blur(4px)" },
       ],
-      { duration: 900, easing: "cubic-bezier(0.4, 0, 0.2, 1)", fill: "forwards" },
+      { duration: 1000, easing: "cubic-bezier(0.4, 0, 0.2, 1)", fill: "forwards" },
     );
-    icon?.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 500, fill: "forwards" });
-    window.dispatchEvent(new CustomEvent("dot-ripple", { detail: { x: pos.x, y: pos.y, k: 0.6 } }));
+    icon?.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 400, fill: "forwards" });
+    // the nearest grid dots around the ball, closest first
+    const spots: { x: number; y: number; d: number }[] = [];
+    for (let gx = -3; gx <= 3; gx++)
+      for (let gy = -3; gy <= 2; gy++) {
+        const x = snap(cx, W / 2) + gx * STEP;
+        const y = snap(cy, H / 2) + gy * STEP;
+        if (y > H - 4 || x < 4 || x > W - 4) continue;
+        spots.push({ x, y, d: Math.hypot(x - cx, y - cy) });
+      }
+    spots.sort((a, b) => a.d - b.d);
+    spots.slice(0, 16).forEach((t, k) => {
+      const sp = document.createElement("span");
+      sp.className = "ball-speck";
+      // start somewhere inside the ball
+      const a = Math.random() * Math.PI * 2;
+      const r0 = Math.random() * R * 0.7;
+      const sx = cx + Math.cos(a) * r0;
+      const sy = cy + Math.sin(a) * r0;
+      sp.style.left = `${sx}px`;
+      sp.style.top = `${sy}px`;
+      document.body.appendChild(sp);
+      const to = `translate(calc(-50% + ${(t.x - sx).toFixed(1)}px), calc(-50% + ${(t.y - sy).toFixed(1)}px))`;
+      sp.animate(
+        [
+          { transform: "translate(-50%, -50%)", opacity: 0, backgroundColor: ink },
+          { transform: "translate(-50%, -50%)", opacity: 0.9, backgroundColor: ink, offset: 0.15 },
+          { transform: to, opacity: 0.85, backgroundColor: accent, offset: 0.6 },
+          { transform: to, opacity: 0, backgroundColor: accent },
+        ],
+        { duration: 1900, delay: 150 + k * 35, easing: "cubic-bezier(0.25, 0.8, 0.25, 1)", fill: "forwards" },
+      );
+      window.setTimeout(() => sp.remove(), 2800);
+    });
+    window.setTimeout(() => window.dispatchEvent(new CustomEvent("dot-ripple", { detail: { x: cx, y: cy, k: 0.45 } })), 500);
   };
   const startRound = () => {
     if (!playing) return;
