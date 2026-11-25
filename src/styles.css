@@ -2078,7 +2078,7 @@ body { font-family: var(--font-sans); }
 }
 /* v0.3.4: name in Inter like his; case-study footer = Next + base row */
 .site-nav__name { display: inline-flex; align-items: center; }
-.site-nav__sig { display: block; width: 62px; height: 45px; background: currentColor; -webkit-mask: var(--sig) center / contain no-repeat; mask: var(--sig) center / contain no-repeat; }
+.site-nav__sig { display: block; width: 84px; height: 36px; background: currentColor; -webkit-mask: var(--sig) center / contain no-repeat; mask: var(--sig) center / contain no-repeat; }
 .site-footer--case { padding-top: var(--space-8); }
 .site-footer--case .ds-next { padding: var(--space-6) 0 var(--space-16); border-top: 1px solid var(--line); }
 .site-footer--case .ds-next__title { font-size: 120px; line-height: 120px; }
