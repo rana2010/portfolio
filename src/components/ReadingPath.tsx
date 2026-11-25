@@ -351,7 +351,9 @@ export function ReadingPath() {
       lastTime = now;
       const target = drawnNow();
       const gap = target - drawnSoFar;
-      const step = Math.sign(gap) * Math.min(Math.abs(gap) * (1 - Math.exp(-dt * EASE)), TOP_SPEED * dt);
+      // relaxed when you scroll gently; the further behind it falls (a fast scroll), the faster it catches up
+      const far = Math.abs(gap) / 1000;
+      const step = Math.sign(gap) * Math.min(Math.abs(gap) * (1 - Math.exp(-dt * EASE * (1 + far))), TOP_SPEED * (1 + far * 2) * dt);
       drawnSoFar = Math.abs(gap) < 1 ? target : drawnSoFar + step;
       const drawn = drawnSoFar;
       drawnRef.current = drawn;
