@@ -10,7 +10,8 @@
   --ink-3: #6d6b68;
   --line-control: #8b8886;
   --surface: #ebe6e0;
-  --signal: #b23c0a;
+  --signal: #c2410c; /* tangerine, 4.6:1 on cream: safe for small text */
+  --signal-big: #ea580c; /* brighter, for very large display words only (3.1:1, passes for large text) */
   --pill: rgba(228, 228, 224, 0.62);
   --tag: rgba(18, 18, 17, 0.06);
   --well: #e8e8e4;
@@ -6178,3 +6179,7 @@ html.vt-theme .work-list__name, html.vt-theme .ds-hero__name, html.vt-theme .ana
 /* v1.2.3 · while the ball plays, every frame is set by the physics: no CSS easing on top */
 .chat-mark.is-playing { transition: none !important; }
 
+
+/* v1.2.5 · brighter, more playful orange on the big display words in light mode */
+.home-hero__title em, .bot-open__title em, .bot-empty__title em { color: var(--signal-big, var(--signal)); }
+:root[data-theme="dark"] { --signal-big: var(--signal); }
