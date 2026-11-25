@@ -153,79 +153,87 @@ function playBall(el: HTMLElement) {
     return { x: r.left + r.width / 2, y: r.top + r.height / 2 };
   };
 
-  // build one round as a list of arcs
-  const plan = (): Arc[] => {
+  // the words of "Say hi!" (not the whole line box): where the ball can actually land
+  const sayBox = () => {
+    const el2 = document.querySelector<HTMLElement>(".hi__big");
+    if (!el2) return null;
+    const range = document.createRange();
+    range.selectNodeContents(el2);
+    const r = range.getBoundingClientRect();
+    if (!r.width || r.top < 70 || r.bottom > origin.y) return null;
+    return { left: r.left + 4, right: r.right - 10, top: r.top + r.height * 0.16 - R, width: r.width };
+  };
+
+  // part 1: from the bottom-right corner, low hops along the footer line until close to "Say hi!",
+  // a jump up onto the words, a second bounce on them, then a drop to the bottom-left floor
+  const planOver = (): Arc[] => {
     origin = homeCentre();
     const W = window.innerWidth;
     const floor = origin.y;
     const leftX = W - origin.x;
     const list: Arc[] = [];
     let p: V = { ...pos };
-
-    // 1) hop up onto the footer line
+    const say = sayBox();
     const lineR = document.querySelector<HTMLElement>(".site-footer__base")?.getBoundingClientRect();
-    if (lineR && lineR.top < floor - 10 && lineR.top > 80) {
+    const hasLine = lineR && lineR.top < floor - 10 && lineR.top > 80;
+
+    if (hasLine && lineR) {
       const ly = lineR.top - R;
-      const lx = Math.min(lineR.right - R, p.x - 110);
-      const q = { x: lx, y: ly };
-      list.push(arc(p, q, 70, "line"));
-      p = q;
-      // it falls back onto the line and bounces along it, each bounce lower, drifting left
-      let lh = 70 * E * E + 18;
-      for (let i = 0; i < 2; i++) {
-        const tFlight = Math.sqrt((2 * lh) / G) * 2;
-        const nq = { x: Math.max(lineR.left + R, p.x - 260 * tFlight), y: ly };
-        list.push(arc(p, nq, lh, "line"));
-        p = nq;
-        lh *= E * E;
+      // up onto the line
+      const first = { x: Math.min(lineR.right - R, p.x - 90), y: ly };
+      list.push(arc(p, first, 60, "line"));
+      p = first;
+      // low, even hops leftwards until just past the end of "Say hi!"
+      const stopX = say ? say.right + 150 : W * 0.45;
+      const HOP = 42;
+      const stepX = 150;
+      let guard = 0;
+      while (p.x - stepX > stopX && guard++ < 20) {
+        const q = { x: p.x - stepX, y: ly };
+        list.push(arc(p, q, HOP, "line"));
+        p = q;
       }
     }
 
-    // 2) spring off the line in a big arc, over "Say hi!", landing on its right side
-    const sr = document.querySelector<HTMLElement>(".hi__big")?.getBoundingClientRect();
-    if (sr && sr.width > 0 && sr.top > 70 && sr.bottom < floor) {
-      const sy = sr.top + sr.height * 0.14 - R; // ball resting on top of the letters
-      const first = { x: sr.right - sr.width * 0.12, y: sy };
-      const bigApex = Math.max(120, Math.min(260, (p.y - sy) * 0.5 + 120));
-      list.push(arc(p, first, bigApex, "say"));
-      // 3) bounce on the words, each bounce lower (h × E²), drifting left
-      let h = Math.min(110, bigApex * E * E); // "jumps low"
-      let x = first.x;
-      const n = sr.width > 320 ? 3 : 2;
-      const span = (sr.width * 0.7) / (n + 0.5);
-      for (let i = 0; i < n - 1; i++) {
-        const q = { x: x - span * (1 - i * 0.15), y: sy };
-        list.push(arc({ x, y: sy }, q, h, "say"));
-        x = q.x;
-        h *= E * E;
-      }
-      // 4) last bounce carries it off the left end, down to the floor
-      const off = { x: Math.max(leftX, sr.left - R * 0.5), y: floor };
-      list.push(arc({ x, y: sy }, off, Math.max(28, h), "floor"));
-      p = off;
+    if (say) {
+      // jump up onto the near end of the words
+      const land1 = { x: say.right - say.width * 0.15, y: say.top };
+      list.push(arc(p, land1, 90, "say"));
+      // one more bounce on the words (lower: height × E²), moving left
+      const drop = land1.y - (Math.min(p.y, land1.y) - 90);
+      const h2 = Math.max(40, drop * E * E);
+      const land2 = { x: say.left + say.width * 0.4, y: say.top };
+      list.push(arc(land1, land2, h2, "say"));
+      // off the left end and down to the floor
+      const h3 = Math.max(24, h2 * E * E);
+      const down = { x: Math.max(leftX, say.left - R), y: floor };
+      list.push(arc(land2, down, h3, "floor"));
+      p = down;
     } else {
-      const q = { x: leftX + 40, y: floor };
-      list.push(arc(p, q, 220, "floor"));
-      p = q;
+      const down = { x: leftX + 40, y: floor };
+      list.push(arc(p, down, 160, "floor"));
+      p = down;
     }
 
-    // 5) settle in the bottom-left corner: two floor bounces from the drop
-    const drop = list[list.length - 1].b.y - list[list.length - 1].Y;
-    let h = drop * E * E;
-    for (let i = 0; i < 2 && h > 8; i++) {
-      const lastOne = i === 1 || h * E * E <= 8;
-      const q = { x: lastOne ? leftX : p.x + (leftX - p.x) * 0.6, y: floor };
+    // settle into the bottom-left corner: bounces die out
+    let h = (list[list.length - 1].b.y - list[list.length - 1].Y) * E * E;
+    while (h > 6) {
+      const q = { x: p.x + (leftX - p.x) * 0.6, y: floor };
       list.push(arc(p, q, h, "floor"));
       p = q;
       h *= E * E;
     }
-    if (Math.abs(p.x - leftX) > 1) {
-      list.push(arc(p, { x: leftX, y: floor }, 6, "floor"));
-      p = { x: leftX, y: floor };
-    }
+    if (Math.abs(p.x - leftX) > 0.5) list.push(arc(p, { x: leftX, y: floor }, 3, "floor"));
+    return list;
+  };
 
-    // 6) dribble to the bottom-right corner: steady height, pushed down faster
-    const dist = origin.x - leftX;
+  // part 2: dribble back to the bottom-right corner (steady height, pushed down faster), then let go
+  const planBack = (): Arc[] => {
+    origin = homeCentre();
+    const floor = origin.y;
+    const list: Arc[] = [];
+    let p: V = { ...pos };
+    const dist = origin.x - p.x;
     const DH = 95;
     const n = Math.max(4, Math.round(dist / 170));
     const stepX = dist / (n + 2);
@@ -234,7 +242,6 @@ function playBall(el: HTMLElement) {
       list.push(arc(p, q, DH, "floor", G * 1.7));
       p = q;
     }
-    // 7) let go of the dribble: bounces die out into the corner
     let fh = DH * 0.75;
     while (p.x < origin.x - 1 && fh > 6) {
       const q = { x: Math.min(origin.x, p.x + Math.max(stepX * 0.45, (origin.x - p.x) * 0.55)), y: floor };
@@ -242,7 +249,7 @@ function playBall(el: HTMLElement) {
       p = q;
       fh *= E * E;
     }
-    if (p.x < origin.x) list.push(arc(p, { x: origin.x, y: floor }, 4, "floor"));
+    if (p.x < origin.x) list.push(arc(p, { x: origin.x, y: floor }, 3, "floor"));
     return list;
   };
 
@@ -329,14 +336,20 @@ function playBall(el: HTMLElement) {
     if (!playing) return;
     origin = homeCentre();
     pos = { ...origin };
-    run(plan(), () => {
-      round += 1;
-      showTip(true);
+    run(planOver(), () => {
+      // rest in the bottom-left corner for 2 seconds, then dribble back
       wait = window.setTimeout(() => {
-        showTip(false);
-        if (round >= ROUNDS) vanish();
-        else wait = window.setTimeout(startRound, 2000);
-      }, 3500);
+        if (!playing) return;
+        run(planBack(), () => {
+          round += 1;
+          showTip(true);
+          wait = window.setTimeout(() => {
+            showTip(false);
+            if (round >= ROUNDS) vanish();
+            else wait = window.setTimeout(startRound, 2000);
+          }, 3500);
+        });
+      }, 2000);
     });
   };
   const goHome = () => {
