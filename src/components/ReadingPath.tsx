@@ -90,8 +90,10 @@ export function ReadingPath() {
       const edgeL = gx(Math.max(P * 0.5, L - P)); // hugging the content's left edge
       const hugR = gx(Math.min(W - P * 0.5, L + Wm + P)); // hugging the content's right edge
       const edgeR = gx(W + P * 3); // turns on the right swing out past the edge of the screen
-      const ringX = arrows[0].cx;
-      const rings: Pt[] = arrows.map((a) => ({ x: a.cx, y: a.cy }));
+      // the rings sit a little to the right of the longest project line, not out at the far edge
+      const words = all(".work-list__name, .work-list__meta");
+      const ringX = gx(Math.min(arrows[0].cx, Math.max(...words.map((w) => w.r)) + P * 3));
+      const rings: Pt[] = arrows.map((a) => ({ x: ringX, y: a.cy }));
       const laneY = mid(flowLabel.b, Math.min(...steps.map((st) => st.t))); // between the label and the step titles
       const stations: Pt[] = steps.map((st) => ({ x: gx(st.l), y: laneY }));
 

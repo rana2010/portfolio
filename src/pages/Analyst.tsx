@@ -58,29 +58,36 @@ export function Analyst() {
   }, []);
 
   return (
-    <div className="page">
+    <div className="page case analyst">
       <Dots />
       <Nav />
-      <main className="projects analyst">
-        <header className="analyst-head">
-          <h1>CS Analytics Bot</h1>
-          <p>AI analyst used for product discovery.</p>
+      <main>
+        <header className="case-hero">
+          <p className="case-kicker">noon · internal tool</p>
+          <h1 className="case-title">CS Analytics Bot</h1>
+          <p className="case-summary">AI analyst used for product discovery.</p>
+          <ul className="tags">
+            <li>Vibe coding</li>
+            <li>Conversational UI</li>
+            <li>Product discovery</li>
+          </ul>
+          <dl className="glance">
+            <div><dt>Role</dt><dd>Designer and builder</dd></div>
+            <div><dt>Built with</dt><dd>Cursor, Claude</dd></div>
+            <div><dt>Time</dt><dd>One week</dd></div>
+            <div><dt>Used by</dt><dd>Leadership, CS team</dd></div>
+          </dl>
         </header>
-        <dl className="glance analyst-glance">
-          <div><dt>Role</dt><dd>Designer and builder</dd></div>
-          <div><dt>Built with</dt><dd>Cursor, Claude</dd></div>
-          <div><dt>Time</dt><dd>One week</dd></div>
-          <div><dt>Used by</dt><dd>Leadership, CS team</dd></div>
-        </dl>
-        <section className="analyst-why">
+        <section className="case-block">
           <h2>The question</h2>
           <p className="statement">Why do customers contact support again after they have already filed a complaint?</p>
           <p className="support">
             To help noon raise customer satisfaction, I vibe-coded a chatbot that answers questions about support
-            data in plain words: ask, approve the agents, read the brief. Try it, or flip to the code.
+            data in plain words: ask, approve the agents, read the brief.
           </p>
         </section>
-
+        <section className="case-block">
+          <h2>Try it, or read the code</h2>
         <Laptop label="CS Analytics Bot, interactive">
         <section className="stage" aria-label="CS Analytics Bot prototype">
           <div className="stage-bar">
@@ -139,6 +146,7 @@ export function Analyst() {
           )}
         </section>
         </Laptop>
+        </section>
       </main>
       <Footer next={{ name: "Pulse", to: "/work/pulse" }} />
     </div>

@@ -1,50 +1,43 @@
 import { useEffect, useState } from "react";
 import { asset } from "../asset";
 import { Dots, Footer, Nav } from "../components/Chrome";
-import { EchoPrototype } from "../components/EchoPrototype";
+import { EchoFlow } from "../components/EchoFlow";
 import { Editable } from "../components/EditContext";
-import { Laptop } from "../components/Laptop";
 
 const glance = [
   ["role", "Role", "Product Designer"],
-  ["product", "Product", "Internal CRM"],
+  ["scope", "Scope", "Whole product"],
   ["focus", "Focus", "Ticket creation"],
   ["status", "Status", "In development"],
 ] as const;
 
 const tags = [
+  ["tag-research", "User Research"],
+  ["tag-shadowing", "Shadowing"],
   ["tag-ui", "UI Design"],
-  ["tag-forms", "Form Design"],
   ["tag-disclosure", "Progressive Disclosure"],
-  ["tag-testing", "Usability Testing"],
 ] as const;
 
-// the three tries, each in one line: what it was, why it did not work, the principle behind the call
+// the two tries that did not work: what it was, why it failed, the principle behind dropping it
 const tries = [
   {
     id: "v1",
-    name: "Scroll rail",
+    name: "A scroll rail",
     what: "One long form, with a rail that jumps to the required fields.",
-    why: "In testing, agents were confused: a new behaviour to learn mid-task.",
+    why: "In testing, agents were confused: a new behaviour to learn mid-call.",
     principle: "Jakob's law",
     src: "/images/echo/echo-v1-rail.webp",
     alt: "Version 1: one long form with required-field chips and a scroll rail on the right.",
   },
   {
     id: "v2",
-    name: "Numbered stepper",
+    name: "A numbered stepper",
     what: "A familiar stepper down the side.",
     why: "Fields change with the department and layout, so the steps shifted under the agent.",
     principle: "Consistency",
     src: "/images/echo/echo-v2-stepper.webp",
     alt: "Version 2: a numbered stepper on the left of the ticket form.",
   },
-] as const;
-
-const finals = [
-  ["f1", "/images/echo/echo-final-step1.webp", "Two decisions first: department and layout.", "Progressive disclosure"],
-  ["f2", "/images/echo/echo-final-step2.webp", "Then only the fields this ticket needs, in sections.", "Chunking"],
-  ["f3", "/images/echo/echo-final-required.webp", "A missed field is outlined, with a message saying what to do.", "Error recovery"],
 ] as const;
 
 function Shot({ src, alt }: { src: string; alt: string }) {
@@ -69,7 +62,7 @@ export function Echo() {
           <Editable
             id="summary"
             className="case-summary"
-            text="Understanding what agents need mid-call, and iterating to the calmest form."
+            text="I designed Echo, the CRM replacing Zoho at noon, end to end. This is the story of its most used flow: creating a ticket while a customer is waiting."
           />
           <ul className="tags">
             {tags.map(([id, label]) => (
@@ -87,21 +80,31 @@ export function Echo() {
         </header>
 
         <section className="case-block">
-          <Editable id="try-heading" as="h2" text="Try it" />
-          <Editable id="try-body" className="support" text="Pick a department and a layout, press Next, then submit with a field empty." />
-          <Laptop label="Echo ticket form, interactive">
-            <EchoPrototype />
-          </Laptop>
+          <Editable id="why-heading" as="h2" text="Why Echo" />
+          <Editable
+            id="why-1"
+            className="support"
+            text="noon wanted to stop paying for Zoho and shape a CRM around its own teams. For agents, that meant giving up a tool they knew. A new tool that is merely different slows them down on day one."
+          />
         </section>
 
         <section className="case-block">
-          <Editable id="problem-heading" as="h2" text="The problem" />
+          <Editable id="research-heading" as="h2" text="Watching agents work" />
           <Editable
-            id="problem-1"
-            className="statement"
-            text="Agents create tickets during urgent conversations, and the fields change with every department and layout."
+            id="research-1"
+            className="support"
+            text="Before designing anything, I ran research sessions and shadowed agents in Zoho to see how their days actually worked. One thing shaped everything after it:"
           />
-          <Editable id="problem-2" className="support" text="noon is replacing Zoho with Echo to cut cost and shape the tool around its teams." />
+          <Editable
+            id="research-insight"
+            className="statement"
+            text="agents start filling in the ticket while the customer is still talking."
+          />
+          <Editable
+            id="research-2"
+            className="support"
+            text="Listening, filtering and typing at once. Creating a ticket is the flow agents use most, and the one under the most pressure, so it is where I went deep."
+          />
         </section>
 
         <section className="case-block">
@@ -123,20 +126,26 @@ export function Echo() {
 
         <section className="case-block">
           <Editable id="final-heading" as="h2" text="What worked" />
-          <div className="echo-final">
-            {finals.map(([id, src, caption, principle]) => (
-              <figure key={id} className="figure">
-                <div className="frame">
-                  <Shot src={src} alt={caption} />
-                </div>
-                <figcaption>
-                  <span className="echo-chip">{principle}</span>
-                  <Editable id={`${id}-caption`} as="span" text={caption} />
-                </figcaption>
-              </figure>
-            ))}
-          </div>
+          <ul className="echo-principles">
+            <li>
+              <span className="echo-chip">Progressive disclosure</span>
+              <Editable id="p1" as="span" text="Two decisions first: department and layout." />
+            </li>
+            <li>
+              <span className="echo-chip">Chunking</span>
+              <Editable id="p2" as="span" text="Then only that ticket's fields, grouped in sections." />
+            </li>
+            <li>
+              <span className="echo-chip">Error recovery</span>
+              <Editable id="p3" as="span" text="A missed field is outlined, with a message saying what to do." />
+            </li>
+          </ul>
           <Editable id="tradeoff" className="statement" text="The trade-off: one extra click, for a form that fits the ticket." />
+        </section>
+
+        <section className="case-block">
+          <Editable id="try-heading" as="h2" text="Try the final flow" />
+          <EchoFlow />
         </section>
 
         <section className="case-block">

@@ -1,8 +1,7 @@
-import { useEffect, useRef, useState, type CSSProperties } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link, NavLink, useLocation } from "react-router-dom";
 import { MoonIcon, SunIcon, useTheme } from "./theme";
 import { playBall } from "./ball/playBall";
-import { asset } from "../asset";
 
 export function Nav() {
   const { theme, toggle } = useTheme();
@@ -29,9 +28,8 @@ export function Nav() {
   return (
     <>
       <header className={scrolled ? "site-nav is-scrolled" : "site-nav"}>
-        <Link className="site-nav__name" to="/" viewTransition aria-label="Rana Ebrahim, home">
-          {/* Rana's own signature, drawn in the text colour (the PNG is only used as a mask) */}
-          <span className="site-nav__sig" style={{ "--sig": `url(${asset("/signature.png?v=6")})` } as CSSProperties} />
+        <Link className="site-nav__name" to="/" viewTransition>
+          Rana Ebrahim
         </Link>
         <nav className="site-nav__links" aria-label="Main">
           <Link

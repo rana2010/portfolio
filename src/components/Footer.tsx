@@ -33,15 +33,19 @@ function CopyEmail() {
 
 export function Footer({
   next,
+  plain,
 }: {
   giant?: boolean;
   next?: { name: string; to: string };
+  plain?: boolean; // just the base line, no "Say hi!"
 }) {
   const base = (
     <div className="site-footer__base">
       <p>© 2026 Rana Ebrahim</p>
     </div>
   );
+
+  if (plain) return <footer className="site-footer">{base}</footer>;
 
   if (next) {
     return (

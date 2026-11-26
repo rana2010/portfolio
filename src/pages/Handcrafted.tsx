@@ -29,11 +29,6 @@ const pieces: Piece[] = [
   },
 ];
 
-const Brush = () => (
-  <svg viewBox="0 0 16 16" aria-hidden="true">
-    <path d="M10.5 2.5l3 3-5.5 5.5-3-3zM5 9l2 2c0 2-1.5 3-4 3 .8-.8 1-1.6 1-2.6C4 10 4.4 9.4 5 9z" fill="currentColor" />
-  </svg>
-);
 
 export function Handcrafted() {
   const [open, setOpen] = useState<number | null>(null);
@@ -91,8 +86,8 @@ export function Handcrafted() {
             if (Math.abs(dx) > 50) go(dx < 0 ? 1 : -1); // swipe left or right
           }}
         >
-          <button className="gallery-view__close" type="button" onClick={() => setOpen(null)} autoFocus>
-            Close
+          <button className="gallery-view__close" type="button" aria-label="Close" onClick={() => setOpen(null)} autoFocus>
+            ×
           </button>
           <button className="gallery-view__nav is-prev" type="button" aria-label="Previous piece" onClick={(e) => (e.stopPropagation(), go(-1))}>
             ←
@@ -105,14 +100,7 @@ export function Handcrafted() {
                 {piece.year ? <span> · {piece.year}</span> : null}
               </strong>
               <span className="gallery-view__idea">{piece.idea}</span>
-              <span className="gallery-view__tools">
-                {piece.tools.map((t) => (
-                  <span key={t}>
-                    <Brush />
-                    {t}
-                  </span>
-                ))}
-              </span>
+              <span className="gallery-view__tools">Tools: {piece.tools.join(", ")}</span>
               <span className="gallery-view__count">
                 {open! + 1} / {pieces.length}
               </span>
@@ -123,7 +111,7 @@ export function Handcrafted() {
           </button>
         </div>
       ) : null}
-      <Footer />
+      <Footer plain />
     </div>
   );
 }
