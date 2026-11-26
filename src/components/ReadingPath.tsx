@@ -90,7 +90,9 @@ export function ReadingPath() {
       const edgeL = gx(Math.max(P * 0.5, L - P)); // hugging the content's left edge
       const hugR = gx(Math.min(W - P * 0.5, L + Wm + P)); // hugging the content's right edge
       const edgeR = gx(W + P * 3); // turns on the right swing out past the edge of the screen
-      const ringX = gx(arrows[0].cx - P * 2); // near the right edge, a little in from where the arrows were
+      // the rings: part way between the end of the longest project line and the right edge
+      const textR = Math.max(...all(".work-list__name, .work-list__meta").map((w) => w.r));
+      const ringX = gx(textR + (arrows[0].cx - textR) * 0.45);
       const rings: Pt[] = arrows.map((a) => ({ x: ringX, y: a.cy }));
       const laneY = mid(flowLabel.b, Math.min(...steps.map((st) => st.t))); // between the label and the step titles
       const stations: Pt[] = steps.map((st) => ({ x: gx(st.l), y: laneY }));
@@ -114,15 +116,15 @@ export function ReadingPath() {
 
       // the route: level runs across the page joined by round turns at the edges. Corners are listed here;
       // "through" points keep the line straight (the drop through the rings).
-      type V = Pt & { through?: boolean };
+      type V = Pt & { through?: boolean; r?: number }; // r: a tighter turn
       const route: V[] = [
         { x: gx(L + Wm * 0.85), y: -P * 2 }, // from the very top of the page
         { x: gx(L + Wm * 0.85), y: gy(label.t - P * 1.5) }, // turning left just above the hero text
         { x: edgeL, y: gy(label.t - P * 1.5) }, // hugging the headline round its left
         { x: edgeL, y: gy(sub.b + P * 1.2) },
-        { x: ringX, y: gy(sub.b + P * 1.2) }, // just under it, across to the work
+        { x: ringX, y: gy(sub.b + P * 1.2), r: P * 4 }, // just under it, across to the work
         ...rings.map((r) => ({ ...r, through: true })), // straight down through every ring
-        { x: ringX, y: gy(lastRow.b + P * 1.5) }, // just under the projects, back across
+        { x: ringX, y: gy(lastRow.b + P * 1.5), r: P * 4 }, // just under the projects, back across
         { x: edgeL, y: gy(lastRow.b + P * 1.5) },
         { x: edgeL, y: gy(para.b + P * 0.8) }, // round the statement, just under it
         { x: hugR, y: gy(para.b + P * 0.8) },
@@ -152,8 +154,8 @@ export function ReadingPath() {
         const outDir = { x: dir(next.x - here.x), y: dir(next.y - here.y) };
         let rIn = side(i - 1, i), rOut = side(i, i + 1);
         const v = inDir.y ? rIn : rOut; // the vertical radius
-        const h = Math.min(inDir.x ? rIn : rOut, P * 10, Math.max(v * 1.6, P * 2));
-        const vv = Math.min(v, P * 14);
+        const h = Math.min(inDir.x ? rIn : rOut, here.r ?? P * 10, Math.max(v * 1.6, P * 2));
+        const vv = Math.min(v, here.r ?? P * 14);
         if (inDir.x) [rIn, rOut] = [h, vv];
         else [rIn, rOut] = [vv, h];
         const a = { x: here.x - inDir.x * rIn, y: here.y - inDir.y * rIn };
