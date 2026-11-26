@@ -1744,7 +1744,6 @@ body { font-family: var(--font-sans); }
   margin: 0 auto;
   padding: var(--space-12) 0 0;
 }
-.site-footer__label,
 .work-list__head h2,
 .home-hero__label,
 .home-about__label,
@@ -3176,9 +3175,9 @@ html.vt-theme .work-list__name, html.vt-theme .ds-hero__name, html.vt-theme .sit
 #work { scroll-margin-top: 72px; }
 .work-list { padding: var(--space-3) 0 0; } /* close to the line above; About gets the room below */
 .work-list a { grid-template-columns: minmax(0, 1fr) 32px; column-gap: var(--space-3); row-gap: 2px; padding: var(--space-3) 0; }
-.work-list ol { margin-left: calc((100% + var(--gutter)) / 6); } /* projects line up with the About text column */
+.work-list__head, .work-list ol { margin-left: calc((100% + var(--gutter)) / 6); } /* label and projects line up with the About text column */
 @media (max-width: 1024px) {
-  .work-list ol { margin-left: 0; }
+  .work-list__head, .work-list ol { margin-left: 0; }
 }
 .work-list__name { grid-column: 1; grid-row: 1; justify-self: start; font-size: 36px; line-height: 44px; }
 .work-list__meta { grid-column: 1; grid-row: 2; justify-self: start; max-width: 560px; text-align: left; color: var(--ink-2); }
@@ -3335,7 +3334,7 @@ html.vt-theme .work-list__name, html.vt-theme .ds-hero__name, html.vt-theme .sit
 
 
 /* ---------- Laptop demos (Laptop.tsx) and the Echo / CS Analytics Bot layouts ---------- */
-.laptop { margin-top: var(--space-3); }
+.laptop { margin-top: var(--space-3); padding-inline: 6%; } /* room for the base, which is wider than the lid */
 .laptop__screen { overflow: hidden; border-radius: 4px; background: var(--bg); }
 .laptop .stage { margin: 0; border: 0; border-radius: 0; box-shadow: none; }
 :is(.echo, .analyst) .glance { margin-top: var(--space-4); }
