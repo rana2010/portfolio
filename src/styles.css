@@ -3175,14 +3175,16 @@ html.vt-theme .work-list__name, html.vt-theme .ds-hero__name, html.vt-theme .sit
 /* v1.1.0 · home layout: calmer work list, "How I work" flow */
 #work { scroll-margin-top: 72px; }
 .work-list { padding: var(--space-3) 0 0; } /* close to the line above; About gets the room below */
-.work-list a { grid-template-columns: minmax(0, auto) minmax(0, 1fr) 32px; align-items: baseline; column-gap: var(--space-4); padding: var(--space-3) 0; }
+.work-list a { grid-template-columns: minmax(0, 1fr) 32px; column-gap: var(--space-3); row-gap: 2px; padding: var(--space-3) 0; }
+.work-list ol { margin-left: calc((100% + var(--gutter)) / 6); } /* projects line up with the About text column */
+@media (max-width: 1024px) {
+  .work-list ol { margin-left: 0; }
+}
 .work-list__name { grid-column: 1; grid-row: 1; justify-self: start; font-size: 36px; line-height: 44px; }
-.work-list__meta { grid-column: 2; grid-row: 1; justify-self: start; max-width: 560px; text-align: left; color: var(--ink-2); }
-.work-list__arrow { grid-column: 3; grid-row: 1; align-self: center; }
+.work-list__meta { grid-column: 1; grid-row: 2; justify-self: start; max-width: 560px; text-align: left; color: var(--ink-2); }
+.work-list__arrow { grid-column: 2; grid-row: 1 / span 2; align-self: center; }
 @media (max-width: 640px) {
   .work-list a { grid-template-columns: minmax(0, 1fr) 20px; column-gap: var(--space-2); padding: var(--space-2) 0; }
-  .work-list__meta { grid-column: 1; grid-row: 2; }
-  .work-list__arrow { grid-column: 2; grid-row: 1 / span 2; }
   .work-list__name { font-size: 28px; line-height: 36px; }
   .work-list__meta { font-size: 13px; line-height: 20px; }
 }

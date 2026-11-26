@@ -88,6 +88,7 @@ export function ReadingPath() {
 
       const mid = (a: number, b: number) => (a + b) / 2;
       const edgeL = gx(Math.max(P * 0.5, L - P)); // hugging the content's left edge
+      const overL = gx(L + P * 0.5); // left turns that brush over the first letters of a label, like the hero's
       const hugR = gx(Math.min(W - P * 0.5, L + Wm + P)); // hugging the content's right edge
       const edgeR = gx(W + P * 3); // turns on the right swing out past the edge of the screen
       // the rings: part way between the end of the longest project line and the right edge
@@ -122,15 +123,15 @@ export function ReadingPath() {
         { x: gx(L + Wm * 0.85), y: gy(label.t - P * 1.5) }, // turning left just above the hero text
         { x: edgeL, y: gy(label.t - P * 1.5) }, // hugging the headline round its left
         { x: edgeL, y: gy(sub.b + P * 1.2) },
-        { x: ringX, y: gy(sub.b + P * 1.2), r: P * 4 }, // just under it, across to the work
+        { x: ringX, y: gy(sub.b + P * 1.2), r: P * 8 }, // just under it, across to the work
         ...rings.map((r) => ({ ...r, through: true })), // straight down through every ring
-        { x: ringX, y: gy(lastRow.b + P * 1.5), r: P * 4 }, // just under the projects, back across
-        { x: edgeL, y: gy(lastRow.b + P * 1.5) },
-        { x: edgeL, y: gy(para.b + P * 0.8) }, // round the statement, just under it
+        { x: ringX, y: gy(lastRow.b + P * 1.5), r: P * 8 }, // just under the projects, back across
+        { x: overL, y: gy(lastRow.b + P * 1.5) }, // round "About", brushing over it
+        { x: overL, y: gy(para.b + P * 0.8) }, // round the statement, just under it
         { x: hugR, y: gy(para.b + P * 0.8) },
         { x: hugR, y: gy(careerList.b + P * 0.6) }, // round Career on the right, just under it
-        { x: edgeL, y: gy(careerList.b + P * 0.6) },
-        { x: edgeL, y: laneY }, // down beside Education, along How I work
+        { x: overL, y: gy(careerList.b + P * 0.6) }, // round "Education", brushing over it
+        { x: overL, y: laneY }, // along How I work
         { x: edgeR, y: laneY },
         ...sayHi, // two circles round "Email, LinkedIn / Say hi!", then off the left edge onto the floor
         { x: lI - GAP * 2, y: floorY },
