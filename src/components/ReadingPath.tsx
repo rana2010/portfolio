@@ -72,8 +72,8 @@ export function ReadingPath() {
       const all = (sel: string) => Array.from(document.querySelectorAll(sel)).map(box).filter(Boolean) as NonNullable<ReturnType<typeof box>>[];
       const sub = $(".home-hero__sub");
       const arrows = all(".work-list__arrow");
+      const lastRow = all(".work-list li").pop();
       const label = $(".home-hero__label");
-      const aboutLabel = $(".home-about__label");
       const para = box(document.querySelector(".home-about__big")?.nextElementSibling ?? null);
       const careerList = $(".home-career");
       const flowLabel = box(document.querySelector(".home-flow-wrap")?.previousElementSibling ?? null);
@@ -83,7 +83,7 @@ export function ReadingPath() {
       const hiWords = document.createRange(); // the words "Say hi!", not their full-width block
       if (hiEl) hiWords.selectNodeContents(hiEl);
       const hi = hiEl ? box({ getBoundingClientRect: () => hiWords.getBoundingClientRect() } as Element) : null;
-      if (!label || !sub || !arrows.length || !aboutLabel || !para) return;
+      if (!label || !sub || !lastRow || !arrows.length || !para) return;
       if (!careerList || !flowLabel || !steps.length || !connect || !hi) return;
 
       const mid = (a: number, b: number) => (a + b) / 2;
@@ -122,8 +122,8 @@ export function ReadingPath() {
         { x: edgeL, y: gy(sub.b + P * 1.2) },
         { x: ringX, y: gy(sub.b + P * 1.2) }, // just under it, across to the work
         ...rings.map((r) => ({ ...r, through: true })), // straight down through every ring
-        { x: ringX, y: gy(aboutLabel.t - P) }, // just above About, back across
-        { x: edgeL, y: gy(aboutLabel.t - P) },
+        { x: ringX, y: gy(lastRow.b + P * 1.5) }, // just under the projects, back across
+        { x: edgeL, y: gy(lastRow.b + P * 1.5) },
         { x: edgeL, y: gy(para.b + P * 0.8) }, // round the statement, just under it
         { x: hugR, y: gy(para.b + P * 0.8) },
         { x: hugR, y: gy(careerList.b + P * 0.6) }, // round Career on the right, just under it

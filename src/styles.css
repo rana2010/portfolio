@@ -23,7 +23,7 @@
   --chrome-dot: #a5a69e;
   --chrome-label: #d4d5cd;
   --shadow: 0 0 0 1px rgba(18, 18, 17, 0.04);
-  --page: 920px;
+  --page: 1120px; /* case studies: between Pulse (1280) and the old 920 */
   --ease: cubic-bezier(0.16, 1, 0.3, 1);
   color-scheme: light;
   --font-sans: "Inter", Helvetica, Arial, sans-serif;
@@ -584,7 +584,7 @@ figcaption {
   line-height: 1.65;
 }
 .case-block {
-  padding: 104px 0;
+  padding: 80px 0;
   border-top: 1px solid var(--line);
 }
 .case-block > h2 {
@@ -1909,7 +1909,7 @@ body { font-family: var(--font-sans); }
 .ds-statement { padding: var(--space-4) 0 var(--space-12); font-size: 64px; line-height: 72px; }
 .ds-next__title { font-size: 72px; line-height: 72px; }
 .ds-next__title span { font-size: 32px; line-height: 40px; }
-:is(.echo, .analyst) .case-hero h1, :is(.echo, .analyst) .case-title { font-size: 64px; line-height: 64px; }
+:is(.echo, .analyst) .case-hero h1, :is(.echo, .analyst) .case-title { font-size: 76px; line-height: 80px; }
 :is(.echo, .analyst) .case-summary { font-size: 24px; line-height: 32px; }
 @media (max-width: 1024px) {
   .home-about { grid-template-columns: 1fr; gap: var(--space-2); }
@@ -2044,7 +2044,7 @@ body { font-family: var(--font-sans); }
 .ds-next__title { transition: none; }
 }
 /* v0.3.4: name in Inter like his; case-study footer = Next + base row */
-.site-nav__name { font-family: "Caveat", cursive; font-size: 30px; line-height: 36px; font-weight: 500; letter-spacing: 0.01em; }
+.site-nav__name { font-family: "Alex Brush", cursive; font-size: 34px; line-height: 40px; font-weight: 400; }
 .site-footer--case { padding-top: var(--space-8); }
 .site-footer--case .ds-next { padding: var(--space-6) 0 var(--space-16); border-top: 1px solid var(--line); }
 .site-footer--case .ds-next__title { font-size: 120px; line-height: 120px; }
@@ -2385,7 +2385,7 @@ body { font-family: var(--font-sans); }
   animation: rk-fade 240ms var(--ease-expo);
 }
 .gallery-view figure { margin: 0; max-width: min(960px, 100%); }
-.gallery-view img { display: block; max-width: 100%; max-height: 76vh; margin: 0 auto; }
+.gallery-view img { display: block; max-width: 100%; max-height: 60vh; margin: 0 auto; } /* leaves room for the caption and tools */
 .gallery-view figcaption { max-width: 640px; margin: var(--space-2) auto 0; color: #b9b6b2; font-size: 14px; line-height: 24px; text-align: center; }
 .gallery-view figcaption strong { color: #f5f0eb; font-weight: 500; }
 @keyframes rk-fade { from { opacity: 0; } }
@@ -3174,7 +3174,7 @@ html.vt-theme .work-list__name, html.vt-theme .ds-hero__name, html.vt-theme .sit
 .count-up { font-variant-numeric: tabular-nums; }
 /* v1.1.0 · home layout: calmer work list, "How I work" flow */
 #work { scroll-margin-top: 72px; }
-.work-list { padding: var(--space-6) 0 var(--space-8); }
+.work-list { padding: var(--space-3) 0 0; } /* close to the line above; About gets the room below */
 .work-list a { grid-template-columns: minmax(0, auto) minmax(0, 1fr) 32px; align-items: baseline; column-gap: var(--space-4); padding: var(--space-3) 0; }
 .work-list__name { grid-column: 1; grid-row: 1; justify-self: start; font-size: 36px; line-height: 44px; }
 .work-list__meta { grid-column: 2; grid-row: 1; justify-self: start; max-width: 560px; text-align: left; color: var(--ink-2); }
