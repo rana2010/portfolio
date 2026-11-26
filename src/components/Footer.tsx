@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { CairoTime } from "./CairoTime";
 
 const EMAIL = "ranaebrahim@aucegypt.edu";
 
@@ -41,9 +40,6 @@ export function Footer({
   const base = (
     <div className="site-footer__base">
       <p>© 2026 Rana Ebrahim</p>
-      <p className="site-footer__time">
-        <CairoTime />
-      </p>
     </div>
   );
 
@@ -61,16 +57,15 @@ export function Footer({
 
   return (
     <footer className="site-footer site-footer--hi" id="contact">
-      <p className="site-footer__label">Let’s connect</p>
-      <p className="hi__big">
-        Say <em>hi!</em>
-      </p>
       <div className="site-footer__links">
         <CopyEmail />
         <a className="u-link" href="https://www.linkedin.com/in/rana-ebrahimm/" target="_blank" rel="noreferrer">
           LinkedIn
         </a>
       </div>
+      <p className="hi__big">
+        Say <em>hi!</em>
+      </p>
       {base}
     </footer>
   );

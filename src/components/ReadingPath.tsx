@@ -5,7 +5,7 @@ import { DOT_PITCH } from "./grid";
    underneath the content as one clean meander: level runs across the page joined by round turns at the edges.
    It comes in from the very top, turns under the nav, rounds the headline on the left, drops straight through
    the project rings, rounds About and Career, runs along How I work through each step, comes back over
-   "Let's connect", circles "Let's connect / Say hi!" twice and lands on the footer, where it runs straight: the floor the chat ball
+   "Let's connect", circles "Email, LinkedIn / Say hi!" twice and lands on the footer, where it runs straight: the floor the chat ball
    plays on. It eats the background dots it passes over. Once the ball has played (playBall.ts), scrolling
    back up brings Pac-Man to the tip, eating the line as it goes. On desktop, content stays faint until the line gets
    to it. Phones (≤ 640px): only the straight floor, nothing hidden. Reduced motion: drawn in full. */
@@ -78,7 +78,7 @@ export function ReadingPath() {
       const careerList = $(".home-career");
       const flowLabel = box(document.querySelector(".home-flow-wrap")?.previousElementSibling ?? null);
       const steps = all(".home-flow li");
-      const connect = $(".site-footer__label");
+      const connect = $(".site-footer__links"); // top of the "Say hi!" block
       const hiEl = document.querySelector(".hi__big");
       const hiWords = document.createRange(); // the words "Say hi!", not their full-width block
       if (hiEl) hiWords.selectNodeContents(hiEl);
@@ -95,7 +95,7 @@ export function ReadingPath() {
       const laneY = mid(flowLabel.b, Math.min(...steps.map((st) => st.t))); // between the label and the step titles
       const stations: Pt[] = steps.map((st) => ({ x: gx(st.l), y: laneY }));
 
-      // "Let's connect / Say hi!": two circles round just those two, spiralling outwards, then off the left
+      // "Email, LinkedIn / Say hi!": two circles round just those two, spiralling outwards, then off the left
       // edge and round onto the floor. The incoming run is the top of the first circle.
       const GAP = P * 0.8;
       const tI = gy(connect.t - P * 0.8), bI = hi.b + P * 0.25; // inner circle: top, bottom
@@ -130,7 +130,7 @@ export function ReadingPath() {
         { x: edgeL, y: gy(careerList.b + P * 0.6) },
         { x: edgeL, y: laneY }, // down beside Education, along How I work
         { x: edgeR, y: laneY },
-        ...sayHi, // two circles round "Let's connect / Say hi!", then off the left edge onto the floor
+        ...sayHi, // two circles round "Email, LinkedIn / Say hi!", then off the left edge onto the floor
         { x: lI - GAP * 2, y: floorY },
         { x: floorR, y: floorY },
       ];

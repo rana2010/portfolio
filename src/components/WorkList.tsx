@@ -4,17 +4,17 @@ export const work = [
   {
     name: "Pulse",
     to: "/work/pulse",
-    description: "An AI-first chat workspace and live dashboard for noon’s support team, used by 200+ agents.",
+    description: "AI · Customer Support Chat",
   },
   {
-    name: "Echo",
+    name: "Ticket Creation",
     to: "/work/echo",
-    description: "noon’s internal CRM.",
+    description: "Understanding user needs and iterating for the best UI"
   },
   {
-    name: "AI Analyst",
+    name: "CS Analytics Bot",
     to: "/work/analyst",
-    description: "Designed and built through Cursor: a customer support analytics chatbot.",
+    description: "AI analyst used for product discovery",
   },
 ];
 
@@ -25,10 +25,9 @@ export function WorkList({ heading = "Selected work" }: { heading?: string }) {
         <h2>{heading}</h2>
       </div>
       <ol>
-        {work.map((item, i) => (
+        {work.map((item) => (
           <li key={item.name}>
             <Link to={item.to} viewTransition>
-              <span className="work-list__n">{String(i + 1).padStart(2, "0")}</span>
               <span className="work-list__name" style={{ viewTransitionName: `work-${item.to.split("/").pop()}` }}>{item.name}</span>
 <span className="work-list__meta">{item.description}</span>
               <span className="work-list__arrow" aria-hidden="true">

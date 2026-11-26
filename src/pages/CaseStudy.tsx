@@ -418,7 +418,7 @@ export function CaseStudy() {
         </Section>
 
       </main>
-      <Footer next={{ name: "Echo", to: "/work/echo" }} />
+      <Footer next={{ name: "Ticket Creation", to: "/work/echo" }} />
     </div>
   );
 }

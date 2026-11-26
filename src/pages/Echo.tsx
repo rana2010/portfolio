@@ -3,49 +3,59 @@ import { asset } from "../asset";
 import { Dots, Footer, Nav } from "../components/Chrome";
 import { EchoPrototype } from "../components/EchoPrototype";
 import { Editable } from "../components/EditContext";
+import { Laptop } from "../components/Laptop";
 
 const glance = [
-  ["role", "Role", "Product Designer, end to end"],
-  ["context", "Context", "noon's internal CRM, replacing Zoho to cut cost and allow customisation"],
-  ["focus", "Focus", "Ticket creation, the most used flow"],
-  ["status", "Status", "In development, usability testing planned"],
+  ["role", "Role", "Product Designer"],
+  ["product", "Product", "Internal CRM"],
+  ["focus", "Focus", "Ticket creation"],
+  ["status", "Status", "In development"],
 ] as const;
 
 const tags = [
   ["tag-ui", "UI Design"],
   ["tag-forms", "Form Design"],
   ["tag-disclosure", "Progressive Disclosure"],
-  ["tag-tools", "Internal Tools"],
+  ["tag-testing", "Usability Testing"],
 ] as const;
 
-function Media({ src, alt }: { src: string; alt: string }) {
-  const [missing, setMissing] = useState(false);
-  if (missing) {
-    return (
-      <div className="shot-pending">
-        <span>{src.split("/").pop()}</span>
-      </div>
-    );
-  }
-  return <img src={asset(src)} alt={alt} onError={() => setMissing(true)} />;
-}
+// the three tries, each in one line: what it was, why it did not work, the principle behind the call
+const tries = [
+  {
+    id: "v1",
+    name: "Scroll rail",
+    what: "One long form, with a rail that jumps to the required fields.",
+    why: "In testing, agents were confused: a new behaviour to learn mid-task.",
+    principle: "Jakob's law",
+    src: "/images/echo/echo-v1-rail.webp",
+    alt: "Version 1: one long form with required-field chips and a scroll rail on the right.",
+  },
+  {
+    id: "v2",
+    name: "Numbered stepper",
+    what: "A familiar stepper down the side.",
+    why: "Fields change with the department and layout, so the steps shifted under the agent.",
+    principle: "Consistency",
+    src: "/images/echo/echo-v2-stepper.webp",
+    alt: "Version 2: a numbered stepper on the left of the ticket form.",
+  },
+] as const;
 
-function Figure({ src, alt, captionId, caption }: { src: string; alt: string; captionId: string; caption: string }) {
-  return (
-    <figure className="figure">
-      <div className="frame">
-        <Media src={src} alt={alt} />
-      </div>
-      <figcaption>
-        <Editable id={captionId} as="span" text={caption} />
-      </figcaption>
-    </figure>
-  );
+const finals = [
+  ["f1", "/images/echo/echo-final-step1.webp", "Two decisions first: department and layout.", "Progressive disclosure"],
+  ["f2", "/images/echo/echo-final-step2.webp", "Then only the fields this ticket needs, in sections.", "Chunking"],
+  ["f3", "/images/echo/echo-final-required.webp", "A missed field is outlined, with a message saying what to do.", "Error recovery"],
+] as const;
+
+function Shot({ src, alt }: { src: string; alt: string }) {
+  const [missing, setMissing] = useState(false);
+  if (missing) return <div className="shot-pending">{src.split("/").pop()}</div>;
+  return <img src={asset(src)} alt={alt} loading="lazy" onError={() => setMissing(true)} />;
 }
 
 export function Echo() {
   useEffect(() => {
-    document.title = "Echo · Rana Ebrahim";
+    document.title = "Ticket Creation · Rana Ebrahim";
   }, []);
 
   return (
@@ -54,22 +64,18 @@ export function Echo() {
       <Nav />
       <main>
         <header className="case-hero">
-          <Editable id="kicker" className="case-kicker" text="Case study · noon · internal CRM" />
-          <Editable id="title" as="h1" className="case-title" text="Echo: a ticket form that keeps up with the call" />
+          <Editable id="kicker" className="case-kicker" text="Echo · noon's internal CRM" />
+          <Editable id="title" as="h1" className="case-title" text="Ticket Creation" />
           <Editable
             id="summary"
             className="case-summary"
-            text="noon is replacing Zoho with its own CRM, Echo, to cut cost and shape the tool around its teams. I designed it end to end. This is the story of one screen, Create Ticket, and the three tries it took to make it calm."
+            text="Understanding what agents need mid-call, and iterating to the calmest form."
           />
           <ul className="tags">
             {tags.map(([id, label]) => (
               <Editable key={id} id={id} as="li" text={label} />
             ))}
           </ul>
-        </header>
-
-        <section className="case-block">
-          <Editable id="glance-heading" as="h2" text="At a glance" />
           <dl className="glance">
             {glance.map(([id, label, value]) => (
               <div key={id}>
@@ -78,106 +84,67 @@ export function Echo() {
               </div>
             ))}
           </dl>
-        </section>
+        </header>
 
         <section className="case-block">
-          <Editable id="try-heading" as="h2" text="Try the final flow" />
-          <Editable
-            id="try-body"
-            className="support"
-            text="Pick a department and a layout, press Next, then try to submit with a field empty."
-          />
-          <EchoPrototype />
+          <Editable id="try-heading" as="h2" text="Try it" />
+          <Editable id="try-body" className="support" text="Pick a department and a layout, press Next, then submit with a field empty." />
+          <Laptop label="Echo ticket form, interactive">
+            <EchoPrototype />
+          </Laptop>
         </section>
 
         <section className="case-block">
           <Editable id="problem-heading" as="h2" text="The problem" />
           <Editable
             id="problem-1"
-            className="support"
-            text="Agents create tickets during urgent conversations. The fields a ticket needs change with the department and the layout the agent picks, so one long form shows too much, and the wrong things."
-          />
-        </section>
-
-        <section className="case-block">
-          <Editable id="versions-heading" as="h2" text="Three tries" />
-          <article className="version">
-            <Editable id="v1-heading" as="h3" text="1. A rail that jumps to required fields." />
-            <Editable
-              id="v1-body"
-              className="support"
-              text="One long form, with required-field chips and a rail on the right that scrolls the agent to what is missing. In testing, agents were confused: it was a new behaviour to learn in the middle of a task. People expect a form to work like the forms they already know (Jakob's law)."
-            />
-            <Figure
-              src="/images/echo/echo-v1-rail.webp"
-              alt="Version 1: one long form with required-field chips and a scroll rail on the right."
-              captionId="v1-caption"
-              caption="Version 1. Clever, but a new pattern to learn mid-call."
-            />
-          </article>
-          <article className="version">
-            <Editable id="v2-heading" as="h3" text="2. A numbered stepper." />
-            <Editable
-              id="v2-body"
-              className="support"
-              text="A familiar pattern this time. But the fields change with the department and layout, so the steps change too: the map moves under the agent's feet. Under time pressure, an interface that is not predictable adds load instead of removing it."
-            />
-            <Figure
-              src="/images/echo/echo-v2-stepper.webp"
-              alt="Version 2: a numbered stepper on the left of the ticket form."
-              captionId="v2-caption"
-              caption="Version 2. Familiar, but the steps shift with every choice."
-            />
-          </article>
-          <article className="version">
-            <Editable id="v3-heading" as="h3" text="3. Two choices first, then only what they need." />
-            <Editable
-              id="v3-body"
-              className="support"
-              text="Progressive disclosure: the agent answers the two questions that shape the ticket, department and layout, and presses Next. Only then do the fields for that ticket appear, grouped into sections with clear headings (chunking, and Gestalt proximity). A quiet section list keeps them oriented without asking them to navigate."
-            />
-            <Figure
-              src="/images/echo/echo-final-step1.webp"
-              alt="Final version, step 1: only Department and Layout, with a section list on the left."
-              captionId="v3a-caption"
-              caption="Step 1. Two decisions, nothing else competing for attention."
-            />
-            <Figure
-              src="/images/echo/echo-final-step2.webp"
-              alt="Final version, step 2: the fields for the chosen layout, grouped into sections."
-              captionId="v3b-caption"
-              caption="Step 2. Only the fields this ticket needs."
-            />
-            <Editable
-              id="v3-errors"
-              className="support"
-              text="Mistakes are caught, not punished: submit with a required field empty and that field is outlined, with a short message saying what to do (Nielsen: help users recognise, diagnose and recover from errors)."
-            />
-            <Figure
-              src="/images/echo/echo-final-required.webp"
-              alt="A missed required field outlined in red, with a 'Please complete required fields' message."
-              captionId="v3c-caption"
-              caption="A missed field is easy to spot and fix."
-            />
-            <Editable id="tradeoff" className="statement" text="The trade-off: one extra click, for a form that fits the ticket." />
-          </article>
-        </section>
-
-        <section className="case-block">
-          <Editable id="outcome-heading" as="h2" text="Where it is now" />
-          <Editable
-            id="outcome-1"
-            className="support"
-            text="Echo is in development, so there is no usage data yet. Next is usability testing of the final flow with agents."
-          />
-          <Editable
-            id="outcome-take"
             className="statement"
-            text="What I took from it: the best version came from removing things, not adding them."
+            text="Agents create tickets during urgent conversations, and the fields change with every department and layout."
           />
+          <Editable id="problem-2" className="support" text="noon is replacing Zoho with Echo to cut cost and shape the tool around its teams." />
+        </section>
+
+        <section className="case-block">
+          <Editable id="versions-heading" as="h2" text="What didn't work" />
+          <div className="echo-tries">
+            {tries.map((t, i) => (
+              <article key={t.id} className="echo-try">
+                <div className="frame">
+                  <Shot src={t.src} alt={t.alt} />
+                </div>
+                <Editable id={`${t.id}-name`} as="h3" text={`${i + 1}. ${t.name}`} />
+                <Editable id={`${t.id}-what`} className="support" text={t.what} />
+                <Editable id={`${t.id}-why`} className="echo-try__why" text={t.why} />
+                <span className="echo-chip">{t.principle}</span>
+              </article>
+            ))}
+          </div>
+        </section>
+
+        <section className="case-block">
+          <Editable id="final-heading" as="h2" text="What worked" />
+          <div className="echo-final">
+            {finals.map(([id, src, caption, principle]) => (
+              <figure key={id} className="figure">
+                <div className="frame">
+                  <Shot src={src} alt={caption} />
+                </div>
+                <figcaption>
+                  <span className="echo-chip">{principle}</span>
+                  <Editable id={`${id}-caption`} as="span" text={caption} />
+                </figcaption>
+              </figure>
+            ))}
+          </div>
+          <Editable id="tradeoff" className="statement" text="The trade-off: one extra click, for a form that fits the ticket." />
+        </section>
+
+        <section className="case-block">
+          <Editable id="outcome-heading" as="h2" text="Next" />
+          <Editable id="outcome-1" className="support" text="Echo is in development: no usage data yet. Usability testing of the final flow with agents comes next." />
         </section>
       </main>
-      <Footer next={{ name: "AI Analyst", to: "/work/analyst" }} />
+      <Footer next={{ name: "CS Analytics Bot", to: "/work/analyst" }} />
     </div>
   );
 }

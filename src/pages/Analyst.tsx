@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Dots, Footer, Nav } from "../components/Chrome";
 import { AnalystPrototype } from "./AnalystPrototype";
+import { Laptop } from "../components/Laptop";
 
 const SNIPPET_PATH = "src/components/Step1Discovery.jsx";
 const SNIPPET_URL =
@@ -53,7 +54,7 @@ export function Analyst() {
   const [mode, setMode] = useState<"preview" | "code">("preview");
 
   useEffect(() => {
-    document.title = "AI Analyst · Rana Ebrahim";
+    document.title = "CS Analytics Bot · Rana Ebrahim";
   }, []);
 
   return (
@@ -62,22 +63,27 @@ export function Analyst() {
       <Nav />
       <main className="projects analyst">
         <header className="analyst-head">
-          <h1>AI Analyst</h1>
-          <p>
-            Why do customers contact support again after they have already filed a complaint? To help
-            noon raise customer satisfaction, I vibe-coded an analytics chatbot in a week with Cursor and
-            Claude: ask a question in plain words, approve the agents, read the brief. Used by leadership
-            and the customer support team. Try it below, or flip to the code.
-          </p>
+          <h1>CS Analytics Bot</h1>
+          <p>AI analyst used for product discovery.</p>
         </header>
+        <dl className="glance analyst-glance">
+          <div><dt>Role</dt><dd>Designer and builder</dd></div>
+          <div><dt>Built with</dt><dd>Cursor, Claude</dd></div>
+          <div><dt>Time</dt><dd>One week</dd></div>
+          <div><dt>Used by</dt><dd>Leadership, CS team</dd></div>
+        </dl>
+        <section className="analyst-why">
+          <h2>The question</h2>
+          <p className="statement">Why do customers contact support again after they have already filed a complaint?</p>
+          <p className="support">
+            To help noon raise customer satisfaction, I vibe-coded a chatbot that answers questions about support
+            data in plain words: ask, approve the agents, read the brief. Try it, or flip to the code.
+          </p>
+        </section>
 
-        <section className="stage" aria-label="AI Analyst prototype">
+        <Laptop label="CS Analytics Bot, interactive">
+        <section className="stage" aria-label="CS Analytics Bot prototype">
           <div className="stage-bar">
-            <span className="mac-lights" aria-hidden="true">
-              <i />
-              <i />
-              <i />
-            </span>
             <div className="seg" role="tablist" aria-label="View">
               <button
                 type="button"
@@ -132,6 +138,7 @@ export function Analyst() {
             </div>
           )}
         </section>
+        </Laptop>
       </main>
       <Footer next={{ name: "Pulse", to: "/work/pulse" }} />
     </div>
