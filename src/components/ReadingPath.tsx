@@ -89,15 +89,15 @@ export function ReadingPath() {
       const mid = (a: number, b: number) => (a + b) / 2;
       const edgeL = gx(Math.max(P * 0.5, L - P)); // hugging the content's left edge
       const overL = gx(L + P * 0.5); // left turns that brush over the first letters of a label, like the hero's
-      const eduX = gx(Math.min(...steps.map((st) => st.l)) - P * 2); // just left of the Education / How I work column
+      const eduX = edgeL; // the curve round Education swings wide, out to the left edge of the content
       const hugR = gx(Math.min(W - P * 0.5, L + Wm + P)); // hugging the content's right edge
       const edgeR = gx(W + P * 3); // turns on the right swing out past the edge of the screen
       const ringX = gx(arrows[0].cx - P * 2); // near the right edge, a little in from where the arrows were
       const rings: Pt[] = arrows.map((a) => ({ x: ringX, y: a.cy }));
       const laneY = mid(flowLabel.b, Math.min(...steps.map((st) => st.t))); // between the label and the step titles
       const EDU_R = P * 12; // size of the curve round Education
-      // the lower half of that curve lands on the line just before the second step, so its dot sits on the line
-      const EDU_R_LOW = Math.min(EDU_R, Math.max(P * 4, (steps[1]?.l ?? eduX + EDU_R) - eduX - P * 0.5));
+      // the lower half of that curve lands on the line just before the first step, so every step sits on the line
+      const EDU_R_LOW = Math.min(EDU_R, Math.max(P * 3, Math.min(...steps.map((st) => st.l)) - eduX - P * 0.5));
       // a dot at each step that sits on the straight part of the line (the curve passes the first one by)
       const stations: Pt[] = steps.filter((st) => st.l >= eduX + EDU_R_LOW - P * 0.5).map((st) => ({ x: gx(st.l), y: laneY }));
 
@@ -133,7 +133,7 @@ export function ReadingPath() {
         { x: overL, y: gy(para.b + P * 0.8) }, // round the statement, just under it
         { x: hugR, y: gy(para.b + P * 0.8) },
         { x: hugR, y: gy(careerList.b + P * 0.6) }, // round Career on the right, just under it
-        // round "Education": one wide, smooth half-oval that brushes the start of the word and rolls into How I work
+        // round Education: one wide, smooth curve out to the left that rolls onto the line before Research
         { x: eduX, y: gy(careerList.b + P * 0.6), r: EDU_R },
         { x: eduX, y: laneY, r: EDU_R_LOW },
         { x: edgeR, y: laneY },
