@@ -1706,7 +1706,7 @@ body { font-family: var(--font-sans); }
   background: transparent;
   transition: background-color 240ms var(--ease);
 }
-.site-nav.is-scrolled { background: color-mix(in srgb, var(--bg) 92%, transparent); }
+.site-nav.is-scrolled { background: linear-gradient(to bottom, var(--bg) 55%, color-mix(in srgb, var(--bg) 0%, transparent)); } /* content fades out under the nav */
 .site-nav__name {
   color: var(--ink);
   text-decoration: none;
@@ -2044,7 +2044,7 @@ body { font-family: var(--font-sans); }
 .ds-next__title { transition: none; }
 }
 /* v0.3.4: name in Inter like his; case-study footer = Next + base row */
-.site-nav__name { font-family: "Herr Von Muellerhoff", cursive; font-size: 34px; line-height: 40px; font-weight: 400; letter-spacing: 0.02em; }
+.site-nav__name { font-family: "Caveat", cursive; font-size: 30px; line-height: 36px; font-weight: 500; letter-spacing: 0.01em; }
 .site-footer--case { padding-top: var(--space-8); }
 .site-footer--case .ds-next { padding: var(--space-6) 0 var(--space-16); border-top: 1px solid var(--line); }
 .site-footer--case .ds-next__title { font-size: 120px; line-height: 120px; }
@@ -2388,22 +2388,6 @@ body { font-family: var(--font-sans); }
 .gallery-view img { display: block; max-width: 100%; max-height: 76vh; margin: 0 auto; }
 .gallery-view figcaption { max-width: 640px; margin: var(--space-2) auto 0; color: #b9b6b2; font-size: 14px; line-height: 24px; text-align: center; }
 .gallery-view figcaption strong { color: #f5f0eb; font-weight: 500; }
-.gallery-view__close {
-  position: absolute;
-  top: var(--space-2);
-  right: var(--page-pad);
-  min-height: 40px;
-  padding: 0 var(--space-3);
-  border: 1px solid #686664;
-  border-radius: 999px;
-  background: transparent;
-  color: #f5f0eb;
-  font-size: 12px;
-  line-height: 16px;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  cursor: pointer;
-}
 @keyframes rk-fade { from { opacity: 0; } }
 @media (max-width: 1024px) {
   .gallery { grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -3106,7 +3090,6 @@ a, button { -webkit-tap-highlight-color: transparent; }
   .home-hero__sub { font-size: 22px; }
 }
 /* nav stays readable over content when scrolled */
-.site-nav.is-scrolled { -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); background: color-mix(in srgb, var(--bg) 82%, transparent); }
 /* tablet work list: description uses the full width under the name */
 @media (min-width: 641px) and (max-width: 1100px) {
   .work-list__meta { max-width: 560px; }
@@ -3192,12 +3175,14 @@ html.vt-theme .work-list__name, html.vt-theme .ds-hero__name, html.vt-theme .sit
 /* v1.1.0 · home layout: calmer work list, "How I work" flow */
 #work { scroll-margin-top: 72px; }
 .work-list { padding: var(--space-6) 0 var(--space-8); }
-.work-list a { grid-template-columns: minmax(0, 1fr) 32px; column-gap: var(--space-3); row-gap: 2px; padding: var(--space-3) 0; }
+.work-list a { grid-template-columns: minmax(0, auto) minmax(0, 1fr) 32px; align-items: baseline; column-gap: var(--space-4); padding: var(--space-3) 0; }
 .work-list__name { grid-column: 1; grid-row: 1; justify-self: start; font-size: 36px; line-height: 44px; }
-.work-list__meta { grid-column: 1; grid-row: 2; justify-self: start; max-width: 560px; text-align: left; color: var(--ink-2); }
-.work-list__arrow { grid-column: 2; grid-row: 1 / span 2; align-self: center; }
+.work-list__meta { grid-column: 2; grid-row: 1; justify-self: start; max-width: 560px; text-align: left; color: var(--ink-2); }
+.work-list__arrow { grid-column: 3; grid-row: 1; align-self: center; }
 @media (max-width: 640px) {
   .work-list a { grid-template-columns: minmax(0, 1fr) 20px; column-gap: var(--space-2); padding: var(--space-2) 0; }
+  .work-list__meta { grid-column: 1; grid-row: 2; }
+  .work-list__arrow { grid-column: 2; grid-row: 1 / span 2; }
   .work-list__name { font-size: 28px; line-height: 36px; }
   .work-list__meta { font-size: 13px; line-height: 20px; }
 }
@@ -3245,7 +3230,6 @@ html.vt-theme .work-list__name, html.vt-theme .ds-hero__name, html.vt-theme .sit
   .home-flow { grid-template-columns: 1fr; row-gap: var(--space-2); }
 }
 /* v1.1.1 · type-only home: flow, career and education share one quiet list style */
-.site-nav.is-scrolled { box-shadow: inset 0 -1px 0 var(--line); }
 .work-list li:last-child { border-bottom: 0; }
 @media (min-width: 641px) {
   .home-hero { padding-bottom: 104px; }
@@ -3365,20 +3349,22 @@ html.vt-theme .work-list__name, html.vt-theme .ds-hero__name, html.vt-theme .sit
 /* Handcrafted: titles under the pieces; the viewer is a carousel with tools */
 .gallery__title { display: block; margin-top: var(--space-2); text-align: center; color: var(--ink); font-size: 20px; line-height: 28px; font-weight: 500; letter-spacing: -0.01em; }
 .gallery-view figure { animation: rk-fade 300ms var(--ease-expo); }
-.gallery-view figcaption { display: grid; justify-items: center; gap: var(--space-1); }
+.gallery-view figcaption { display: grid; justify-items: center; gap: var(--space-2); max-width: 520px; margin-top: var(--space-3); }
+.gallery-view figcaption strong { font-size: 20px; line-height: 28px; }
 .gallery-view figcaption strong span { color: #8d8a86; font-weight: 400; }
-.gallery-view__idea { max-width: 560px; }
-.gallery-view__tools { color: #e8e4df; }
+.gallery-view__idea { color: #b9b6b2; }
+.gallery-view__tools { color: #8d8a86; font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; }
 .gallery-view__count { color: #8d8a86; font-size: 12px; letter-spacing: 0.1em; }
-.gallery-view__nav { position: absolute; top: 50%; width: 48px; height: 48px; border: 1px solid #3a3836; border-radius: 50%; background: rgba(20, 20, 20, 0.6); color: #f5f0eb; font: inherit; font-size: 18px; cursor: pointer; transform: translateY(-50%); }
+.gallery-view__nav { position: absolute; top: 50%; display: grid; place-items: center; width: 40px; height: 40px; padding: 0; border: 0; background: none; color: #8d8a86; cursor: pointer; transform: translateY(-50%); transition: color 200ms; }
+.gallery-view__nav svg { width: 18px; height: 18px; }
 .gallery-view__nav.is-prev { left: var(--space-3); }
 .gallery-view__nav.is-next { right: var(--space-3); }
-.gallery-view__nav:hover { border-color: #f5f0eb; }
+.gallery-view__nav:hover { color: #f5f0eb; }
 @media (max-width: 640px) {
-  .gallery-view__nav { top: auto; bottom: var(--space-3); transform: none; }
+  .gallery-view__nav { position: absolute; top: 50%; display: grid; place-items: center; width: 40px; height: 40px; padding: 0; border: 0; background: none; color: #8d8a86; cursor: pointer; transform: translateY(-50%); transition: color 200ms; }
+.gallery-view__nav svg { width: 18px; height: 18px; }
 }
 /* small round close for the Handcrafted viewer */
-.gallery-view__close { min-height: 0; width: 40px; height: 40px; padding: 0; border-radius: 50%; font-size: 22px; line-height: 1; }
 /* Echo click-through prototype (EchoFlow.tsx) */
 .echo-flow { margin-top: var(--space-3); }
 .echo-flow__screen { position: relative; aspect-ratio: 1600 / 1138; }

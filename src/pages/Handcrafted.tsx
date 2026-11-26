@@ -30,6 +30,12 @@ const pieces: Piece[] = [
 ];
 
 
+const Chevron = ({ left }: { left?: boolean }) => (
+  <svg viewBox="0 0 16 16" aria-hidden="true">
+    <path d={left ? "M10 3 5 8l5 5" : "M6 3l5 5-5 5"} fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+  </svg>
+);
+
 export function Handcrafted() {
   const [open, setOpen] = useState<number | null>(null);
   const swipe = useRef<number | null>(null);
@@ -77,7 +83,7 @@ export function Handcrafted() {
           className="gallery-view"
           role="dialog"
           aria-modal="true"
-          aria-label={piece.title}
+          aria-label={`${piece.title}. Click outside to close`}
           onClick={() => setOpen(null)}
           onPointerDown={(e) => (swipe.current = e.clientX)}
           onPointerUp={(e) => {
@@ -86,11 +92,8 @@ export function Handcrafted() {
             if (Math.abs(dx) > 50) go(dx < 0 ? 1 : -1); // swipe left or right
           }}
         >
-          <button className="gallery-view__close" type="button" aria-label="Close" onClick={() => setOpen(null)} autoFocus>
-            ×
-          </button>
           <button className="gallery-view__nav is-prev" type="button" aria-label="Previous piece" onClick={(e) => (e.stopPropagation(), go(-1))}>
-            ←
+            <Chevron left />
           </button>
           <figure key={piece.title} onClick={(e) => e.stopPropagation()}>
             <img src={asset(piece.image)} alt={piece.alt} draggable={false} />
@@ -100,14 +103,14 @@ export function Handcrafted() {
                 {piece.year ? <span> · {piece.year}</span> : null}
               </strong>
               <span className="gallery-view__idea">{piece.idea}</span>
-              <span className="gallery-view__tools">Tools: {piece.tools.join(", ")}</span>
+              <span className="gallery-view__tools">{piece.tools.join(" · ")}</span>
               <span className="gallery-view__count">
                 {open! + 1} / {pieces.length}
               </span>
             </figcaption>
           </figure>
           <button className="gallery-view__nav is-next" type="button" aria-label="Next piece" onClick={(e) => (e.stopPropagation(), go(1))}>
-            →
+            <Chevron />
           </button>
         </div>
       ) : null}
