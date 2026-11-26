@@ -89,13 +89,17 @@ export function ReadingPath() {
       const mid = (a: number, b: number) => (a + b) / 2;
       const edgeL = gx(Math.max(P * 0.5, L - P)); // hugging the content's left edge
       const overL = gx(L + P * 0.5); // left turns that brush over the first letters of a label, like the hero's
-      const eduX = gx(Math.min(...steps.map((st) => st.l)) - P * 1.2); // just left of the Education / How I work column
+      const eduX = gx(Math.min(...steps.map((st) => st.l)) - P * 2); // just left of the Education / How I work column
       const hugR = gx(Math.min(W - P * 0.5, L + Wm + P)); // hugging the content's right edge
       const edgeR = gx(W + P * 3); // turns on the right swing out past the edge of the screen
       const ringX = gx(arrows[0].cx - P * 2); // near the right edge, a little in from where the arrows were
       const rings: Pt[] = arrows.map((a) => ({ x: ringX, y: a.cy }));
       const laneY = mid(flowLabel.b, Math.min(...steps.map((st) => st.t))); // between the label and the step titles
-      const stations: Pt[] = steps.map((st) => ({ x: gx(st.l), y: laneY }));
+      const EDU_R = P * 12; // size of the curve round Education
+      // the lower half of that curve lands on the line just before the second step, so its dot sits on the line
+      const EDU_R_LOW = Math.min(EDU_R, Math.max(P * 4, (steps[1]?.l ?? eduX + EDU_R) - eduX - P * 0.5));
+      // a dot at each step that sits on the straight part of the line (the curve passes the first one by)
+      const stations: Pt[] = steps.filter((st) => st.l >= eduX + EDU_R_LOW - P * 0.5).map((st) => ({ x: gx(st.l), y: laneY }));
 
       // "Email, LinkedIn / Say hi!": two circles round just those two, spiralling outwards, then off the left
       // edge and round onto the floor. The incoming run is the top of the first circle.
@@ -116,7 +120,7 @@ export function ReadingPath() {
 
       // the route: level runs across the page joined by round turns at the edges. Corners are listed here;
       // "through" points keep the line straight (the drop through the rings).
-      type V = Pt & { through?: boolean; r?: number; rv?: number }; // r: turn size; rv: its height only
+      type V = Pt & { through?: boolean; r?: number }; // r: turn size
       const route: V[] = [
         { x: gx(L + Wm * 0.85), y: -P * 2 }, // from the very top of the page
         { x: gx(L + Wm * 0.85), y: gy(label.t - P * 1.5) }, // turning left just above the hero text
@@ -129,9 +133,9 @@ export function ReadingPath() {
         { x: overL, y: gy(para.b + P * 0.8) }, // round the statement, just under it
         { x: hugR, y: gy(para.b + P * 0.8) },
         { x: hugR, y: gy(careerList.b + P * 0.6) }, // round Career on the right, just under it
-        // round "Education": a wide curve that brushes over the start of the word, then a tight turn into How I work
-        { x: eduX, y: gy(careerList.b + P * 0.6), r: P * 16 },
-        { x: eduX, y: laneY, rv: P * 5 }, // a wide, low curve into How I work, over its label
+        // round "Education": one wide, smooth half-oval that brushes the start of the word and rolls into How I work
+        { x: eduX, y: gy(careerList.b + P * 0.6), r: EDU_R },
+        { x: eduX, y: laneY, r: EDU_R_LOW },
         { x: edgeR, y: laneY },
         ...sayHi, // two circles round "Email, LinkedIn / Say hi!", then off the left edge onto the floor
         { x: lI - GAP * 2, y: floorY },
@@ -156,7 +160,7 @@ export function ReadingPath() {
         let rIn = side(i - 1, i), rOut = side(i, i + 1);
         const v = inDir.y ? rIn : rOut; // the vertical radius
         const h = Math.min(inDir.x ? rIn : rOut, here.r ?? P * 10, Math.max(v * 1.6, P * 2));
-        const vv = Math.min(v, here.rv ?? here.r ?? P * 14);
+        const vv = Math.min(v, here.r ?? P * 14);
         if (inDir.x) [rIn, rOut] = [h, vv];
         else [rIn, rOut] = [vv, h];
         const a = { x: here.x - inDir.x * rIn, y: here.y - inDir.y * rIn };
