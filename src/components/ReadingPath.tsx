@@ -89,6 +89,7 @@ export function ReadingPath() {
       const mid = (a: number, b: number) => (a + b) / 2;
       const edgeL = gx(Math.max(P * 0.5, L - P)); // hugging the content's left edge
       const overL = gx(L + P * 0.5); // left turns that brush over the first letters of a label, like the hero's
+      const eduX = gx(Math.min(...steps.map((st) => st.l)) - P * 2.2); // just left of the Education / How I work column
       const hugR = gx(Math.min(W - P * 0.5, L + Wm + P)); // hugging the content's right edge
       const edgeR = gx(W + P * 3); // turns on the right swing out past the edge of the screen
       const ringX = gx(arrows[0].cx - P * 2); // near the right edge, a little in from where the arrows were
@@ -128,8 +129,9 @@ export function ReadingPath() {
         { x: overL, y: gy(para.b + P * 0.8) }, // round the statement, just under it
         { x: hugR, y: gy(para.b + P * 0.8) },
         { x: hugR, y: gy(careerList.b + P * 0.6) }, // round Career on the right, just under it
-        { x: overL, y: gy(careerList.b + P * 0.6) }, // round "Education", brushing over it
-        { x: overL, y: laneY }, // along How I work
+        // round "Education": a wide curve that brushes over the start of the word, then a tight turn into How I work
+        { x: eduX, y: gy(careerList.b + P * 0.6), r: P * 16 },
+        { x: eduX, y: laneY, r: P * 2 },
         { x: edgeR, y: laneY },
         ...sayHi, // two circles round "Email, LinkedIn / Say hi!", then off the left edge onto the floor
         { x: lI - GAP * 2, y: floorY },
