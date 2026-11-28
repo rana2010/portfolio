@@ -3191,8 +3191,8 @@ html.vt-theme .work-list__name, html.vt-theme .ds-hero__name, html.vt-theme .sit
 /* ---------- Home reading thread (ReadingPath.tsx): a dotted orange line that eats the dots in its way as you read and lands on the footer as a straight floor ---------- */
 .reading-path { position: absolute; inset: 0; z-index: 0; overflow: visible; pointer-events: none; }
 .reading-path__guide { fill: none; stroke: none; }
-.reading-path__eat { fill: none; stroke: var(--bg); stroke-width: 9; stroke-linecap: round; }
-.reading-path__line { fill: none; stroke: var(--signal); stroke-width: 2.6; stroke-linecap: round; stroke-dasharray: 0 7.05; opacity: 0.45; }
+.reading-path__eat { fill: none; stroke: var(--bg); stroke-width: 9; stroke-linecap: round; stroke-linejoin: round; }
+.reading-path__line { fill: none; stroke: var(--signal); stroke-width: 2.6; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 0.01 7.05; opacity: 0.45; }
 .reading-path__head { fill: var(--signal); opacity: 0.8; transition: opacity 200ms; }
 .reading-path__ring { fill: none; stroke: var(--signal); stroke-width: 1px; opacity: 0; transform-box: fill-box; transform-origin: center; transform: scale(0.4); transition: opacity 500ms var(--ease-expo), transform 600ms var(--ease-expo); }
 .reading-path__ring.is-on { opacity: 0.55; transform: none; }

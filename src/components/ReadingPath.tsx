@@ -21,6 +21,9 @@ export function ReadingPath() {
   const [route, setRoute] = useState<Route | null>(null);
   const pathRef = useRef<SVGPathElement>(null);
   const svgRef = useRef<SVGSVGElement>(null);
+  const eatRef = useRef<SVGPathElement>(null);
+  const lineRef = useRef<SVGPathElement>(null);
+  const maskRef = useRef<SVGPathElement>(null);
   const drawnRef = useRef<number | null>(null); // how much of the line is drawn, kept across relayouts
   // everything that lights up along the line, measured once per layout: dots of the line itself, grid dots
   // it eats, rings and stations. Each has the length along the line at which it appears.
@@ -101,17 +104,19 @@ export function ReadingPath() {
       const GAP = P * 0.8;
       const tI = gy(connect.t - P * 0.8), bI = hi.b + P * 0.25; // inner circle: top, bottom
       const lI = gx(Math.min(connect.l, hi.l) - P), rI = gx(hi.r + P * 1.5); // inner circle: left, right
-      const sayHi: Pt[] = [{ x: edgeR, y: tI }];
+      // Spiral turns sit only GAP apart; a large corner would cut through the previous run and leave a dash cloud.
+      const spiralR = GAP * 0.4;
+      const sayHi: (Pt & { r?: number })[] = [{ x: edgeR, y: tI }];
       for (let k = 0; k < 2; k++) {
         const g = GAP * k;
         sayHi.push(
-          { x: lI - g, y: tI - g },
-          { x: lI - g, y: bI + g },
-          { x: rI + g, y: bI + g },
-          { x: rI + g, y: tI - g - GAP },
+          { x: lI - g, y: tI - g, r: k === 0 ? undefined : spiralR },
+          { x: lI - g, y: bI + g, r: spiralR },
+          { x: rI + g, y: bI + g, r: spiralR },
+          { x: rI + g, y: tI - g - GAP, r: spiralR },
         );
       }
-      sayHi.push({ x: lI - GAP * 2, y: tI - GAP * 2 });
+      sayHi.push({ x: lI - GAP * 2, y: tI - GAP * 2, r: spiralR });
 
       // the route: level runs across the page joined by round turns at the edges. Corners are listed here;
       // "through" points keep the line straight (the drop through the rings).
@@ -152,6 +157,9 @@ export function ReadingPath() {
         const dir = (v: number) => (Math.abs(v) < 0.5 ? 0 : Math.sign(v)); // runs are level or upright; ignore float dust
         const inDir = { x: dir(here.x - prev.x), y: dir(here.y - prev.y) };
         const outDir = { x: dir(next.x - here.x), y: dir(next.y - here.y) };
+        if ((!inDir.x && !inDir.y) || (!outDir.x && !outDir.y)) continue;
+        if (inDir.x === outDir.x && inDir.y === outDir.y) continue;
+        if (inDir.x === -outDir.x && inDir.y === -outDir.y) continue;
         let rIn = side(i - 1, i), rOut = side(i, i + 1);
         const v = inDir.y ? rIn : rOut; // the vertical radius
         const h = Math.min(inDir.x ? rIn : rOut, here.r ?? P * 10, Math.max(v * 1.6, P * 2));
@@ -198,13 +206,15 @@ export function ReadingPath() {
     }
     const end = path.getPointAtLength(total);
     if ((samples[samples.length - 1]?.len ?? 0) < total - 0.5) samples.push({ len: total, x: end.x, y: end.y, at: 0 });
-    // pace: close to an even speed along the whole line, so the tip (and Pac-Man) moves with the scroll at a
-    // steady rate and never races across a row. The line from its start to the floor spans the page's height.
-    const floorLen = Math.max(0, total - route.straight); // the path's measured length can come out a hair short
+    // Map by how far down the page the line has already been — not by length. A winding path is much
+    // longer than the page, so even-speed along the line makes the tip trail the scroll.
+    const floorLen = Math.max(0, total - route.straight);
     const body = samples.filter((q) => q.len <= floorLen);
-    const y0 = body[0].y, yEnd = body[body.length - 1].y;
-    // half even speed, half the line's own height: steady, and the tip stays on screen
-    body.forEach((q) => (q.at = floorLen ? 0.5 * q.y + 0.5 * (y0 + (q.len / floorLen) * (yEnd - y0)) : y0));
+    let peak = body[0].y;
+    for (const q of body) {
+      if (q.y > peak) peak = q.y;
+      q.at = peak;
+    }
     const y1 = body[body.length - 1].at;
     samples.forEach((q) => q.len > floorLen && (q.at = y1));
     const at = (pts: Pt[]) =>
@@ -221,11 +231,11 @@ export function ReadingPath() {
     });
   }, [route]);
 
-  // 3) the tip is the scroll — no catch-up ease. One stroke, not a thousand dots.
+  // 3) tip tracks the reading line. Paint on scroll only. Mask dash is in real path units.
   useEffect(() => {
     const svg = svgRef.current;
-    const path = pathRef.current;
-    if (!svg || !path || !marks || !route) return;
+    const mask = maskRef.current;
+    if (!svg || !mask || !marks || !route) return;
     const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     const rings = Array.from(svg.querySelectorAll<SVGCircleElement>(".reading-path__ring"));
     const stations = Array.from(svg.querySelectorAll<SVGCircleElement>(".reading-path__station"));
@@ -233,6 +243,7 @@ export function ReadingPath() {
     const pacman = svg.querySelector<SVGPathElement>(".reading-path__pacman");
     const floorLen = Math.max(0, marks.total - route.straight);
     const hide = document.documentElement.classList.contains("has-reading-reveal");
+    const samples = marks.samples;
 
     const workEls = [
       document.querySelector<HTMLElement>(".work-list__head"),
@@ -246,12 +257,12 @@ export function ReadingPath() {
         if (ring) blocks.push({ el, trigger: ring.len, on: false });
       });
       for (const el of document.querySelectorAll<HTMLElement>(REVEAL)) {
-        if (skip.has(el) || [...skip].some((w) => w.contains(el))) continue;
+        if (skip.has(el) || el.closest(".work-list")) continue;
         const r = el.getBoundingClientRect();
         const top = r.top + window.scrollY;
         const bottom = top + r.height;
         let trigger = -1;
-        for (const q of marks.samples) {
+        for (const q of samples) {
           if (q.len > floorLen) break;
           if (q.x >= r.left && q.x <= r.right && q.y >= top && q.y <= bottom) {
             trigger = q.len;
@@ -271,8 +282,23 @@ export function ReadingPath() {
       shown[key] = n;
     };
 
+    const pointAt = (len: number) => {
+      const target = Math.min(Math.max(len, 0), marks.total);
+      let lo = 0, hi = samples.length - 1;
+      while (lo < hi) {
+        const mid = (lo + hi) >> 1;
+        if (samples[mid].len < target) lo = mid + 1;
+        else hi = mid;
+      }
+      const b = samples[lo];
+      const a = samples[Math.max(0, lo - 1)];
+      const span = b.len - a.len;
+      const t = span <= 0 ? 1 : (target - a.len) / span;
+      return { x: a.x + (b.x - a.x) * t, y: a.y + (b.y - a.y) * t };
+    };
+
     const drawnNow = () => {
-      const { total, samples } = marks;
+      const { total } = marks;
       if (reduced) return total;
       const H = window.innerHeight;
       const max = document.documentElement.scrollHeight - H;
@@ -283,20 +309,25 @@ export function ReadingPath() {
       const readY = window.scrollY + H * (0.3 + 0.25 * settle + 0.45 * near);
       let k = 0;
       while (k < samples.length && samples[k].len <= floorLen && samples[k].at <= readY) k++;
-      const upTo = samples[Math.max(0, k - 1)]?.len ?? 0;
-      if (upTo < floorLen - 4) return upTo;
-      return floorLen + route.straight * Math.min(1, Math.max(0, (near - 0.5) / 0.45));
+      const a = samples[Math.max(0, k - 1)];
+      if (!a || a.len >= floorLen - 4) {
+        return floorLen + route.straight * Math.min(1, Math.max(0, (near - 0.5) / 0.45));
+      }
+      const b = samples[k];
+      if (!b || b.len > floorLen || b.at <= a.at) return a.len;
+      const t = Math.max(0, Math.min(1, (readY - a.at) / (b.at - a.at)));
+      return a.len + (b.len - a.len) * t;
     };
 
     let lastDrawn = -1;
     let chomping = false;
     let raf = 0;
-    let lastY = -1;
 
     const paint = () => {
       const drawn = reduced ? marks.total : drawnNow();
+      if (Math.abs(drawn - lastDrawn) < 0.25 && lastDrawn >= 0) return;
       drawnRef.current = drawn;
-      svg.querySelector("#reading-draw path")?.setAttribute("stroke-dasharray", `${Math.max(0, drawn)} ${marks.total}`);
+      mask.setAttribute("stroke-dasharray", `${Math.max(0, drawn)} ${marks.total}`);
       sync("rings", marks.rings, rings, drawn);
       sync("stations", marks.stations, stations, drawn);
       for (const b of blocks) {
@@ -310,7 +341,7 @@ export function ReadingPath() {
       else if (lastDrawn >= 0 && drawn > lastDrawn + 0.5) chomping = false;
       lastDrawn = drawn;
       const pac = chomping && live;
-      const tip = path.getPointAtLength(Math.min(Math.max(drawn, 0), marks.total));
+      const tip = pointAt(drawn);
       if (head) {
         head.style.opacity = live && !pac ? "1" : "0";
         head.setAttribute("cx", String(tip.x));
@@ -319,7 +350,7 @@ export function ReadingPath() {
       if (pacman) {
         pacman.classList.toggle("is-on", pac);
         if (pac) {
-          const back = path.getPointAtLength(Math.max(0, drawn - 24));
+          const back = pointAt(drawn - 24);
           const angle = Math.atan2(back.y - tip.y, back.x - tip.x);
           const m = 0.4;
           pacman.setAttribute(
@@ -331,15 +362,17 @@ export function ReadingPath() {
       }
     };
 
-    const tick = () => {
-      raf = requestAnimationFrame(tick);
-      const target = reduced ? marks.total : drawnNow();
-      if (window.scrollY === lastY && Math.abs(target - lastDrawn) < 0.5 && lastDrawn >= 0) return;
-      lastY = window.scrollY;
-      paint();
+    const onScroll = () => {
+      if (raf) return;
+      raf = requestAnimationFrame(() => {
+        raf = 0;
+        paint();
+      });
     };
-    tick();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    paint();
     return () => {
+      window.removeEventListener("scroll", onScroll);
       cancelAnimationFrame(raf);
       blocks.forEach((b) => b.el.classList.remove("is-reached"));
     };
@@ -350,12 +383,12 @@ export function ReadingPath() {
       <defs>
         <mask id="reading-draw" maskUnits="userSpaceOnUse" x="-80" y="-80" width="4000" height="8000">
           <rect x="-80" y="-80" width="4000" height="8000" fill="black" />
-          <path d={route?.d ?? ""} pathLength={marks?.total || 1} fill="none" stroke="white" strokeWidth="18" strokeLinecap="round" />
+          <path ref={maskRef} d={route?.d ?? ""} fill="none" stroke="white" strokeWidth="18" strokeLinecap="round" />
         </mask>
       </defs>
       {route && <path ref={pathRef} d={route.d} className="reading-path__guide" />}
-      {route && <path className="reading-path__eat" d={route.d} mask="url(#reading-draw)" />}
-      {route && <path className="reading-path__line" d={route.d} mask="url(#reading-draw)" />}
+      {route && <path ref={eatRef} className="reading-path__eat" d={route.d} mask="url(#reading-draw)" />}
+      {route && <path ref={lineRef} className="reading-path__line" d={route.d} mask="url(#reading-draw)" />}
       {marks?.rings.map((r, i) => <circle key={`r${i}`} className="reading-path__ring" cx={r.x} cy={r.y} r={14} />)}
       {marks?.stations.map((st, i) => <circle key={`s${i}`} className="reading-path__station" cx={st.x} cy={st.y} r={4} />)}
       <circle className="reading-path__head" r={3.5} style={{ opacity: 0 }} />
