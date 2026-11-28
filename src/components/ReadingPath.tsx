@@ -72,6 +72,7 @@ export function ReadingPath() {
       const floorY = gy(baseB.t);
       const floorR = gx(mainR.right);
       const phone = W <= PHONE;
+      const slim = W <= 1100; // phone + iPad: keep turns on-screen and scaled to the width
       document.documentElement.classList.toggle("has-reading-reveal", !phone && !window.matchMedia("(prefers-reduced-motion: reduce)").matches);
 
       const L = mainR.left, Wm = mainR.width;
@@ -96,15 +97,16 @@ export function ReadingPath() {
       if (!careerList || !flowLabel || !steps.length || !connect || !hi) return;
 
       const mid = (a: number, b: number) => (a + b) / 2;
-      const edgeL = gx(Math.max(P * 0.5, L - (phone ? 0 : P))); // hugging the content's left edge
-      const overL = gx(L + P * 0.5); // left turns that brush over the first letters of a label, like the hero's
+      const turn = Math.min(P * 12, Math.max(P * 5, W * 0.2)); // corner size follows the screen
+      const edgeL = gx(Math.max(P * 0.5, L - (slim ? 0 : P))); // hugging the content's left edge
+      const overL = slim ? edgeL : gx(L + P * 0.5); // on a narrow page stay in the gutter, not through the type
       const eduX = edgeL; // the curve round Education swings wide, out to the left edge of the content
-      const hugR = gx(Math.min(W - P * 0.5, L + Wm + P)); // hugging the content's right edge
-      const edgeR = phone ? gx(W - P * 0.45) : gx(W + P * 3); // desktop swings past the screen; phone keeps the tip on-screen
-      const ringX = phone ? gx(W - P * 0.55) : gx(arrows[0].cx - P * 2); // near the right edge, a little in from where the arrows were
+      const hugR = slim ? gx(W - P * 0.4) : gx(Math.min(W - P * 0.5, L + Wm + P)); // hugging the content's right edge
+      const edgeR = slim ? gx(W - P * 0.45) : gx(W + P * 3); // desktop swings past the screen; phone/iPad keep the tip on-screen
+      const ringX = phone ? gx(W - P * 0.55) : gx(Math.min(arrows[0].cx - P * 2, W - P * 0.8)); // near the right edge, a little in from where the arrows were
       const rings: Pt[] = arrows.map((a) => ({ x: ringX, y: a.cy }));
       const laneY = mid(flowLabel.b, Math.min(...steps.map((st) => st.t))); // between the label and the step titles
-      const EDU_R = Math.min(P * 12, phone ? W * 0.42 : P * 12); // size of the curve round Education
+      const EDU_R = Math.min(P * 12, W * (slim ? 0.28 : 1)); // size of the curve round Education
       // the lower half of that curve lands on the line just before the first step, so every step sits on the line
       const EDU_R_LOW = Math.min(EDU_R, Math.max(P * 3, Math.min(...steps.map((st) => st.l)) - eduX - P * 0.5));
       // a dot at each step that sits on the straight part of the line (the curve passes the first one by)
@@ -112,9 +114,9 @@ export function ReadingPath() {
 
       // "Email, LinkedIn / Say hi!": two circles round just those two, spiralling outwards, then off the left
       // edge and round onto the floor. The incoming run is the top of the first circle.
-      const GAP = P * 0.8;
-      const tI = gy(connect.t - P * 0.8), bI = hi.b + P * 0.25; // inner circle: top, bottom
-      const lI = gx(Math.min(connect.l, hi.l) - (phone ? P * 0.4 : P)), rI = gx(hi.r + (phone ? P * 0.4 : P * 1.5)); // inner circle: left, right
+      const GAP = P * (slim ? 0.55 : 0.8);
+      const tI = gy(connect.t - P * (slim ? 0.5 : 0.8)), bI = hi.b + P * (slim ? 0.15 : 0.25); // inner circle: top, bottom
+      const lI = gx(Math.min(connect.l, hi.l) - (slim ? P * 0.5 : P)), rI = gx(hi.r + (slim ? P * 0.8 : P * 1.5)); // inner circle: left, right
       const sayHi: Pt[] = [{ x: edgeR, y: tI }];
       if (phone) {
         // one wrap around Email / Say hi — the two desktop spirals would fill a phone screen
@@ -140,12 +142,12 @@ export function ReadingPath() {
         { x: gx(L + Wm * 0.85), y: gy(label.t - P * 1.5) }, // turning left just above the hero text
         { x: edgeL, y: gy(label.t - P * 1.5) }, // hugging the headline round its left
         { x: edgeL, y: gy(sub.b + P * 1.2) },
-        { x: ringX, y: gy(sub.b + P * 1.2), r: phone ? P * 6 : P * 12 }, // just under it, a big easy curve down to the work
+        { x: ringX, y: gy(sub.b + P * 1.2), r: turn }, // just under it, a big easy curve down to the work
         ...rings.map((r) => ({ ...r, through: true })), // straight down through every ring
-        { x: ringX, y: gy(lastRow.b + P * 1.5), r: phone ? P * 6 : P * 12 }, // just under the projects, back across
+        { x: ringX, y: gy(lastRow.b + P * 1.5), r: turn }, // just under the projects, back across
         { x: overL, y: gy(lastRow.b + P * 1.5) }, // round "About", brushing over it
-        { x: overL, y: gy(para.b + P * 0.8) }, // round the statement, just under it
-        { x: hugR, y: gy(para.b + P * 0.8) },
+        { x: overL, y: gy(para.b + P * (slim ? 1.4 : 0.8)) }, // round the statement, just under it
+        { x: hugR, y: gy(para.b + P * (slim ? 1.4 : 0.8)) },
         { x: hugR, y: gy(careerList.b + P * 0.6) }, // round Career on the right, just under it
         // round Education: one wide, smooth curve out to the left that rolls onto the line before Research
         { x: eduX, y: gy(careerList.b + P * 0.6), r: EDU_R },
