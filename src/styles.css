@@ -3191,8 +3191,10 @@ html.vt-theme .work-list__name, html.vt-theme .ds-hero__name, html.vt-theme .sit
 /* ---------- Home reading thread (ReadingPath.tsx): a dotted orange line that eats the dots in its way as you read and lands on the footer as a straight floor ---------- */
 .reading-path { position: absolute; inset: 0; z-index: 0; overflow: visible; pointer-events: none; }
 .reading-path__guide { fill: none; stroke: none; }
-.reading-path__eat { fill: none; stroke: var(--bg); stroke-width: 9; stroke-linecap: round; stroke-linejoin: round; }
-.reading-path__line { fill: none; stroke: var(--signal); stroke-width: 2.6; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 0.01 7.05; opacity: 0.45; }
+.reading-path__dot { fill: var(--signal); opacity: 0; }
+.reading-path__dot.is-on { opacity: 0.45; }
+.reading-path__eaten { fill: var(--bg); display: none; }
+.reading-path__eaten.is-on { display: inline; }
 .reading-path__head { fill: var(--signal); opacity: 0.8; transition: opacity 200ms; }
 .reading-path__ring { fill: none; stroke: var(--signal); stroke-width: 1px; opacity: 0; transform-box: fill-box; transform-origin: center; transform: scale(0.4); transition: opacity 500ms var(--ease-expo), transform 600ms var(--ease-expo); }
 .reading-path__ring.is-on { opacity: 0.55; transform: none; }
@@ -3233,6 +3235,7 @@ html.vt-theme .work-list__name, html.vt-theme .ds-hero__name, html.vt-theme .sit
   }
   .work-list li:not(.is-reached) > a { pointer-events: none; }
   .work-list__head.is-reached h2,
+  .work-list__head h2.is-reached,
   .work-list li.is-reached > a,
   .home-about__label.is-reached,
   .home-about__big.is-reached,
@@ -3263,6 +3266,7 @@ html.vt-theme .work-list__name, html.vt-theme .ds-hero__name, html.vt-theme .sit
 }
 .reading-path__pacman { fill: var(--ink); opacity: 0; transition: opacity 200ms; }
 .reading-path__pacman.is-on { opacity: 1; }
+html.ball-chomping .reading-path { z-index: 2; } /* Pac-Man sits above the footer type, not under it */
 /* ---------- Home · How I work: four steps; the reading thread runs through them (space above for it) ---------- */
 .home-flow-wrap { position: relative; padding-top: var(--space-2); }
 .home-flow { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--space-3); }
@@ -3334,6 +3338,7 @@ html.vt-theme .work-list__name, html.vt-theme .ds-hero__name, html.vt-theme .sit
 .hi__big { cursor: default; margin: var(--space-2) 0 0; }
 .hi__big em, .hi__big:hover em { color: inherit; transform: none; transition: none; }
 .site-footer--hi .site-footer__links { margin: 0 0 var(--space-2); }
+.site-footer--hi .hi__big { width: fit-content; }
 /* v1.2.0 · "Say hi!" on one line; Email copies */
 .hi__big { display: block; white-space: nowrap; font-size: clamp(48px, 9vw, 120px); line-height: 1; }
 .hi__big em { display: inline; }

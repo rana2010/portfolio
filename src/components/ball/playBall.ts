@@ -332,13 +332,18 @@ export function playBall(el: HTMLElement) {
     run(list, vanish);
   };
 
-  const atBottom = () => window.scrollY + window.innerHeight >= document.documentElement.scrollHeight - 4;
+  const atBottom = () => {
+    const vv = window.visualViewport;
+    const bottom = vv ? vv.pageTop + vv.height : window.scrollY + window.innerHeight;
+    return bottom >= document.documentElement.scrollHeight - 8;
+  };
   const onScroll = () => {
     if (gone) return;
     const bottom = atBottom();
     if (bottom && !playing) {
       playing = true;
       playedThisLoad = true;
+      document.documentElement.classList.add(PACMAN);
       wait = window.setTimeout(() => {
         el.classList.add("is-playing");
         dropIn(() => {
@@ -358,15 +363,19 @@ export function playBall(el: HTMLElement) {
     document.documentElement.classList.add(PACMAN);
   } else {
     window.addEventListener("scroll", onScroll, { passive: true });
+    window.visualViewport?.addEventListener("scroll", onScroll, { passive: true });
+    window.visualViewport?.addEventListener("resize", onScroll, { passive: true });
     onScroll();
   }
   return () => {
     window.removeEventListener("scroll", onScroll);
+    window.visualViewport?.removeEventListener("scroll", onScroll);
+    window.visualViewport?.removeEventListener("resize", onScroll);
     window.clearTimeout(wait);
     if (raf) cancelAnimationFrame(raf);
     el.getAnimations().forEach((a) => a.cancel());
     el.style.transform = "";
     el.classList.remove("is-playing");
-    document.documentElement.classList.remove(PACMAN);
+    // leave PACMAN on: Nav remounts (and React Strict Mode) would otherwise wipe Pac-Man off the line
   };
 }

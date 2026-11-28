@@ -8,12 +8,17 @@ import { DOT_PITCH } from "./grid";
    "Let's connect", circles "Email, LinkedIn / Say hi!" twice and lands on the footer, where it runs straight: the floor the chat ball
    plays on. It eats the background dots it passes over. Once the ball has played (playBall.ts), scrolling
    back up brings Pac-Man to the tip, eating the line as it goes. On desktop, content stays faint until the line gets
-   to it. Phones (≤ 640px): only the straight floor, nothing hidden. Reduced motion: drawn in full. */
+   to it. Phones (≤ 640px): the same thread, fitted to the screen, text not hidden. Reduced motion: drawn in full. */
 
 type Pt = { x: number; y: number };
 type Route = { d: string; floorY: number; straight: number; ox: number; oy: number; rings: Pt[]; stations: Pt[] };
 const PHONE = 640;
+const EAT_RADIUS = 10;
 const PAC_R = 13;
+const viewH = () => window.visualViewport?.height ?? window.innerHeight;
+const viewY = () => window.visualViewport?.pageTop ?? window.scrollY;
+const TOP_SPEED = 800; // px of line per second: the calm pace the line (and Pac-Man) never goes past
+const EASE = 1.4; // how quickly it closes the distance to where the scroll is (per second) // Pac-Man's radius, px
 // the blocks that appear as the line reaches them: everything after the hero, and the footer
 const REVEAL = "main > :not(.home-hero) :is(h2, h3, p, li), .site-footer--hi > *";
 
@@ -21,14 +26,11 @@ export function ReadingPath() {
   const [route, setRoute] = useState<Route | null>(null);
   const pathRef = useRef<SVGPathElement>(null);
   const svgRef = useRef<SVGSVGElement>(null);
-  const eatRef = useRef<SVGPathElement>(null);
-  const lineRef = useRef<SVGPathElement>(null);
-  const maskRef = useRef<SVGPathElement>(null);
   const drawnRef = useRef<number | null>(null); // how much of the line is drawn, kept across relayouts
-  // everything that lights up along the line, measured once per layout: dots of the line itself, grid dots
-  // it eats, rings and stations. Each has the length along the line at which it appears.
   const [marks, setMarks] = useState<{
     total: number;
+    dots: { x: number; y: number; len: number }[];
+    eaten: { x: number; y: number; len: number }[];
     rings: { x: number; y: number; len: number }[];
     stations: { x: number; y: number; len: number }[];
     samples: { len: number; x: number; y: number; at: number }[];
@@ -55,16 +57,22 @@ export function ReadingPath() {
         return r ? { l: r.left, r: r.right, t: r.top + sy, b: r.bottom + sy, cx: r.left + r.width / 2, cy: r.top + sy + r.height / 2 } : null;
       };
       const $ = (sel: string) => box(document.querySelector(sel));
+      const fadeY = (el: Element | null) => {
+        if (!el) return 0;
+        const t = getComputedStyle(el).transform;
+        if (!t || t === "none") return 0;
+        try { return new DOMMatrix(t).f; } catch { return 0; }
+      };
+      const unfade = (el: Element | null, b: NonNullable<ReturnType<typeof box>>) => {
+        const dy = fadeY(el);
+        return dy ? { ...b, t: b.t - dy, b: b.b - dy, cy: b.cy - dy } : b;
+      };
 
-      const baseB = box(base)!;
+      const baseB = unfade(base, box(base)!);
       const floorY = gy(baseB.t);
-      const floorL = gx(mainR.left);
       const floorR = gx(mainR.right);
-      document.documentElement.classList.toggle("has-reading-reveal", W > PHONE && !window.matchMedia("(prefers-reduced-motion: reduce)").matches);
-      if (W <= PHONE) {
-        setRoute({ d: `M ${floorL} ${floorY} L ${floorR} ${floorY}`, floorY, straight: floorR - floorL, ox, oy, rings: [], stations: [] });
-        return;
-      }
+      const phone = W <= PHONE;
+      document.documentElement.classList.toggle("has-reading-reveal", !phone && !window.matchMedia("(prefers-reduced-motion: reduce)").matches);
 
       const L = mainR.left, Wm = mainR.width;
       const all = (sel: string) => Array.from(document.querySelectorAll(sel)).map(box).filter(Boolean) as NonNullable<ReturnType<typeof box>>[];
@@ -76,24 +84,27 @@ export function ReadingPath() {
       const careerList = $(".home-career");
       const flowLabel = box(document.querySelector(".home-flow-wrap")?.previousElementSibling ?? null);
       const steps = all(".home-flow li");
-      const connect = $(".site-footer__links"); // top of the "Say hi!" block
+      const connectEl = document.querySelector(".site-footer__links");
+      const connectRaw = box(connectEl);
+      const connect = connectRaw ? unfade(connectEl, connectRaw) : null;
       const hiEl = document.querySelector(".hi__big");
       const hiWords = document.createRange(); // the words "Say hi!", not their full-width block
       if (hiEl) hiWords.selectNodeContents(hiEl);
-      const hi = hiEl ? box({ getBoundingClientRect: () => hiWords.getBoundingClientRect() } as Element) : null;
+      const hiRaw = hiEl ? box({ getBoundingClientRect: () => hiWords.getBoundingClientRect() } as Element) : null;
+      const hi = hiRaw ? unfade(hiEl, hiRaw) : null;
       if (!label || !sub || !lastRow || !arrows.length || !para) return;
       if (!careerList || !flowLabel || !steps.length || !connect || !hi) return;
 
       const mid = (a: number, b: number) => (a + b) / 2;
-      const edgeL = gx(Math.max(P * 0.5, L - P)); // hugging the content's left edge
+      const edgeL = gx(Math.max(P * 0.5, L - (phone ? 0 : P))); // hugging the content's left edge
       const overL = gx(L + P * 0.5); // left turns that brush over the first letters of a label, like the hero's
       const eduX = edgeL; // the curve round Education swings wide, out to the left edge of the content
       const hugR = gx(Math.min(W - P * 0.5, L + Wm + P)); // hugging the content's right edge
-      const edgeR = gx(W + P * 3); // turns on the right swing out past the edge of the screen
-      const ringX = gx(arrows[0].cx - P * 2); // near the right edge, a little in from where the arrows were
+      const edgeR = phone ? gx(W - P * 0.45) : gx(W + P * 3); // desktop swings past the screen; phone keeps the tip on-screen
+      const ringX = phone ? gx(W - P * 0.55) : gx(arrows[0].cx - P * 2); // near the right edge, a little in from where the arrows were
       const rings: Pt[] = arrows.map((a) => ({ x: ringX, y: a.cy }));
       const laneY = mid(flowLabel.b, Math.min(...steps.map((st) => st.t))); // between the label and the step titles
-      const EDU_R = P * 12; // size of the curve round Education
+      const EDU_R = Math.min(P * 12, phone ? W * 0.42 : P * 12); // size of the curve round Education
       // the lower half of that curve lands on the line just before the first step, so every step sits on the line
       const EDU_R_LOW = Math.min(EDU_R, Math.max(P * 3, Math.min(...steps.map((st) => st.l)) - eduX - P * 0.5));
       // a dot at each step that sits on the straight part of the line (the curve passes the first one by)
@@ -103,20 +114,23 @@ export function ReadingPath() {
       // edge and round onto the floor. The incoming run is the top of the first circle.
       const GAP = P * 0.8;
       const tI = gy(connect.t - P * 0.8), bI = hi.b + P * 0.25; // inner circle: top, bottom
-      const lI = gx(Math.min(connect.l, hi.l) - P), rI = gx(hi.r + P * 1.5); // inner circle: left, right
-      // Spiral turns sit only GAP apart; a large corner would cut through the previous run and leave a dash cloud.
-      const spiralR = GAP * 0.4;
-      const sayHi: (Pt & { r?: number })[] = [{ x: edgeR, y: tI }];
-      for (let k = 0; k < 2; k++) {
-        const g = GAP * k;
-        sayHi.push(
-          { x: lI - g, y: tI - g, r: k === 0 ? undefined : spiralR },
-          { x: lI - g, y: bI + g, r: spiralR },
-          { x: rI + g, y: bI + g, r: spiralR },
-          { x: rI + g, y: tI - g - GAP, r: spiralR },
-        );
+      const lI = gx(Math.min(connect.l, hi.l) - (phone ? P * 0.4 : P)), rI = gx(hi.r + (phone ? P * 0.4 : P * 1.5)); // inner circle: left, right
+      const sayHi: Pt[] = [{ x: edgeR, y: tI }];
+      if (phone) {
+        // one wrap around Email / Say hi — the two desktop spirals would fill a phone screen
+        sayHi.push({ x: lI, y: tI }, { x: lI, y: floorY });
+      } else {
+        for (let k = 0; k < 2; k++) {
+          const g = GAP * k;
+          sayHi.push(
+            { x: lI - g, y: tI - g },
+            { x: lI - g, y: bI + g },
+            { x: rI + g, y: bI + g },
+            { x: rI + g, y: tI - g - GAP },
+          );
+        }
+        sayHi.push({ x: lI - GAP * 2, y: tI - GAP * 2 });
       }
-      sayHi.push({ x: lI - GAP * 2, y: tI - GAP * 2, r: spiralR });
 
       // the route: level runs across the page joined by round turns at the edges. Corners are listed here;
       // "through" points keep the line straight (the drop through the rings).
@@ -126,9 +140,9 @@ export function ReadingPath() {
         { x: gx(L + Wm * 0.85), y: gy(label.t - P * 1.5) }, // turning left just above the hero text
         { x: edgeL, y: gy(label.t - P * 1.5) }, // hugging the headline round its left
         { x: edgeL, y: gy(sub.b + P * 1.2) },
-        { x: ringX, y: gy(sub.b + P * 1.2), r: P * 12 }, // just under it, a big easy curve down to the work
+        { x: ringX, y: gy(sub.b + P * 1.2), r: phone ? P * 6 : P * 12 }, // just under it, a big easy curve down to the work
         ...rings.map((r) => ({ ...r, through: true })), // straight down through every ring
-        { x: ringX, y: gy(lastRow.b + P * 1.5), r: P * 12 }, // just under the projects, back across
+        { x: ringX, y: gy(lastRow.b + P * 1.5), r: phone ? P * 6 : P * 12 }, // just under the projects, back across
         { x: overL, y: gy(lastRow.b + P * 1.5) }, // round "About", brushing over it
         { x: overL, y: gy(para.b + P * 0.8) }, // round the statement, just under it
         { x: hugR, y: gy(para.b + P * 0.8) },
@@ -138,7 +152,7 @@ export function ReadingPath() {
         { x: eduX, y: laneY, r: EDU_R_LOW },
         { x: edgeR, y: laneY },
         ...sayHi, // two circles round "Email, LinkedIn / Say hi!", then off the left edge onto the floor
-        { x: lI - GAP * 2, y: floorY },
+        ...(phone ? [] : [{ x: lI - GAP * 2, y: floorY }]),
         { x: floorR, y: floorY },
       ];
 
@@ -157,9 +171,6 @@ export function ReadingPath() {
         const dir = (v: number) => (Math.abs(v) < 0.5 ? 0 : Math.sign(v)); // runs are level or upright; ignore float dust
         const inDir = { x: dir(here.x - prev.x), y: dir(here.y - prev.y) };
         const outDir = { x: dir(next.x - here.x), y: dir(next.y - here.y) };
-        if ((!inDir.x && !inDir.y) || (!outDir.x && !outDir.y)) continue;
-        if (inDir.x === outDir.x && inDir.y === outDir.y) continue;
-        if (inDir.x === -outDir.x && inDir.y === -outDir.y) continue;
         let rIn = side(i - 1, i), rOut = side(i, i + 1);
         const v = inDir.y ? rIn : rOut; // the vertical radius
         const h = Math.min(inDir.x ? rIn : rOut, here.r ?? P * 10, Math.max(v * 1.6, P * 2));
@@ -172,7 +183,7 @@ export function ReadingPath() {
         if (i === route.length - 2) floorStart = b.x;
       }
       d += ` L ${f(floorR)} ${f(floorY)}`;
-      setRoute({ d, floorY, straight: floorR - floorStart, ox, oy, rings, stations });
+      setRoute({ d, floorY, straight: floorR - floorStart, ox, oy, rings, stations: phone ? [] : stations });
     };
 
     let t = 0;
@@ -180,7 +191,7 @@ export function ReadingPath() {
       window.clearTimeout(t);
       t = window.setTimeout(build, 200);
     };
-    schedule();
+    build();
     document.fonts?.ready.then(schedule);
     const ro = new ResizeObserver(schedule);
     ro.observe(main);
@@ -197,198 +208,202 @@ export function ReadingPath() {
   useEffect(() => {
     const path = pathRef.current;
     if (!path || !route) return setMarks(null);
+    const P = DOT_PITCH;
     const total = path.getTotalLength();
     const samples: { len: number; x: number; y: number; at: number }[] = [];
-    const step = Math.max(8, DOT_PITCH / 3);
-    for (let l = 0; l <= total; l += step) {
+    const dots: { x: number; y: number; len: number }[] = [];
+    const eatenMap = new Map<number, { x: number; y: number; len: number }>();
+    const STEP = P / 4;
+    for (let l = 0; l <= total; l += 3) {
       const p = path.getPointAtLength(l);
       samples.push({ len: l, x: p.x, y: p.y, at: 0 });
+      const c = Math.round((p.x - route.ox) / P), r = Math.round((p.y - route.oy) / P);
+      const gx = route.ox + c * P, gy = route.oy + r * P;
+      const key = r * 100000 + c;
+      if (Math.hypot(gx - p.x, gy - p.y) <= EAT_RADIUS && !eatenMap.has(key)) eatenMap.set(key, { x: gx, y: gy, len: l });
     }
-    const end = path.getPointAtLength(total);
-    if ((samples[samples.length - 1]?.len ?? 0) < total - 0.5) samples.push({ len: total, x: end.x, y: end.y, at: 0 });
-    // Map by how far down the page the line has already been — not by length. A winding path is much
-    // longer than the page, so even-speed along the line makes the tip trail the scroll.
+    for (let l = 0; l <= total; l += STEP) {
+      const p = path.getPointAtLength(l);
+      dots.push({ x: p.x, y: p.y, len: l });
+    }
     const floorLen = Math.max(0, total - route.straight);
     const body = samples.filter((q) => q.len <= floorLen);
-    let peak = body[0].y;
-    for (const q of body) {
-      if (q.y > peak) peak = q.y;
-      q.at = peak;
-    }
+    const y0 = body[0].y, yEnd = body[body.length - 1].y;
+    body.forEach((q) => (q.at = floorLen ? 0.5 * q.y + 0.5 * (y0 + (q.len / floorLen) * (yEnd - y0)) : y0));
     const y1 = body[body.length - 1].at;
     samples.forEach((q) => q.len > floorLen && (q.at = y1));
     const at = (pts: Pt[]) =>
       pts.map((pt) => {
         let best = samples[0];
         for (const q of samples) if (Math.hypot(q.x - pt.x, q.y - pt.y) < Math.hypot(best.x - pt.x, best.y - pt.y)) best = q;
-        return { x: best.x, y: best.y, len: best.len }; // exactly on the line
+        return { x: best.x, y: best.y, len: best.len };
       });
     setMarks({
       total,
+      dots,
+      eaten: Array.from(eatenMap.values()).sort((a, b) => a.len - b.len),
       rings: at(route.rings),
       stations: at(route.stations),
       samples,
     });
   }, [route]);
 
-  // 3) tip tracks the reading line. Paint on scroll only. Mask dash is in real path units.
+  // 3) follow the scroll. A refresh at the top draws in from off-screen so you see it enter.
   useEffect(() => {
     const svg = svgRef.current;
-    const mask = maskRef.current;
-    if (!svg || !mask || !marks || !route) return;
+    if (!svg || !marks || !route) return;
     const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    const rings = Array.from(svg.querySelectorAll<SVGCircleElement>(".reading-path__ring"));
-    const stations = Array.from(svg.querySelectorAll<SVGCircleElement>(".reading-path__station"));
+    const groups = {
+      dots: Array.from(svg.querySelectorAll<SVGCircleElement>(".reading-path__dot")),
+      eaten: Array.from(svg.querySelectorAll<SVGCircleElement>(".reading-path__eaten")),
+      rings: Array.from(svg.querySelectorAll<SVGCircleElement>(".reading-path__ring")),
+      stations: Array.from(svg.querySelectorAll<SVGCircleElement>(".reading-path__station")),
+    };
     const head = svg.querySelector<SVGCircleElement>(".reading-path__head");
     const pacman = svg.querySelector<SVGPathElement>(".reading-path__pacman");
+    let lastDrawn = drawnRef.current ?? -1;
+    let chomping = document.documentElement.classList.contains("ball-chomping");
     const floorLen = Math.max(0, marks.total - route.straight);
-    const hide = document.documentElement.classList.contains("has-reading-reveal");
-    const samples = marks.samples;
-
-    const workEls = [
-      document.querySelector<HTMLElement>(".work-list__head"),
-      ...document.querySelectorAll<HTMLElement>(".work-list li"),
-    ].filter((el): el is HTMLElement => !!el);
-    const skip = new Set(workEls);
-    const blocks: { el: HTMLElement; trigger: number; on: boolean }[] = [];
-    if (hide) {
-      workEls.forEach((el, i) => {
-        const ring = marks.rings[Math.min(i, Math.max(0, marks.rings.length - 1))];
-        if (ring) blocks.push({ el, trigger: ring.len, on: false });
-      });
-      for (const el of document.querySelectorAll<HTMLElement>(REVEAL)) {
-        if (skip.has(el) || el.closest(".work-list")) continue;
-        const r = el.getBoundingClientRect();
-        const top = r.top + window.scrollY;
-        const bottom = top + r.height;
-        let trigger = -1;
-        for (const q of samples) {
-          if (q.len > floorLen) break;
-          if (q.x >= r.left && q.x <= r.right && q.y >= top && q.y <= bottom) {
-            trigger = q.len;
-            break;
-          }
-        }
-        if (trigger >= 0) blocks.push({ el, trigger, on: false });
+    type Pass = { start: number; end: number; across: boolean; pts: { len: number; x: number; y: number }[] };
+    const passOf = (r: DOMRect, top: number): Pass => {
+      const bottom = top + r.height;
+      const dist = (q: { x: number; y: number }) => Math.hypot(Math.max(r.left - q.x, 0, q.x - r.right), Math.max(top - q.y, 0, q.y - bottom));
+      const NEAR = DOT_PITCH * 1.5;
+      const body = marks.samples.filter((q) => q.len <= floorLen);
+      let i = body.findIndex((q) => dist(q) <= NEAR);
+      if (i < 0) {
+        const best = body.reduce((a, q) => (dist(q) < dist(a) ? q : a), body[0]);
+        return { start: best.len, end: best.len, across: true, pts: [] };
       }
-    }
-
-    const shown = { rings: 0, stations: 0 };
-    const sync = (key: "rings" | "stations", list: { len: number }[], els: SVGCircleElement[], drawn: number) => {
+      let j = i;
+      while (j + 1 < body.length && dist(body[j + 1]) <= NEAR * 2) j++;
+      const pts = body.slice(i, j + 1);
+      const xs = pts.map((q) => q.x), ys = pts.map((q) => q.y);
+      const across = Math.max(...xs) - Math.min(...xs) >= Math.max(...ys) - Math.min(...ys);
+      return { start: pts[0].len, end: pts[pts.length - 1].len, across, pts };
+    };
+    const reveal = document.documentElement.classList.contains("has-reading-reveal")
+      ? (() => {
+          const els = Array.from(document.querySelectorAll<HTMLElement>(REVEAL));
+          return els
+            .filter((el) => !els.some((o) => o !== el && o.contains(el)))
+            .map((el) => {
+              const r = el.getBoundingClientRect();
+              const top = r.top + window.scrollY;
+              return { el, pass: passOf(r, top), on: false };
+            });
+        })()
+      : [];
+    let drawnSoFar = 0;
+    let lastTime = performance.now() - 16; // first frame already has a step, so the entrance does not stall
+    const shown = { dots: 0, eaten: 0, rings: 0, stations: 0 };
+    const sync = (key: keyof typeof shown, list: { len: number }[], drawn: number) => {
       let n = 0;
       while (n < list.length && list[n].len <= drawn) n++;
+      const els = groups[key];
       if (n > shown[key]) for (let i = shown[key]; i < n; i++) els[i]?.classList.add("is-on");
       else for (let i = n; i < shown[key]; i++) els[i]?.classList.remove("is-on");
       shown[key] = n;
     };
-
-    const pointAt = (len: number) => {
-      const target = Math.min(Math.max(len, 0), marks.total);
-      let lo = 0, hi = samples.length - 1;
-      while (lo < hi) {
-        const mid = (lo + hi) >> 1;
-        if (samples[mid].len < target) lo = mid + 1;
-        else hi = mid;
-      }
-      const b = samples[lo];
-      const a = samples[Math.max(0, lo - 1)];
-      const span = b.len - a.len;
-      const t = span <= 0 ? 1 : (target - a.len) / span;
-      return { x: a.x + (b.x - a.x) * t, y: a.y + (b.y - a.y) * t };
-    };
-
     const drawnNow = () => {
-      const { total } = marks;
+      const { total, samples } = marks;
       if (reduced) return total;
-      const H = window.innerHeight;
-      const max = document.documentElement.scrollHeight - H;
-      if (max <= 1) return total;
-      const near = Math.max(0, Math.min(1, 1 - (max - window.scrollY) / (H * 0.6)));
+      const H = viewH();
+      const y = viewY();
+      const max = Math.max(0, document.documentElement.scrollHeight - H);
+      const near = Math.max(0, Math.min(1, 1 - (max - y) / (H * 0.6)));
       if (near >= 0.999) return total;
-      const settle = Math.min(1, window.scrollY / (H * 0.5));
-      const readY = window.scrollY + H * (0.3 + 0.25 * settle + 0.45 * near);
+      const settle = Math.min(1, y / (H * 0.5));
+      const readY = y + H * (0.3 + 0.25 * settle + 0.45 * near);
       let k = 0;
       while (k < samples.length && samples[k].len <= floorLen && samples[k].at <= readY) k++;
-      const a = samples[Math.max(0, k - 1)];
-      if (!a || a.len >= floorLen - 4) {
-        return floorLen + route.straight * Math.min(1, Math.max(0, (near - 0.5) / 0.45));
-      }
-      const b = samples[k];
-      if (!b || b.len > floorLen || b.at <= a.at) return a.len;
-      const t = Math.max(0, Math.min(1, (readY - a.at) / (b.at - a.at)));
-      return a.len + (b.len - a.len) * t;
+      const upTo = samples[Math.max(0, k - 1)]?.len ?? 0;
+      if (upTo < floorLen - 4) return upTo;
+      return floorLen + route.straight * Math.min(1, Math.max(0, (near - 0.5) / 0.45));
     };
-
-    let lastDrawn = -1;
-    let chomping = false;
+    drawnSoFar = reduced ? marks.total : drawnRef.current ?? (viewY() > 50 ? drawnNow() : 0);
     let raf = 0;
-
-    const paint = () => {
-      const drawn = reduced ? marks.total : drawnNow();
-      if (Math.abs(drawn - lastDrawn) < 0.25 && lastDrawn >= 0) return;
+    const frame = () => {
+      raf = 0;
+      const now = performance.now();
+      const dt = Math.min(0.05, (now - lastTime) / 1000);
+      lastTime = now;
+      const target = drawnNow();
+      const gap = target - drawnSoFar;
+      const far = Math.abs(gap) / 500;
+      const step = Math.sign(gap) * Math.min(Math.abs(gap) * (1 - Math.exp(-dt * EASE * (1 + far))), TOP_SPEED * (1 + far * 2) * dt);
+      drawnSoFar = Math.abs(gap) < 1 ? target : drawnSoFar + step;
+      const drawn = drawnSoFar;
       drawnRef.current = drawn;
-      mask.setAttribute("stroke-dasharray", `${Math.max(0, drawn)} ${marks.total}`);
-      sync("rings", marks.rings, rings, drawn);
-      sync("stations", marks.stations, stations, drawn);
-      for (const b of blocks) {
-        const on = drawn >= b.trigger;
+      const moving = drawn !== target;
+      if (moving) raf = requestAnimationFrame(frame);
+      sync("dots", marks.dots, drawn);
+      sync("eaten", marks.eaten, drawn);
+      sync("rings", marks.rings, drawn);
+      sync("stations", marks.stations, drawn);
+      for (const b of reveal) {
+        const on = drawn >= b.pass.start;
         if (on === b.on) continue;
         b.on = on;
         b.el.classList.toggle("is-reached", on);
       }
-      const live = drawn > 0 && drawn < marks.total;
-      if (lastDrawn >= 0 && drawn < lastDrawn - 0.5) chomping = document.documentElement.classList.contains("ball-pacman");
+      const tip = marks.dots[Math.max(0, shown.dots - 1)];
+      const live = drawn > 0 && !!tip;
+      // original: the tip is a head on the way down; scrolling up turns it into Pac-Man, which eats
+      // the line until you draw forward again. Stays across remounts via ball-chomping on <html>.
+      if (lastDrawn >= 0 && drawn < lastDrawn - 0.5) chomping = true;
       else if (lastDrawn >= 0 && drawn > lastDrawn + 0.5) chomping = false;
       lastDrawn = drawn;
       const pac = chomping && live;
-      const tip = pointAt(drawn);
+      document.documentElement.classList.toggle("ball-chomping", pac);
       if (head) {
         head.style.opacity = live && !pac ? "1" : "0";
-        head.setAttribute("cx", String(tip.x));
-        head.setAttribute("cy", String(tip.y));
+        if (tip) {
+          head.setAttribute("cx", String(tip.x));
+          head.setAttribute("cy", String(tip.y));
+        }
       }
       if (pacman) {
         pacman.classList.toggle("is-on", pac);
-        if (pac) {
-          const back = pointAt(drawn - 24);
+        if (pac && tip) {
+          const back = marks.dots[Math.max(0, shown.dots - 5)];
           const angle = Math.atan2(back.y - tip.y, back.x - tip.x);
-          const m = 0.4;
+          const m = moving ? 0.12 + 0.55 * Math.abs(Math.sin(now / 110)) : 0.4;
+          const r = viewH() < 900 && document.documentElement.clientWidth <= PHONE ? 11 : PAC_R;
           pacman.setAttribute(
             "d",
-            `M 0 0 L ${(PAC_R * Math.cos(m)).toFixed(2)} ${(PAC_R * Math.sin(m)).toFixed(2)} A ${PAC_R} ${PAC_R} 0 1 1 ${(PAC_R * Math.cos(m)).toFixed(2)} ${(-PAC_R * Math.sin(m)).toFixed(2)} Z`,
+            `M 0 0 L ${(r * Math.cos(m)).toFixed(2)} ${(r * Math.sin(m)).toFixed(2)} A ${r} ${r} 0 1 1 ${(r * Math.cos(m)).toFixed(2)} ${(-r * Math.sin(m)).toFixed(2)} Z`,
           );
           pacman.setAttribute("transform", `translate(${tip.x.toFixed(1)} ${tip.y.toFixed(1)}) rotate(${((angle * 180) / Math.PI).toFixed(1)})`);
         }
       }
     };
-
     const onScroll = () => {
-      if (raf) return;
-      raf = requestAnimationFrame(() => {
-        raf = 0;
-        paint();
-      });
+      if (!raf) {
+        lastTime = performance.now() - 16;
+        raf = requestAnimationFrame(frame);
+      }
     };
+    frame();
     window.addEventListener("scroll", onScroll, { passive: true });
-    paint();
+    window.visualViewport?.addEventListener("scroll", onScroll, { passive: true });
+    window.visualViewport?.addEventListener("resize", onScroll, { passive: true });
     return () => {
       window.removeEventListener("scroll", onScroll);
-      cancelAnimationFrame(raf);
-      blocks.forEach((b) => b.el.classList.remove("is-reached"));
+      window.visualViewport?.removeEventListener("scroll", onScroll);
+      window.visualViewport?.removeEventListener("resize", onScroll);
+      if (raf) cancelAnimationFrame(raf);
+      reveal.forEach((b) => {
+        b.el.classList.remove("is-reached");
+      });
     };
   }, [marks, route]);
 
   return (
     <svg ref={svgRef} className="reading-path" aria-hidden="true" width="100%" height="100%" data-floor-y={route?.floorY}>
-      <defs>
-        <mask id="reading-draw" maskUnits="userSpaceOnUse" x="-80" y="-80" width="4000" height="8000">
-          <rect x="-80" y="-80" width="4000" height="8000" fill="black" />
-          <path ref={maskRef} d={route?.d ?? ""} fill="none" stroke="white" strokeWidth="18" strokeLinecap="round" />
-        </mask>
-      </defs>
       {route && <path ref={pathRef} d={route.d} className="reading-path__guide" />}
-      {route && <path ref={eatRef} className="reading-path__eat" d={route.d} mask="url(#reading-draw)" />}
-      {route && <path ref={lineRef} className="reading-path__line" d={route.d} mask="url(#reading-draw)" />}
+      {marks?.eaten.map((e, i) => <circle key={`e${i}`} className="reading-path__eaten" cx={e.x} cy={e.y} r={4.5} />)}
+      {marks?.dots.map((d, i) => <circle key={`d${i}`} className="reading-path__dot" cx={d.x.toFixed(1)} cy={d.y.toFixed(1)} r={1.3} />)}
       {marks?.rings.map((r, i) => <circle key={`r${i}`} className="reading-path__ring" cx={r.x} cy={r.y} r={14} />)}
       {marks?.stations.map((st, i) => <circle key={`s${i}`} className="reading-path__station" cx={st.x} cy={st.y} r={4} />)}
       <circle className="reading-path__head" r={3.5} style={{ opacity: 0 }} />
