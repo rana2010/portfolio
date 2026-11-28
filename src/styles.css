@@ -3191,18 +3191,64 @@ html.vt-theme .work-list__name, html.vt-theme .ds-hero__name, html.vt-theme .sit
 /* ---------- Home reading thread (ReadingPath.tsx): a dotted orange line that eats the dots in its way as you read and lands on the footer as a straight floor ---------- */
 .reading-path { position: absolute; inset: 0; z-index: 0; overflow: visible; pointer-events: none; }
 .reading-path__guide { fill: none; stroke: none; }
-.reading-path__dot { fill: var(--signal); opacity: 0; }
-.reading-path__dot.is-on { opacity: 0.45; } /* quiet: it runs under the content */
-.reading-path__eaten { fill: var(--bg); display: none; }
-.reading-path__eaten.is-on { display: inline; }
+.reading-path__eat { fill: none; stroke: var(--bg); stroke-width: 9; stroke-linecap: round; }
+.reading-path__line { fill: none; stroke: var(--signal); stroke-width: 2.6; stroke-linecap: round; stroke-dasharray: 0 7.05; opacity: 0.45; }
 .reading-path__head { fill: var(--signal); opacity: 0.8; transition: opacity 200ms; }
 .reading-path__ring { fill: none; stroke: var(--signal); stroke-width: 1px; opacity: 0; transform-box: fill-box; transform-origin: center; transform: scale(0.4); transition: opacity 500ms var(--ease-expo), transform 600ms var(--ease-expo); }
 .reading-path__ring.is-on { opacity: 0.55; transform: none; }
 .reading-path__station { fill: var(--signal); opacity: 0; transform-box: fill-box; transform-origin: center; transform: scale(0.3); transition: opacity 400ms var(--ease-expo), transform 500ms var(--ease-expo); }
 .reading-path__station.is-on { opacity: 0.7; transform: none; }
-/* desktop: sections fade up as the line reaches them */
-.has-reading-reveal .reading-reveal { opacity: 0; transition: opacity 500ms ease; } /* wiped in with the line (clip-path set in ReadingPath); layout never moves */
-.has-reading-reveal .reading-reveal.is-reached { opacity: 1; }
+@media (min-width: 641px) and (prefers-reduced-motion: no-preference) {
+  .work-list__head,
+  .work-list li,
+  .home-about__label,
+  .home-about__big,
+  .home-about__body > p:not(.home-about__big),
+  .home-about__sub,
+  .home-career li,
+  .home-edu li,
+  .home-flow li,
+  .site-footer__links,
+  .hi__big,
+  .site-footer__base { overflow: hidden; }
+  .work-list__head h2,
+  .work-list li > a,
+  .home-about__label,
+  .home-about__big,
+  .home-about__body > p:not(.home-about__big),
+  .home-about__sub,
+  .home-career li > *,
+  .home-edu li > *,
+  .home-flow li > *,
+  .site-footer__links,
+  .hi__big,
+  .site-footer__base {
+    opacity: 0;
+    filter: blur(10px);
+    transform: translateY(1.15em);
+    transition:
+      opacity 0.6s cubic-bezier(0.215, 0.61, 0.355, 1),
+      filter 0.6s cubic-bezier(0.215, 0.61, 0.355, 1),
+      transform 0.6s cubic-bezier(0.215, 0.61, 0.355, 1);
+  }
+  .work-list li:not(.is-reached) > a { pointer-events: none; }
+  .work-list__head.is-reached h2,
+  .work-list li.is-reached > a,
+  .home-about__label.is-reached,
+  .home-about__big.is-reached,
+  .home-about__body > p.is-reached,
+  .home-about__sub.is-reached,
+  .home-career li.is-reached > *,
+  .home-edu li.is-reached > *,
+  .home-flow li.is-reached > *,
+  .site-footer__links.is-reached,
+  .hi__big.is-reached,
+  .site-footer__base.is-reached {
+    opacity: 1;
+    filter: blur(0);
+    transform: none;
+  }
+}
 /* the thread is the only line on the home page */
 .has-reading-path .work-list__head, .has-reading-path .work-list li, .has-reading-path .work-list li:last-child,
 .has-reading-path .home-about, .has-reading-path .home-career li, .has-reading-path .home-edu li,

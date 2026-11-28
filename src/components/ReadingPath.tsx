@@ -13,10 +13,7 @@ import { DOT_PITCH } from "./grid";
 type Pt = { x: number; y: number };
 type Route = { d: string; floorY: number; straight: number; ox: number; oy: number; rings: Pt[]; stations: Pt[] };
 const PHONE = 640;
-const EAT_RADIUS = 10;
 const PAC_R = 13;
-const TOP_SPEED = 800; // px of line per second: the calm pace the line (and Pac-Man) never goes past
-const EASE = 1.4; // how quickly it closes the distance to where the scroll is (per second) // Pac-Man's radius, px
 // the blocks that appear as the line reaches them: everything after the hero, and the footer
 const REVEAL = "main > :not(.home-hero) :is(h2, h3, p, li), .site-footer--hi > *";
 
@@ -29,11 +26,9 @@ export function ReadingPath() {
   // it eats, rings and stations. Each has the length along the line at which it appears.
   const [marks, setMarks] = useState<{
     total: number;
-    dots: { x: number; y: number; len: number }[];
-    eaten: { x: number; y: number; len: number }[];
     rings: { x: number; y: number; len: number }[];
     stations: { x: number; y: number; len: number }[];
-    samples: { len: number; x: number; y: number; at: number }[]; // at: the reading point (page y) that draws it
+    samples: { len: number; x: number; y: number; at: number }[];
   } | null>(null);
 
   // 1) design the route from where things sit on the page
@@ -194,24 +189,15 @@ export function ReadingPath() {
   useEffect(() => {
     const path = pathRef.current;
     if (!path || !route) return setMarks(null);
-    const P = DOT_PITCH;
     const total = path.getTotalLength();
     const samples: { len: number; x: number; y: number; at: number }[] = [];
-    const dots: { x: number; y: number; len: number }[] = [];
-    const eatenMap = new Map<number, { x: number; y: number; len: number }>();
-    const STEP = P / 4;
-    for (let l = 0; l <= total; l += 3) {
+    const step = Math.max(8, DOT_PITCH / 3);
+    for (let l = 0; l <= total; l += step) {
       const p = path.getPointAtLength(l);
       samples.push({ len: l, x: p.x, y: p.y, at: 0 });
-      const c = Math.round((p.x - route.ox) / P), r = Math.round((p.y - route.oy) / P);
-      const gx = route.ox + c * P, gy = route.oy + r * P;
-      const key = r * 100000 + c;
-      if (Math.hypot(gx - p.x, gy - p.y) <= EAT_RADIUS && !eatenMap.has(key)) eatenMap.set(key, { x: gx, y: gy, len: l });
     }
-    for (let l = 0; l <= total; l += STEP) {
-      const p = path.getPointAtLength(l);
-      dots.push({ x: p.x, y: p.y, len: l });
-    }
+    const end = path.getPointAtLength(total);
+    if ((samples[samples.length - 1]?.len ?? 0) < total - 0.5) samples.push({ len: total, x: end.x, y: end.y, at: 0 });
     // pace: close to an even speed along the whole line, so the tip (and Pac-Man) moves with the scroll at a
     // steady rate and never races across a row. The line from its start to the floor spans the page's height.
     const floorLen = Math.max(0, total - route.straight); // the path's measured length can come out a hair short
@@ -229,201 +215,147 @@ export function ReadingPath() {
       });
     setMarks({
       total,
-      dots,
-      eaten: Array.from(eatenMap.values()).sort((a, b) => a.len - b.len),
       rings: at(route.rings),
       stations: at(route.stations),
       samples,
     });
   }, [route]);
 
-  // 3) follow the scroll 1:1. Only the elements that change get touched, straight in the DOM (no re-render).
+  // 3) the tip is the scroll — no catch-up ease. One stroke, not a thousand dots.
   useEffect(() => {
     const svg = svgRef.current;
-    if (!svg || !marks || !route) return;
+    const path = pathRef.current;
+    if (!svg || !path || !marks || !route) return;
     const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    const groups = {
-      dots: Array.from(svg.querySelectorAll<SVGCircleElement>(".reading-path__dot")),
-      eaten: Array.from(svg.querySelectorAll<SVGCircleElement>(".reading-path__eaten")),
-      rings: Array.from(svg.querySelectorAll<SVGCircleElement>(".reading-path__ring")),
-      stations: Array.from(svg.querySelectorAll<SVGCircleElement>(".reading-path__station")),
-    };
+    const rings = Array.from(svg.querySelectorAll<SVGCircleElement>(".reading-path__ring"));
+    const stations = Array.from(svg.querySelectorAll<SVGCircleElement>(".reading-path__station"));
     const head = svg.querySelector<SVGCircleElement>(".reading-path__head");
-    // after the ball has played (playBall adds "ball-pacman" to <html>), scrolling back up shows Pac-Man
-    // at the tip, facing back along the line and chomping it as it shrinks
     const pacman = svg.querySelector<SVGPathElement>(".reading-path__pacman");
-    let lastDrawn = -1;
-    let chomping = false;
-    // content below the hero stays faint until the line gets to it (desktop only): a project when the line
-    // Content appears with the line: each block is wiped into view along the stretch of line that passes it
-    // (left to right or right to left along a run, top to bottom along a drop), and wiped out again the same
-    // way when the line goes back (scrolling up, or Pac-Man). Desktop only.
     const floorLen = Math.max(0, marks.total - route.straight);
-    type Pass = { start: number; end: number; across: boolean; pts: { len: number; x: number; y: number }[] };
-    const passOf = (r: DOMRect, top: number): Pass => {
-      const bottom = top + r.height;
-      const dist = (q: { x: number; y: number }) => Math.hypot(Math.max(r.left - q.x, 0, q.x - r.right), Math.max(top - q.y, 0, q.y - bottom));
-      const NEAR = DOT_PITCH * 1.5;
-      const body = marks.samples.filter((q) => q.len <= floorLen);
-      let i = body.findIndex((q) => dist(q) <= NEAR);
-      if (i < 0) {
-        // never close: it appears whole where the line comes nearest
-        const best = body.reduce((a, q) => (dist(q) < dist(a) ? q : a), body[0]);
-        return { start: best.len, end: best.len, across: true, pts: [] };
-      }
-      let j = i;
-      while (j + 1 < body.length && dist(body[j + 1]) <= NEAR * 2) j++;
-      const pts = body.slice(i, j + 1);
-      const xs = pts.map((q) => q.x), ys = pts.map((q) => q.y);
-      const across = Math.max(...xs) - Math.min(...xs) >= Math.max(...ys) - Math.min(...ys);
-      return { start: pts[0].len, end: pts[pts.length - 1].len, across, pts };
-    };
-    const reveal = document.documentElement.classList.contains("has-reading-reveal")
-      ? (() => {
-          const els = Array.from(document.querySelectorAll<HTMLElement>(REVEAL));
-          return els
-            .filter((el) => !els.some((o) => o !== el && o.contains(el))) // outermost blocks only
-            .map((el) => {
-              el.classList.add("reading-reveal");
-              const r = el.getBoundingClientRect();
-              const top = r.top + window.scrollY;
-              return { el, r, top, pass: passOf(r, top), clip: "hidden" };
-            });
-        })()
-      : [];
-    // In: wiped in along the line as it grows. Out: when the line goes back (scrolling up, or Pac-Man) past
-    // the middle of a block's stretch, the whole block softly fades away.
-    const wipe = (b: (typeof reveal)[number], drawn: number, growing: boolean) => {
-      const { pass, r, top } = b;
-      let clip = b.clip;
-      if (drawn >= pass.end) clip = "";
-      else if (!growing) {
-        if (drawn < (pass.start + pass.end) / 2) clip = "hidden";
-      } else if (drawn >= pass.start) {
-        if (b.clip !== "") {
-          const done = pass.pts.filter((q) => q.len <= drawn);
-          const lo = (k: "x" | "y") => Math.min(...done.map((q) => q[k]));
-          const hi = (k: "x" | "y") => Math.max(...done.map((q) => q[k]));
-          const px = (n: number) => `${Math.max(0, n).toFixed(0)}px`;
-          clip = pass.across
-            ? `inset(0 ${px(r.right - hi("x"))} 0 ${px(lo("x") - r.left)})`
-            : `inset(${px(lo("y") - top)} 0 ${px(top + r.height - hi("y"))} 0)`;
+    const hide = document.documentElement.classList.contains("has-reading-reveal");
+
+    const workEls = [
+      document.querySelector<HTMLElement>(".work-list__head"),
+      ...document.querySelectorAll<HTMLElement>(".work-list li"),
+    ].filter((el): el is HTMLElement => !!el);
+    const skip = new Set(workEls);
+    const blocks: { el: HTMLElement; trigger: number; on: boolean }[] = [];
+    if (hide) {
+      workEls.forEach((el, i) => {
+        const ring = marks.rings[Math.min(i, Math.max(0, marks.rings.length - 1))];
+        if (ring) blocks.push({ el, trigger: ring.len, on: false });
+      });
+      for (const el of document.querySelectorAll<HTMLElement>(REVEAL)) {
+        if (skip.has(el) || [...skip].some((w) => w.contains(el))) continue;
+        const r = el.getBoundingClientRect();
+        const top = r.top + window.scrollY;
+        const bottom = top + r.height;
+        let trigger = -1;
+        for (const q of marks.samples) {
+          if (q.len > floorLen) break;
+          if (q.x >= r.left && q.x <= r.right && q.y >= top && q.y <= bottom) {
+            trigger = q.len;
+            break;
+          }
         }
-      } else clip = "hidden";
-      if (clip === b.clip) return;
-      b.clip = clip;
-      b.el.classList.toggle("is-reached", clip !== "hidden");
-      if (clip !== "hidden") b.el.style.clipPath = clip; // hidden keeps its last shape and fades out whole
-    };
-    // the line trails the scroll: it heads for where the scroll says it should be, easing in and never faster
-    // than a calm top speed, both on the way down and (as Pac-Man) on the way back up. On load it draws in
-    // from the top the same way.
-    let drawnSoFar = 0;
-    let lastTime = performance.now();
-    const shown = { dots: 0, eaten: 0, rings: 0, stations: 0 };
-    const sync = (key: keyof typeof shown, list: { len: number }[], drawn: number) => {
+        if (trigger >= 0) blocks.push({ el, trigger, on: false });
+      }
+    }
+
+    const shown = { rings: 0, stations: 0 };
+    const sync = (key: "rings" | "stations", list: { len: number }[], els: SVGCircleElement[], drawn: number) => {
       let n = 0;
       while (n < list.length && list[n].len <= drawn) n++;
-      const els = groups[key];
       if (n > shown[key]) for (let i = shown[key]; i < n; i++) els[i]?.classList.add("is-on");
       else for (let i = n; i < shown[key]; i++) els[i]?.classList.remove("is-on");
       shown[key] = n;
     };
+
     const drawnNow = () => {
       const { total, samples } = marks;
       if (reduced) return total;
       const H = window.innerHeight;
       const max = document.documentElement.scrollHeight - H;
+      if (max <= 1) return total;
       const near = Math.max(0, Math.min(1, 1 - (max - window.scrollY) / (H * 0.6)));
       if (near >= 0.999) return total;
-      // the reading point: a third of the way down the screen, a little lower once you start scrolling (the line
-      // draws a little ahead of it), and reaching the bottom as the page ends
       const settle = Math.min(1, window.scrollY / (H * 0.5));
       const readY = window.scrollY + H * (0.3 + 0.25 * settle + 0.45 * near);
-      // the curve follows the reading point; the straight floor then draws out with the last bit of scroll
       let k = 0;
       while (k < samples.length && samples[k].len <= floorLen && samples[k].at <= readY) k++;
       const upTo = samples[Math.max(0, k - 1)]?.len ?? 0;
       if (upTo < floorLen - 4) return upTo;
       return floorLen + route.straight * Math.min(1, Math.max(0, (near - 0.5) / 0.45));
     };
-    // after a relayout (fonts, resize) carry on from where it was; arriving part-way down the page (a link to
-    // #work, a restored scroll) starts there instead of drawing in from the top
-    drawnSoFar = reduced ? marks.total : drawnRef.current ?? (window.scrollY > 50 ? drawnNow() : 0);
+
+    let lastDrawn = -1;
+    let chomping = false;
     let raf = 0;
-    const frame = () => {
-      raf = 0;
-      const now = performance.now();
-      const dt = Math.min(0.05, (now - lastTime) / 1000);
-      lastTime = now;
-      const target = drawnNow();
-      const gap = target - drawnSoFar;
-      // relaxed when you scroll gently; the further behind it falls (a fast scroll), the faster it catches up
-      const far = Math.abs(gap) / 500;
-      const step = Math.sign(gap) * Math.min(Math.abs(gap) * (1 - Math.exp(-dt * EASE * (1 + far))), TOP_SPEED * (1 + far * 2) * dt);
-      drawnSoFar = Math.abs(gap) < 1 ? target : drawnSoFar + step;
-      const drawn = drawnSoFar;
+    let lastY = -1;
+
+    const paint = () => {
+      const drawn = reduced ? marks.total : drawnNow();
       drawnRef.current = drawn;
-      const moving = drawn !== target;
-      if (moving) raf = requestAnimationFrame(frame);
-      sync("dots", marks.dots, drawn);
-      sync("eaten", marks.eaten, drawn);
-      sync("rings", marks.rings, drawn);
-      sync("stations", marks.stations, drawn);
-      const growing = lastDrawn < 0 || drawn >= lastDrawn;
-      reveal.forEach((b) => wipe(b, drawn, growing));
-      const tip = marks.dots[Math.max(0, shown.dots - 1)];
-      const live = drawn > 0 && drawn < marks.total && !!tip;
-      // Pac-Man: shows up when the line goes back and stays (resting, mouth half open) until it grows again
+      svg.querySelector("#reading-draw path")?.setAttribute("stroke-dasharray", `${Math.max(0, drawn)} ${marks.total}`);
+      sync("rings", marks.rings, rings, drawn);
+      sync("stations", marks.stations, stations, drawn);
+      for (const b of blocks) {
+        const on = drawn >= b.trigger;
+        if (on === b.on) continue;
+        b.on = on;
+        b.el.classList.toggle("is-reached", on);
+      }
+      const live = drawn > 0 && drawn < marks.total;
       if (lastDrawn >= 0 && drawn < lastDrawn - 0.5) chomping = document.documentElement.classList.contains("ball-pacman");
       else if (lastDrawn >= 0 && drawn > lastDrawn + 0.5) chomping = false;
       lastDrawn = drawn;
       const pac = chomping && live;
+      const tip = path.getPointAtLength(Math.min(Math.max(drawn, 0), marks.total));
       if (head) {
         head.style.opacity = live && !pac ? "1" : "0";
-        if (tip) {
-          head.setAttribute("cx", String(tip.x));
-          head.setAttribute("cy", String(tip.y));
-        }
+        head.setAttribute("cx", String(tip.x));
+        head.setAttribute("cy", String(tip.y));
       }
       if (pacman) {
         pacman.classList.toggle("is-on", pac);
-        if (pac && tip) {
-          const back = marks.dots[Math.max(0, shown.dots - 5)];
-          const angle = Math.atan2(back.y - tip.y, back.x - tip.x); // faces the line it is eating
-          const m = moving ? 0.12 + 0.55 * Math.abs(Math.sin(now / 110)) : 0.4; // mouth half-angle: chomping while it eats
-          const r = PAC_R;
+        if (pac) {
+          const back = path.getPointAtLength(Math.max(0, drawn - 24));
+          const angle = Math.atan2(back.y - tip.y, back.x - tip.x);
+          const m = 0.4;
           pacman.setAttribute(
             "d",
-            `M 0 0 L ${(r * Math.cos(m)).toFixed(2)} ${(r * Math.sin(m)).toFixed(2)} A ${r} ${r} 0 1 1 ${(r * Math.cos(m)).toFixed(2)} ${(-r * Math.sin(m)).toFixed(2)} Z`,
+            `M 0 0 L ${(PAC_R * Math.cos(m)).toFixed(2)} ${(PAC_R * Math.sin(m)).toFixed(2)} A ${PAC_R} ${PAC_R} 0 1 1 ${(PAC_R * Math.cos(m)).toFixed(2)} ${(-PAC_R * Math.sin(m)).toFixed(2)} Z`,
           );
           pacman.setAttribute("transform", `translate(${tip.x.toFixed(1)} ${tip.y.toFixed(1)}) rotate(${((angle * 180) / Math.PI).toFixed(1)})`);
         }
       }
     };
-    const onScroll = () => {
-      if (!raf) {
-        lastTime = performance.now();
-        raf = requestAnimationFrame(frame);
-      }
+
+    const tick = () => {
+      raf = requestAnimationFrame(tick);
+      const target = reduced ? marks.total : drawnNow();
+      if (window.scrollY === lastY && Math.abs(target - lastDrawn) < 0.5 && lastDrawn >= 0) return;
+      lastY = window.scrollY;
+      paint();
     };
-    frame();
-    window.addEventListener("scroll", onScroll, { passive: true });
+    tick();
     return () => {
-      window.removeEventListener("scroll", onScroll);
-      if (raf) cancelAnimationFrame(raf);
-      reveal.forEach((b) => {
-        b.el.classList.remove("reading-reveal", "is-reached");
-        b.el.style.clipPath = "";
-      });
+      cancelAnimationFrame(raf);
+      blocks.forEach((b) => b.el.classList.remove("is-reached"));
     };
   }, [marks, route]);
 
   return (
     <svg ref={svgRef} className="reading-path" aria-hidden="true" width="100%" height="100%" data-floor-y={route?.floorY}>
+      <defs>
+        <mask id="reading-draw" maskUnits="userSpaceOnUse" x="-80" y="-80" width="4000" height="8000">
+          <rect x="-80" y="-80" width="4000" height="8000" fill="black" />
+          <path d={route?.d ?? ""} pathLength={marks?.total || 1} fill="none" stroke="white" strokeWidth="18" strokeLinecap="round" />
+        </mask>
+      </defs>
       {route && <path ref={pathRef} d={route.d} className="reading-path__guide" />}
-      {marks?.eaten.map((e, i) => <circle key={`e${i}`} className="reading-path__eaten" cx={e.x} cy={e.y} r={4.5} />)}
-      {marks?.dots.map((d, i) => <circle key={`d${i}`} className="reading-path__dot" cx={d.x.toFixed(1)} cy={d.y.toFixed(1)} r={1.3} />)}
+      {route && <path className="reading-path__eat" d={route.d} mask="url(#reading-draw)" />}
+      {route && <path className="reading-path__line" d={route.d} mask="url(#reading-draw)" />}
       {marks?.rings.map((r, i) => <circle key={`r${i}`} className="reading-path__ring" cx={r.x} cy={r.y} r={14} />)}
       {marks?.stations.map((st, i) => <circle key={`s${i}`} className="reading-path__station" cx={st.x} cy={st.y} r={4} />)}
       <circle className="reading-path__head" r={3.5} style={{ opacity: 0 }} />
